@@ -13,20 +13,10 @@ builder.Services.AddCors(options =>
     options.AddDefaultPolicy(policy =>
     {
         policy
-            .AllowAnyOrigin() // 或者指定你模拟器的IP:port
+            .AllowAnyOrigin()
             .AllowAnyMethod()
             .AllowAnyHeader();
     });
-});
-
-builder.WebHost.ConfigureKestrel(options =>
-{
-    // 允许外部访问，让Android模拟器访问
-    options.ListenAnyIP(5096);
-    options.ListenAnyIP(7293, listenOptions =>
-    {
-        listenOptions.UseHttps(); // 默认开发证书
-    }); 
 });
 
 var app = builder.Build();
@@ -49,6 +39,7 @@ app.UseAuthorization();
 app.MapControllers();
 
 var port = Environment.GetEnvironmentVariable("PORT") ?? "7293";
+app.Urls.Clear();             // 清除默认 HTTPS
 app.Urls.Add($"http://0.0.0.0:{port}");
 
 app.Run();
