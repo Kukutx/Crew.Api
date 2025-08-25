@@ -9,8 +9,8 @@ namespace Crew.Api.Controllers
     {
         private static readonly List<Event> Events = new()
     {
-        new Event { Id = 1, Title = "City Walk", Location = "Berlin" , Latitude = 52.520008, Longitude = 13.404954},
-        new Event { Id = 2, Title = "Museum Tour", Location = "Paris" , Latitude = 48.856614, Longitude = 2.3522219}
+        new Event { Id = 1, Title = "City Walk", Location = "Berlin" , Description = "A walk through the city center", Latitude = 52.520008, Longitude = 13.404954},
+        new Event { Id = 2, Title = "Museum Tour", Location = "Paris" , Description = "A tour of the Louvre Museum", Latitude = 48.856614, Longitude = 2.3522219}
     };
 
         [HttpGet]
