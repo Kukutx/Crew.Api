@@ -10,7 +10,7 @@ namespace Crew.Api.Controllers
         private static readonly List<Event> Events = new()
     {
         new Event { Id = 1, Title = "City Walk", Location = "Berlin" , Description = "A walk through the city center", Latitude = 52.520008, Longitude = 13.404954},
-        new Event { Id = 2, Title = "Museum Tour", Location = "Paris" , Description = "A tour of the Louvre Museum", Latitude = 48.856614, Longitude = 2.3522219}
+        new Event { Id = 2, Title = "Museum Tour", Location = "Paris" , Description = "A tour of the Louvre Museum", Latitude = 48.856614, Longitude = 2.3522219},
         new Event { Id = 1, Title = "Coffee Meetup", Location = "Paris",Description = "聊聊创业和生活", Latitude = 48.8566, Longitude = 2.3522 }, // Paris
         new Event { Id = 2, Title = "Art Gallery Walk",  Location = "Berlin",Description = "一起探索当代艺术", Latitude = 51.5074, Longitude = -0.1278 }, // London
         new Event { Id = 3, Title = "Hiking Adventure", Location = "Berlin", Description = "阿尔卑斯山徒步", Latitude = 46.2044, Longitude = 6.1432 }, // Geneva
