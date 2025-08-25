@@ -1,25 +1,23 @@
 ﻿# ---- Build Stage ----
-FROM mcr.microsoft.com/dotnet/sdk:9.0.203 AS build
+FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /app
 
-# 复制解决方案和项目文件
-COPY Crew.Api.sln .
+# 复制 csproj 并 restore
+COPY *.sln .
 COPY Crew.Api/*.csproj ./Crew.Api/
-
-# Restore
 RUN dotnet restore
 
-# 复制全部文件并 publish
+# 复制所有文件并发布
 COPY Crew.Api/. ./Crew.Api/
 WORKDIR /app/Crew.Api
 RUN dotnet publish -c Release -o /app/out
 
 # ---- Runtime Stage ----
-FROM mcr.microsoft.com/dotnet/aspnet:9.0.13
+FROM mcr.microsoft.com/dotnet/aspnet:9.0
 WORKDIR /app
 COPY --from=build /app/out .
 
-# Railway 环境端口
+# 使用 Railway 提供的端口
 ENV ASPNETCORE_URLS=http://+:$PORT
 EXPOSE $PORT
 
