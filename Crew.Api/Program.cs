@@ -38,8 +38,4 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-var port = Environment.GetEnvironmentVariable("PORT") ?? "7293";
-app.Urls.Clear();             // 清除默认 HTTPS
-app.Urls.Add($"http://0.0.0.0:{port}");
-
 app.Run();
