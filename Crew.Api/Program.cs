@@ -143,6 +143,30 @@ using (var scope = app.Services.CreateScope())
         );
         context.SaveChanges();
     }
+
+    if (!context.Users.Any())
+    {
+        context.Users.AddRange(
+            new User { Id = 1, UserName = "alice", Email = "alice@example.com" },
+            new User { Id = 2, UserName = "bob", Email = "bob@example.com" }
+        );
+        context.SaveChanges();
+    }
+
+    if (!context.Comments.Any())
+    {
+        context.Comments.Add(
+            new Comment
+            {
+                Id = 1,
+                EventId = 1,
+                UserId = 1,
+                Content = "Looking forward to it!",
+                CreatedAt = DateTime.UtcNow
+            }
+        );
+        context.SaveChanges();
+    }
 }
 
 // Configure the HTTP request pipeline.

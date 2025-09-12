@@ -10,5 +10,7 @@ public class EventsDbContext : DbContext
     }
 
     public DbSet<Event> Events => Set<Event>();
+    public DbSet<User> Users => Set<User>();
+    public DbSet<Comment> Comments => Set<Comment>();
 }
 
