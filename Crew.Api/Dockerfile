@@ -5,15 +5,12 @@ WORKDIR /app
 # 复制解决方案和项目文件
 COPY Crew.Api.sln .
 COPY Crew.Api/*.csproj ./Crew.Api/
-COPY Crew.Data/*.csproj ./Crew.Data/
-COPY Crew.Services/*.csproj ./Crew.Services/
-COPY Crew.Shared/*.csproj ./Crew.Shared/
 
 # Restore
 RUN dotnet restore
 
 # 复制全部文件并 publish
-COPY . .
+COPY Crew.Api/. ./Crew.Api/
 WORKDIR /app/Crew.Api
 RUN dotnet publish -c Release -o /app/out
 
