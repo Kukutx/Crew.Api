@@ -1,5 +1,4 @@
 ﻿using Crew.Api.Models;
-using Crew.Api.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Crew.Api.Controllers
