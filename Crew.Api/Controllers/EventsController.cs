@@ -1,11 +1,12 @@
 ﻿using Crew.Api.Models;
+using Crew.Api.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Crew.Api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class EventsController : Controller
+    public class EventsController : ControllerBase
     {
         private static readonly List<Event> Events = new()
     {
