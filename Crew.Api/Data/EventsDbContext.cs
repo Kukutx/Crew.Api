@@ -1,0 +1,16 @@
+using Crew.Api.Models;
+using Microsoft.EntityFrameworkCore;
+
+namespace Crew.Api.Data;
+
+public class EventsDbContext : DbContext
+{
+    public EventsDbContext(DbContextOptions<EventsDbContext> options) : base(options)
+    {
+    }
+
+    public DbSet<Event> Events => Set<Event>();
+    public DbSet<User> Users => Set<User>();
+    public DbSet<Comment> Comments => Set<Comment>();
+}
+
