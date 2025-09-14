@@ -32,10 +32,19 @@ public class EventsController : ControllerBase
     public async Task<ActionResult<Event>> Create(Event newEvent)
     {
         newEvent.Id = _context.Events.Any() ? _context.Events.Max(e => e.Id) + 1 : 1;
+
+        // 限制最多 5 张图片
+        if (newEvent.ImageUrls.Count > 5)
+        {
+            newEvent.ImageUrls = newEvent.ImageUrls.Take(5).ToList();
+        }
+
+        // 自动设置封面
         if (string.IsNullOrEmpty(newEvent.CoverImageUrl) && newEvent.ImageUrls.Any())
         {
             newEvent.CoverImageUrl = newEvent.ImageUrls[0];
         }
+
         _context.Events.Add(newEvent);
         await _context.SaveChangesAsync();
         return CreatedAtAction(nameof(GetById), new { id = newEvent.Id }, newEvent);
@@ -52,7 +61,8 @@ public class EventsController : ControllerBase
         ev.Description = updatedEvent.Description;
         ev.Latitude = updatedEvent.Latitude;
         ev.Longitude = updatedEvent.Longitude;
-        ev.ImageUrls = updatedEvent.ImageUrls;
+        // 限制最多 5 张图片
+        ev.ImageUrls = updatedEvent.ImageUrls.Take(5).ToList();
         ev.CoverImageUrl = string.IsNullOrEmpty(updatedEvent.CoverImageUrl) && updatedEvent.ImageUrls.Any()
             ? updatedEvent.ImageUrls[0]
             : updatedEvent.CoverImageUrl;
