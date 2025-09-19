@@ -13,4 +13,10 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="8.0.6" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Crew.Data\Crew.Infrastructure.csproj" />
+    <ProjectReference Include="..\Crew.Services\Crew.Services.csproj" />
+    <ProjectReference Include="..\Crew.Shared\Crew.Shared.csproj" />
+  </ItemGroup>
+
 </Project>
