@@ -32,9 +32,8 @@ var totalkeys = originalKeys.Concat(morekeys);
 builder.Services.AddControllers();
 
 // 配置 Entity Framework Core数据库连接 和 Identity
-//builder.Services.AddDbContext<AppDbContext>(options =>
-//    options.UseInMemoryDatabase("EventsDb"));
-builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlite("Data Source=Crew.db"));
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseSqlite(builder.Configuration.GetConnectionString("Default")));
 builder.Services.AddDefaultIdentity<ApplicationUser>().AddEntityFrameworkStores<AppDbContext>();
 builder.Services.AddHttpContextAccessor();
 
