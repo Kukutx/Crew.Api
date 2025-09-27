@@ -12,9 +12,9 @@ namespace Crew.Api.Controllers;
 [Route("api/[controller]")]
 public class EventsController : ControllerBase
 {
-    private readonly EventsDbContext _context;
+    private readonly AppDbContext _context;
 
-    public EventsController(EventsDbContext context)
+    public EventsController(AppDbContext context)
     {
         _context = context;
     }

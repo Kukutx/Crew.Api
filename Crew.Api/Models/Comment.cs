@@ -11,5 +11,5 @@ public class Comment
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     public Event? Event { get; set; }
-    public User? User { get; set; }
+    public DomainUsers? User { get; set; }
 }

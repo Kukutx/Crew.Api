@@ -8,7 +8,7 @@ namespace Crew.Api.Utils;
 
 public static class SeedDataService
 {
-    public static void SeedDatabase(EventsDbContext context)
+    public static void SeedDatabase(AppDbContext context)
     {
         if (!context.Events.Any())
         {
@@ -196,10 +196,10 @@ public static class SeedDataService
             context.SaveChanges();
         }
 
-        if (!context.Users.Any())
+        if (!context.DomainUsers.Any())
         {
-            context.Users.AddRange(
-                new User
+            context.DomainUsers.AddRange(
+                new DomainUsers
                 {
                     Id = 1,
                     UserName = "alice",
@@ -214,7 +214,7 @@ public static class SeedDataService
                     Likes = 640,
                     Followed = true
                 },
-                new User
+                new DomainUsers
                 {
                     Id = 2,
                     UserName = "bob",
@@ -229,7 +229,7 @@ public static class SeedDataService
                     Likes = 480,
                     Followed = false
                 },
-                new User
+                new DomainUsers
                 {
                     Id = 3,
                     UserName = "carol",

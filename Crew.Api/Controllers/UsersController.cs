@@ -10,39 +10,39 @@ namespace Crew.Api.Controllers;
 [Route("api/[controller]")]
 public class UsersController : ControllerBase
 {
-    private readonly EventsDbContext _context;
+    private readonly AppDbContext _context;
 
-    public UsersController(EventsDbContext context)
+    public UsersController(AppDbContext context)
     {
         _context = context;
     }
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<User>>> GetAll()
-        => Ok(await _context.Users.ToListAsync());
+    public async Task<ActionResult<IEnumerable<DomainUsers>>> GetAll()
+        => Ok(await _context.DomainUsers.ToListAsync());
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<User>> GetById(int id)
+    public async Task<ActionResult<DomainUsers>> GetById(int id)
     {
-        var user = await _context.Users.FindAsync(id);
+        var user = await _context.DomainUsers.FindAsync(id);
         if (user == null) return NotFound();
         return Ok(user);
     }
 
     [HttpPost]
-    public async Task<ActionResult<User>> Create(User newUser)
+    public async Task<ActionResult<DomainUsers>> Create(DomainUsers newUser)
     {
-        newUser.Id = _context.Users.Any() ? _context.Users.Max(u => u.Id) + 1 : 1;
+        newUser.Id = _context.DomainUsers.Any() ? _context.DomainUsers.Max(u => u.Id) + 1 : 1;
         NormalizeUser(newUser);
-        _context.Users.Add(newUser);
+        _context.DomainUsers.Add(newUser);
         await _context.SaveChangesAsync();
         return CreatedAtAction(nameof(GetById), new { id = newUser.Id }, newUser);
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> Update(int id, User updatedUser)
+    public async Task<IActionResult> Update(int id, DomainUsers updatedUser)
     {
-        var user = await _context.Users.FindAsync(id);
+        var user = await _context.DomainUsers.FindAsync(id);
         if (user == null) return NotFound();
 
         NormalizeUser(updatedUser);
@@ -64,15 +64,15 @@ public class UsersController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id)
     {
-        var user = await _context.Users.FindAsync(id);
+        var user = await _context.DomainUsers.FindAsync(id);
         if (user == null) return NotFound();
 
-        _context.Users.Remove(user);
+        _context.DomainUsers.Remove(user);
         await _context.SaveChangesAsync();
         return NoContent();
     }
 
-    private static void NormalizeUser(User user)
+    private static void NormalizeUser(DomainUsers user)
     {
         user.UserName = user.UserName?.Trim() ?? string.Empty;
         user.Email = user.Email?.Trim() ?? string.Empty;

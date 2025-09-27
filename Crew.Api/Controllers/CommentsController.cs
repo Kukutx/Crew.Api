@@ -9,9 +9,9 @@ namespace Crew.Api.Controllers;
 [Route("api/events/{eventId}/[controller]")]
 public class CommentsController : ControllerBase
 {
-    private readonly EventsDbContext _context;
+    private readonly AppDbContext _context;
 
-    public CommentsController(EventsDbContext context)
+    public CommentsController(AppDbContext context)
     {
         _context = context;
     }
