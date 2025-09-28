@@ -196,6 +196,44 @@ public static class SeedDataService
             context.SaveChanges();
         }
 
+        if (!context.SubscriptionPlans.Any())
+        {
+            var plans = new List<SubscriptionPlan>
+            {
+                new SubscriptionPlan
+                {
+                    Id = 1,
+                    Key = "free",
+                    DisplayName = "Free",
+                    Description = "基础免费计划"
+                },
+                new SubscriptionPlan
+                {
+                    Id = 2,
+                    Key = "tier1",
+                    DisplayName = "Tier 1",
+                    Description = "基础付费计划"
+                },
+                new SubscriptionPlan
+                {
+                    Id = 3,
+                    Key = "tier2",
+                    DisplayName = "Tier 2",
+                    Description = "进阶计划，更多额度"
+                },
+                new SubscriptionPlan
+                {
+                    Id = 4,
+                    Key = "tier3",
+                    DisplayName = "Tier 3",
+                    Description = "高级计划，解锁全部功能"
+                }
+            };
+
+            context.SubscriptionPlans.AddRange(plans);
+            context.SaveChanges();
+        }
+
         if (!context.DomainUsers.Any())
         {
             context.DomainUsers.AddRange(
@@ -212,7 +250,9 @@ public static class SeedDataService
                     Followers = 128,
                     Following = 54,
                     Likes = 640,
-                    Followed = true
+                    Followed = true,
+                    Role = UserRole.User,
+                    SubscriptionPlanId = 1
                 },
                 new DomainUsers
                 {
@@ -227,7 +267,9 @@ public static class SeedDataService
                     Followers = 96,
                     Following = 73,
                     Likes = 480,
-                    Followed = false
+                    Followed = false,
+                    Role = UserRole.User,
+                    SubscriptionPlanId = 2
                 },
                 new DomainUsers
                 {
@@ -242,7 +284,43 @@ public static class SeedDataService
                     Followers = 205,
                     Following = 120,
                     Likes = 1024,
-                    Followed = false
+                    Followed = false,
+                    Role = UserRole.User,
+                    SubscriptionPlanId = 3
+                },
+                new DomainUsers
+                {
+                    Id = 4,
+                    UserName = "luzhongli",
+                    Email = "luzhongli.ascii@gmail.com",
+                    Uid = "0kl6ETYUu2Ugclow94CBgSUoIEo2",
+                    Name = "Lu Zhongli",
+                    Bio = "喜欢技术和社区活动的普通用户。",
+                    Avatar = "https://i.imgur.com/zY5R8dH.png",
+                    Cover = "https://i.imgur.com/3S9g6Et.png",
+                    Followers = 0,
+                    Following = 0,
+                    Likes = 0,
+                    Followed = false,
+                    Role = UserRole.User,
+                    SubscriptionPlanId = 4
+                },
+                new DomainUsers
+                {
+                    Id = 5,
+                    UserName = "admin",
+                    Email = "admin.ascii@gmail.com",
+                    Uid = "ph57Iy73tONjxUbXireWIQU5xHD2",
+                    Name = "Crew Admin",
+                    Bio = "系统管理员",
+                    Avatar = "https://i.imgur.com/V0YqR0P.png",
+                    Cover = "https://i.imgur.com/8aZPRWn.png",
+                    Followers = 0,
+                    Following = 0,
+                    Likes = 0,
+                    Followed = false,
+                    Role = UserRole.Admin,
+                    SubscriptionPlanId = null
                 }
             );
             context.SaveChanges();

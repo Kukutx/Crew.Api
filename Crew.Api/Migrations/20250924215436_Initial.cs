@@ -53,6 +53,22 @@ namespace Crew.Api.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "SubscriptionPlans",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    Key = table.Column<string>(type: "TEXT", nullable: false),
+                    DisplayName = table.Column<string>(type: "TEXT", nullable: false),
+                    Description = table.Column<string>(type: "TEXT", nullable: false),
+                    IsActive = table.Column<bool>(type: "INTEGER", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_SubscriptionPlans", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "DomainUsers",
                 columns: table => new
                 {
@@ -68,11 +84,18 @@ namespace Crew.Api.Migrations
                     Followers = table.Column<int>(type: "INTEGER", nullable: false),
                     Following = table.Column<int>(type: "INTEGER", nullable: false),
                     Likes = table.Column<int>(type: "INTEGER", nullable: false),
-                    Followed = table.Column<bool>(type: "INTEGER", nullable: false)
+                    Followed = table.Column<bool>(type: "INTEGER", nullable: false),
+                    Role = table.Column<int>(type: "INTEGER", nullable: false),
+                    SubscriptionPlanId = table.Column<int>(type: "INTEGER", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_DomainUsers", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_DomainUsers_SubscriptionPlans_SubscriptionPlanId",
+                        column: x => x.SubscriptionPlanId,
+                        principalTable: "SubscriptionPlans",
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -292,6 +315,11 @@ namespace Crew.Api.Migrations
                 column: "EventId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_DomainUsers_SubscriptionPlanId",
+                table: "DomainUsers",
+                column: "SubscriptionPlanId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Comments_UserId",
                 table: "Comments",
                 column: "UserId");
@@ -329,6 +357,9 @@ namespace Crew.Api.Migrations
 
             migrationBuilder.DropTable(
                 name: "DomainUsers");
+
+            migrationBuilder.DropTable(
+                name: "SubscriptionPlans");
 
             migrationBuilder.DropTable(
                 name: "Events");

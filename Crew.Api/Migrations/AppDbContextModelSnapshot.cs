@@ -155,6 +155,12 @@ namespace Crew.Api.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<int>("Role")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("SubscriptionPlanId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("Uid")
                         .IsRequired()
                         .HasColumnType("TEXT");
@@ -165,7 +171,35 @@ namespace Crew.Api.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("SubscriptionPlanId");
+
                     b.ToTable("DomainUsers");
+                });
+
+            modelBuilder.Entity("Crew.Api.Models.SubscriptionPlan", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("DisplayName")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Key")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("SubscriptionPlans");
                 });
 
             modelBuilder.Entity("Crew.Api.Models.Event", b =>
@@ -396,6 +430,20 @@ namespace Crew.Api.Migrations
                     b.Navigation("Event");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Crew.Api.Models.DomainUsers", b =>
+                {
+                    b.HasOne("Crew.Api.Models.SubscriptionPlan", "SubscriptionPlan")
+                        .WithMany("Users")
+                        .HasForeignKey("SubscriptionPlanId");
+
+                    b.Navigation("SubscriptionPlan");
+                });
+
+            modelBuilder.Entity("Crew.Api.Models.SubscriptionPlan", b =>
+                {
+                    b.Navigation("Users");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>

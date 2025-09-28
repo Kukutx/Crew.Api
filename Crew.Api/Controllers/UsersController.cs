@@ -19,12 +19,16 @@ public class UsersController : ControllerBase
 
     [HttpGet]
     public async Task<ActionResult<IEnumerable<DomainUsers>>> GetAll()
-        => Ok(await _context.DomainUsers.ToListAsync());
+        => Ok(await _context.DomainUsers
+            .Include(u => u.SubscriptionPlan)
+            .ToListAsync());
 
     [HttpGet("{id}")]
     public async Task<ActionResult<DomainUsers>> GetById(int id)
     {
-        var user = await _context.DomainUsers.FindAsync(id);
+        var user = await _context.DomainUsers
+            .Include(u => u.SubscriptionPlan)
+            .FirstOrDefaultAsync(u => u.Id == id);
         if (user == null) return NotFound();
         return Ok(user);
     }
@@ -57,6 +61,8 @@ public class UsersController : ControllerBase
         user.Following = Math.Max(0, updatedUser.Following);
         user.Likes = Math.Max(0, updatedUser.Likes);
         user.Followed = updatedUser.Followed;
+        user.Role = Enum.IsDefined(typeof(UserRole), updatedUser.Role) ? updatedUser.Role : user.Role;
+        user.SubscriptionPlanId = updatedUser.SubscriptionPlanId;
         await _context.SaveChangesAsync();
         return NoContent();
     }
@@ -84,5 +90,13 @@ public class UsersController : ControllerBase
         user.Followers = Math.Max(0, user.Followers);
         user.Following = Math.Max(0, user.Following);
         user.Likes = Math.Max(0, user.Likes);
+        if (!Enum.IsDefined(typeof(UserRole), user.Role))
+        {
+            user.Role = UserRole.User;
+        }
+        if (user.SubscriptionPlanId is <= 0)
+        {
+            user.SubscriptionPlanId = null;
+        }
     }
 }
