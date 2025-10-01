@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Crew.Api.Data;
+using Crew.Api.Data.DbContexts;
 using Crew.Api.Models;
 
 namespace Crew.Api.Utils;

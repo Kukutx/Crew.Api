@@ -30,4 +30,10 @@
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.14.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Data\Enum\" />
+    <Folder Include="Data\Entities\" />
+    <Folder Include="Data\Configurations\" />
+  </ItemGroup>
+
 </Project>

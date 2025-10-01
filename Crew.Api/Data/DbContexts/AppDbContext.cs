@@ -3,7 +3,7 @@ using Crew.Api.Models.Authentication;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
-namespace Crew.Api.Data;
+namespace Crew.Api.Data.DbContexts;
 
 public class AppDbContext : IdentityDbContext<ApplicationUser>
 {
