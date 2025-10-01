@@ -208,6 +208,42 @@ public static class SeedDataService
             context.SaveChanges();
         }
 
+        if (!context.Users.Any(u => u.Uid == "seed-admin"))
+        {
+            var adminUser = new UserAccount
+            {
+                Uid = "seed-admin",
+                Email = "admin@crew.local",
+                UserName = "seed-admin",
+                DisplayName = "Seed Administrator",
+                Status = UserStatuses.Active,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+
+            context.Users.Add(adminUser);
+            context.SaveChanges();
+        }
+
+        var adminRoleId = context.Roles
+            .Where(r => r.Key == RoleKeys.Admin)
+            .Select(r => r.Id)
+            .FirstOrDefault();
+
+        if (adminRoleId != 0 &&
+            !context.UserRoles.Any(assignment =>
+                assignment.UserUid == "seed-admin" && assignment.RoleId == adminRoleId))
+        {
+            context.UserRoles.Add(new UserRoleAssignment
+            {
+                UserUid = "seed-admin",
+                RoleId = adminRoleId,
+                GrantedAt = DateTime.UtcNow
+            });
+
+            context.SaveChanges();
+        }
+
         if (!context.SubscriptionPlans.Any())
         {
             var plans = new List<SubscriptionPlan>
