@@ -196,49 +196,7 @@ public static class SeedDataService
             context.SaveChanges();
         }
 
-<<<<<<< HEAD
-        if (!context.SubscriptionPlans.Any())
-        {
-            var plans = new List<SubscriptionPlan>
-            {
-                new SubscriptionPlan
-                {
-                    Id = 1,
-                    Key = "free",
-                    DisplayName = "Free",
-                    Description = "基础免费计划"
-                },
-                new SubscriptionPlan
-                {
-                    Id = 2,
-                    Key = "tier1",
-                    DisplayName = "Tier 1",
-                    Description = "基础付费计划"
-                },
-                new SubscriptionPlan
-                {
-                    Id = 3,
-                    Key = "tier2",
-                    DisplayName = "Tier 2",
-                    Description = "进阶计划，更多额度"
-                },
-                new SubscriptionPlan
-                {
-                    Id = 4,
-                    Key = "tier3",
-                    DisplayName = "Tier 3",
-                    Description = "高级计划，解锁全部功能"
-                }
-            };
-
-            context.SubscriptionPlans.AddRange(plans);
-            context.SaveChanges();
-        }
-
-        if (!context.DomainUsers.Any())
-=======
         if (!context.Roles.Any())
->>>>>>> origin/codex/add-user-roles-and-subscription-plans-qo44ux
         {
             var roles = new List<Role>
             {
@@ -257,50 +215,18 @@ public static class SeedDataService
                 new SubscriptionPlan
                 {
                     Id = 1,
-<<<<<<< HEAD
-                    UserName = "alice",
-                    Email = "alice@example.com",
-                    Uid = "user-alice",
-                    Name = "Alice Lee",
-                    Bio = "Berlin-based community organizer who loves urban walks.",
-                    Avatar = "https://i.imgur.com/zY5R8dH.png",
-                    Cover = "https://i.imgur.com/3S9g6Et.png",
-                    Followers = 128,
-                    Following = 54,
-                    Likes = 640,
-                    Followed = true,
-                    Role = UserRole.User,
-                    SubscriptionPlanId = 1
-=======
                     Key = "free",
                     DisplayName = "Free",
                     Description = "基础免费计划",
                     SortOrder = 0
->>>>>>> origin/codex/add-user-roles-and-subscription-plans-qo44ux
                 },
                 new SubscriptionPlan
                 {
                     Id = 2,
-<<<<<<< HEAD
-                    UserName = "bob",
-                    Email = "bob@example.com",
-                    Uid = "user-bob",
-                    Name = "Bob Martin",
-                    Bio = "A Paris-based designer and museum enthusiast.",
-                    Avatar = "https://i.imgur.com/4ZQZ3p0.png",
-                    Cover = "https://i.imgur.com/2bE8wE7.png",
-                    Followers = 96,
-                    Following = 73,
-                    Likes = 480,
-                    Followed = false,
-                    Role = UserRole.User,
-                    SubscriptionPlanId = 2
-=======
                     Key = "tier1",
                     DisplayName = "Tier 1",
                     Description = "基础付费计划",
                     SortOrder = 1
->>>>>>> origin/codex/add-user-roles-and-subscription-plans-qo44ux
                 },
                 new SubscriptionPlan
                 {
@@ -357,50 +283,6 @@ public static class SeedDataService
                     Email = "carol@example.com",
                     DisplayName = "Carol Smith",
                     Bio = "Event host who curates intimate coffee meetups.",
-<<<<<<< HEAD
-                    Avatar = "https://i.imgur.com/V0YqR0P.png",
-                    Cover = "https://i.imgur.com/8aZPRWn.png",
-                    Followers = 205,
-                    Following = 120,
-                    Likes = 1024,
-                    Followed = false,
-                    Role = UserRole.User,
-                    SubscriptionPlanId = 3
-                },
-                new DomainUsers
-                {
-                    Id = 4,
-                    UserName = "luzhongli",
-                    Email = "luzhongli.ascii@gmail.com",
-                    Uid = "0kl6ETYUu2Ugclow94CBgSUoIEo2",
-                    Name = "Lu Zhongli",
-                    Bio = "喜欢技术和社区活动的普通用户。",
-                    Avatar = "https://i.imgur.com/zY5R8dH.png",
-                    Cover = "https://i.imgur.com/3S9g6Et.png",
-                    Followers = 0,
-                    Following = 0,
-                    Likes = 0,
-                    Followed = false,
-                    Role = UserRole.User,
-                    SubscriptionPlanId = 4
-                },
-                new DomainUsers
-                {
-                    Id = 5,
-                    UserName = "admin",
-                    Email = "admin.ascii@gmail.com",
-                    Uid = "ph57Iy73tONjxUbXireWIQU5xHD2",
-                    Name = "Crew Admin",
-                    Bio = "系统管理员",
-                    Avatar = "https://i.imgur.com/V0YqR0P.png",
-                    Cover = "https://i.imgur.com/8aZPRWn.png",
-                    Followers = 0,
-                    Following = 0,
-                    Likes = 0,
-                    Followed = false,
-                    Role = UserRole.Admin,
-                    SubscriptionPlanId = null
-=======
                     AvatarUrl = "https://i.imgur.com/V0YqR0P.png",
                     CoverImageUrl = "https://i.imgur.com/8aZPRWn.png",
                     CreatedAt = DateTime.UtcNow.AddDays(-7),
@@ -426,7 +308,6 @@ public static class SeedDataService
                     AvatarUrl = "https://i.imgur.com/V0YqR0P.png",
                     CoverImageUrl = "https://i.imgur.com/8aZPRWn.png",
                     CreatedAt = DateTime.UtcNow.AddDays(-1),
->>>>>>> origin/codex/add-user-roles-and-subscription-plans-qo44ux
                 }
             };
 

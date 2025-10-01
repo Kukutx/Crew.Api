@@ -9,14 +9,8 @@ public class SubscriptionPlan
     public string DisplayName { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
     public bool IsActive { get; set; } = true;
-<<<<<<< HEAD
-
-    [JsonIgnore]
-    public ICollection<DomainUsers> Users { get; set; } = new List<DomainUsers>();
-=======
     public int SortOrder { get; set; }
 
     [JsonIgnore]
     public ICollection<UserSubscription> UserSubscriptions { get; set; } = new List<UserSubscription>();
->>>>>>> origin/codex/add-user-roles-and-subscription-plans-qo44ux
 }
