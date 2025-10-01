@@ -1,6 +1,7 @@
-using System;
 using Crew.Api.Data;
 using Crew.Api.Models;
+using Crew.Api.Security;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -18,71 +19,198 @@ public class UsersController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<DomainUsers>>> GetAll()
-        => Ok(await _context.DomainUsers.ToListAsync());
-
-    [HttpGet("{id}")]
-    public async Task<ActionResult<DomainUsers>> GetById(int id)
+    [Authorize(Policy = AuthorizationPolicies.RequireAdmin)]
+    public async Task<ActionResult<IEnumerable<UserAccountResponse>>> GetAll(CancellationToken cancellationToken)
     {
-        var user = await _context.DomainUsers.FindAsync(id);
-        if (user == null) return NotFound();
-        return Ok(user);
+        var users = await _context.Users
+            .Include(u => u.Roles)
+                .ThenInclude(r => r.Role)
+            .Include(u => u.Subscriptions)
+                .ThenInclude(s => s.Plan)
+            .OrderBy(u => u.UserName)
+            .ToListAsync(cancellationToken);
+
+        return Ok(users.Select(MapToResponse));
     }
 
-    [HttpPost]
-    public async Task<ActionResult<DomainUsers>> Create(DomainUsers newUser)
+    [HttpGet("{uid}")]
+    [Authorize(Policy = AuthorizationPolicies.RequireAdmin)]
+    public async Task<ActionResult<UserAccountResponse>> GetByUid(string uid, CancellationToken cancellationToken)
     {
-        newUser.Id = _context.DomainUsers.Any() ? _context.DomainUsers.Max(u => u.Id) + 1 : 1;
-        NormalizeUser(newUser);
-        _context.DomainUsers.Add(newUser);
-        await _context.SaveChangesAsync();
-        return CreatedAtAction(nameof(GetById), new { id = newUser.Id }, newUser);
+        var user = await _context.Users
+            .Include(u => u.Roles)
+                .ThenInclude(r => r.Role)
+            .Include(u => u.Subscriptions)
+                .ThenInclude(s => s.Plan)
+            .FirstOrDefaultAsync(u => u.Uid == uid, cancellationToken);
+
+        if (user is null)
+        {
+            return NotFound();
+        }
+
+        return Ok(MapToResponse(user));
     }
 
-    [HttpPut("{id}")]
-    public async Task<IActionResult> Update(int id, DomainUsers updatedUser)
+    [HttpPost("ensure")]
+    [AllowAnonymous]
+    public async Task<ActionResult<UserAccountResponse>> EnsureUser([FromBody] EnsureUserRequest request, CancellationToken cancellationToken)
     {
-        var user = await _context.DomainUsers.FindAsync(id);
-        if (user == null) return NotFound();
+        if (request is null)
+        {
+            return BadRequest("request body is required");
+        }
 
-        NormalizeUser(updatedUser);
-        user.UserName = updatedUser.UserName;
-        user.Email = updatedUser.Email;
-        user.Uid = updatedUser.Uid;
-        user.Name = updatedUser.Name;
-        user.Bio = updatedUser.Bio;
-        user.Avatar = updatedUser.Avatar;
-        user.Cover = updatedUser.Cover;
-        user.Followers = Math.Max(0, updatedUser.Followers);
-        user.Following = Math.Max(0, updatedUser.Following);
-        user.Likes = Math.Max(0, updatedUser.Likes);
-        user.Followed = updatedUser.Followed;
-        await _context.SaveChangesAsync();
-        return NoContent();
+        if (string.IsNullOrWhiteSpace(request.Uid))
+        {
+            return BadRequest("uid is required");
+        }
+
+        var normalizedUid = request.Uid.Trim();
+        var user = await _context.Users
+            .Include(u => u.Roles)
+                .ThenInclude(r => r.Role)
+            .Include(u => u.Subscriptions)
+                .ThenInclude(s => s.Plan)
+            .FirstOrDefaultAsync(u => u.Uid == normalizedUid, cancellationToken);
+
+        if (user is null)
+        {
+            var email = request.Email?.Trim() ?? string.Empty;
+            var userName = request.UserName?.Trim();
+            if (string.IsNullOrEmpty(userName))
+            {
+                userName = string.IsNullOrEmpty(email) ? normalizedUid : email;
+            }
+
+            var displayName = request.DisplayName?.Trim();
+            if (string.IsNullOrEmpty(displayName))
+            {
+                displayName = userName;
+            }
+
+            user = new UserAccount
+            {
+                Uid = normalizedUid,
+                Email = email,
+                UserName = userName,
+                DisplayName = displayName,
+                AvatarUrl = AvatarDefaults.Normalize(request.AvatarUrl),
+                CreatedAt = DateTime.UtcNow,
+                Status = UserStatuses.Active,
+            };
+
+            await ApplyDefaultRoleAsync(user, cancellationToken);
+            await ApplyDefaultPlanAsync(user, cancellationToken);
+
+            _context.Users.Add(user);
+        }
+        else
+        {
+            var email = request.Email?.Trim();
+            if (!string.IsNullOrEmpty(email))
+            {
+                user.Email = email;
+            }
+
+            var userName = request.UserName?.Trim();
+            if (!string.IsNullOrEmpty(userName))
+            {
+                user.UserName = userName;
+            }
+
+            var displayName = request.DisplayName?.Trim();
+            if (!string.IsNullOrEmpty(displayName))
+            {
+                user.DisplayName = displayName;
+            }
+
+            user.AvatarUrl = AvatarDefaults.Normalize(string.IsNullOrWhiteSpace(request.AvatarUrl)
+                ? user.AvatarUrl
+                : request.AvatarUrl);
+            user.UpdatedAt = DateTime.UtcNow;
+        }
+
+        await _context.SaveChangesAsync(cancellationToken);
+
+        return Ok(MapToResponse(user));
     }
 
-    [HttpDelete("{id}")]
-    public async Task<IActionResult> Delete(int id)
+    private async Task ApplyDefaultRoleAsync(UserAccount user, CancellationToken cancellationToken)
     {
-        var user = await _context.DomainUsers.FindAsync(id);
-        if (user == null) return NotFound();
+        var role = await _context.Roles.FirstOrDefaultAsync(r => r.Key == RoleKeys.User, cancellationToken);
+        if (role == null)
+        {
+            throw new InvalidOperationException("Default user role is missing.");
+        }
 
-        _context.DomainUsers.Remove(user);
-        await _context.SaveChangesAsync();
-        return NoContent();
+        user.Roles.Add(new UserRoleAssignment
+        {
+            RoleId = role.Id,
+            UserUid = user.Uid,
+            GrantedAt = DateTime.UtcNow,
+        });
     }
 
-    private static void NormalizeUser(DomainUsers user)
+    private async Task ApplyDefaultPlanAsync(UserAccount user, CancellationToken cancellationToken)
     {
-        user.UserName = user.UserName?.Trim() ?? string.Empty;
-        user.Email = user.Email?.Trim() ?? string.Empty;
-        user.Uid = user.Uid?.Trim() ?? string.Empty;
-        user.Name = user.Name?.Trim() ?? string.Empty;
-        user.Bio = user.Bio?.Trim() ?? string.Empty;
-        user.Avatar = user.Avatar?.Trim() ?? string.Empty;
-        user.Cover = user.Cover?.Trim() ?? string.Empty;
-        user.Followers = Math.Max(0, user.Followers);
-        user.Following = Math.Max(0, user.Following);
-        user.Likes = Math.Max(0, user.Likes);
+        var plan = await _context.SubscriptionPlans.FirstOrDefaultAsync(p => p.Key == SubscriptionPlanKeys.Free, cancellationToken);
+        if (plan == null)
+        {
+            return;
+        }
+
+        user.Subscriptions.Add(new UserSubscription
+        {
+            PlanId = plan.Id,
+            UserUid = user.Uid,
+            AssignedAt = DateTime.UtcNow,
+        });
     }
+
+    private static UserAccountResponse MapToResponse(UserAccount user)
+        => new(
+            user.Uid,
+            user.Email,
+            user.UserName,
+            user.DisplayName,
+            user.AvatarUrl,
+            user.CoverImageUrl,
+            user.Status,
+            user.CreatedAt,
+            user.UpdatedAt,
+            user.Roles
+                .Where(r => r.Role != null)
+                .Select(r => new RoleAssignmentResponse(r.Role!.Key, r.Role.DisplayName, r.GrantedAt))
+                .OrderBy(r => r.Key)
+                .ToList(),
+            user.Subscriptions
+                .Where(s => s.Plan != null)
+                .Select(s => new SubscriptionResponse(s.Plan!.Key, s.Plan.DisplayName, s.AssignedAt, s.ExpiresAt))
+                .OrderBy(s => s.PlanKey)
+                .ToList());
+
+    public record EnsureUserRequest(
+        string Uid,
+        string? Email,
+        string? UserName,
+        string? DisplayName,
+        string? AvatarUrl);
+
+    public record UserAccountResponse(
+        string Uid,
+        string Email,
+        string UserName,
+        string DisplayName,
+        string AvatarUrl,
+        string CoverImageUrl,
+        string Status,
+        DateTime CreatedAt,
+        DateTime? UpdatedAt,
+        IReadOnlyCollection<RoleAssignmentResponse> Roles,
+        IReadOnlyCollection<SubscriptionResponse> Subscriptions);
+
+    public record RoleAssignmentResponse(string Key, string DisplayName, DateTime GrantedAt);
+
+    public record SubscriptionResponse(string PlanKey, string PlanName, DateTime AssignedAt, DateTime? ExpiresAt);
 }

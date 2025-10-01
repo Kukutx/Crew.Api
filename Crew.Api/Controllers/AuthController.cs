@@ -1,6 +1,8 @@
 ﻿using System.Text.Json;
+using Crew.Api.Models;
 using Crew.Api.Models.Authentication;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Crew.Api.Controllers;
@@ -27,13 +29,21 @@ public class AuthController : Controller
                     { WriteIndented = true, PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
             
             var encoded = await result.Content.ReadFromJsonAsync<GoogleToken>();
+            if (encoded is null)
+            {
+                return StatusCode(StatusCodes.Status502BadGateway, "Failed to parse Google response.");
+            }
+
+            var avatar = AvatarDefaults.Normalize(encoded.photoUrl);
+
             Token token = new Token
             {
                 token_type = "Bearer",
                 access_token = encoded.idToken,
                 id_token = encoded.idToken,
                 expires_in = int.Parse(encoded.expiresIn),
-                refresh_token = encoded.refreshToken
+                refresh_token = encoded.refreshToken,
+                avatar = avatar
             };
             return Ok(token);
         }

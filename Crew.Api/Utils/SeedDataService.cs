@@ -196,55 +196,148 @@ public static class SeedDataService
             context.SaveChanges();
         }
 
-        if (!context.DomainUsers.Any())
+        if (!context.Roles.Any())
         {
-            context.DomainUsers.AddRange(
-                new DomainUsers
+            var roles = new List<Role>
+            {
+                new Role { Id = 1, Key = RoleKeys.User, DisplayName = "User", IsSystemRole = true },
+                new Role { Id = 2, Key = RoleKeys.Admin, DisplayName = "Admin", IsSystemRole = true },
+            };
+
+            context.Roles.AddRange(roles);
+            context.SaveChanges();
+        }
+
+        if (!context.SubscriptionPlans.Any())
+        {
+            var plans = new List<SubscriptionPlan>
+            {
+                new SubscriptionPlan
                 {
                     Id = 1,
-                    UserName = "alice",
-                    Email = "alice@example.com",
-                    Uid = "user-alice",
-                    Name = "Alice Lee",
-                    Bio = "Berlin-based community organizer who loves urban walks.",
-                    Avatar = "https://i.imgur.com/zY5R8dH.png",
-                    Cover = "https://i.imgur.com/3S9g6Et.png",
-                    Followers = 128,
-                    Following = 54,
-                    Likes = 640,
-                    Followed = true
+                    Key = "free",
+                    DisplayName = "Free",
+                    Description = "基础免费计划",
+                    SortOrder = 0
                 },
-                new DomainUsers
+                new SubscriptionPlan
                 {
                     Id = 2,
-                    UserName = "bob",
-                    Email = "bob@example.com",
-                    Uid = "user-bob",
-                    Name = "Bob Martin",
-                    Bio = "A Paris-based designer and museum enthusiast.",
-                    Avatar = "https://i.imgur.com/4ZQZ3p0.png",
-                    Cover = "https://i.imgur.com/2bE8wE7.png",
-                    Followers = 96,
-                    Following = 73,
-                    Likes = 480,
-                    Followed = false
+                    Key = "tier1",
+                    DisplayName = "Tier 1",
+                    Description = "基础付费计划",
+                    SortOrder = 1
                 },
-                new DomainUsers
+                new SubscriptionPlan
                 {
                     Id = 3,
+                    Key = "tier2",
+                    DisplayName = "Tier 2",
+                    Description = "进阶计划，更多额度",
+                    SortOrder = 2
+                },
+                new SubscriptionPlan
+                {
+                    Id = 4,
+                    Key = "tier3",
+                    DisplayName = "Tier 3",
+                    Description = "高级计划，解锁全部功能",
+                    SortOrder = 3
+                }
+            };
+
+            context.SubscriptionPlans.AddRange(plans);
+            context.SaveChanges();
+        }
+
+        if (!context.Users.Any())
+        {
+            var seededUsers = new List<UserAccount>
+            {
+                new UserAccount
+                {
+                    Uid = "user-alice",
+                    UserName = "alice",
+                    Email = "alice@example.com",
+                    DisplayName = "Alice Lee",
+                    Bio = "Berlin-based community organizer who loves urban walks.",
+                    AvatarUrl = "https://i.imgur.com/zY5R8dH.png",
+                    CoverImageUrl = "https://i.imgur.com/3S9g6Et.png",
+                    CreatedAt = DateTime.UtcNow.AddDays(-14),
+                },
+                new UserAccount
+                {
+                    Uid = "user-bob",
+                    UserName = "bob",
+                    Email = "bob@example.com",
+                    DisplayName = "Bob Martin",
+                    Bio = "A Paris-based designer and museum enthusiast.",
+                    AvatarUrl = "https://i.imgur.com/4ZQZ3p0.png",
+                    CoverImageUrl = "https://i.imgur.com/2bE8wE7.png",
+                    CreatedAt = DateTime.UtcNow.AddDays(-10),
+                },
+                new UserAccount
+                {
+                    Uid = "user-carol",
                     UserName = "carol",
                     Email = "carol@example.com",
-                    Uid = "user-carol",
-                    Name = "Carol Smith",
+                    DisplayName = "Carol Smith",
                     Bio = "Event host who curates intimate coffee meetups.",
-                    Avatar = "https://i.imgur.com/V0YqR0P.png",
-                    Cover = "https://i.imgur.com/8aZPRWn.png",
-                    Followers = 205,
-                    Following = 120,
-                    Likes = 1024,
-                    Followed = false
+                    AvatarUrl = "https://i.imgur.com/V0YqR0P.png",
+                    CoverImageUrl = "https://i.imgur.com/8aZPRWn.png",
+                    CreatedAt = DateTime.UtcNow.AddDays(-7),
+                },
+                new UserAccount
+                {
+                    Uid = "0kl6ETYUu2Ugclow94CBgSUoIEo2",
+                    UserName = "luzhongli",
+                    Email = "luzhongli.ascii@gmail.com",
+                    DisplayName = "Lu Zhongli",
+                    Bio = "喜欢技术和社区活动的普通用户。",
+                    AvatarUrl = "https://i.imgur.com/zY5R8dH.png",
+                    CoverImageUrl = "https://i.imgur.com/3S9g6Et.png",
+                    CreatedAt = DateTime.UtcNow.AddDays(-3),
+                },
+                new UserAccount
+                {
+                    Uid = "ph57Iy73tONjxUbXireWIQU5xHD2",
+                    UserName = "admin",
+                    Email = "admin.ascii@gmail.com",
+                    DisplayName = "Crew Admin",
+                    Bio = "系统管理员",
+                    AvatarUrl = "https://i.imgur.com/V0YqR0P.png",
+                    CoverImageUrl = "https://i.imgur.com/8aZPRWn.png",
+                    CreatedAt = DateTime.UtcNow.AddDays(-1),
                 }
-            );
+            };
+
+            context.Users.AddRange(seededUsers);
+            context.SaveChanges();
+
+            var roleLookup = context.Roles.ToDictionary(r => r.Key, r => r.Id);
+            var planLookup = context.SubscriptionPlans.ToDictionary(p => p.Key, p => p.Id);
+
+            var assignments = new List<UserRoleAssignment>
+            {
+                new UserRoleAssignment { UserUid = "user-alice", RoleId = roleLookup[RoleKeys.User], GrantedAt = DateTime.UtcNow.AddDays(-14) },
+                new UserRoleAssignment { UserUid = "user-bob", RoleId = roleLookup[RoleKeys.User], GrantedAt = DateTime.UtcNow.AddDays(-10) },
+                new UserRoleAssignment { UserUid = "user-carol", RoleId = roleLookup[RoleKeys.User], GrantedAt = DateTime.UtcNow.AddDays(-7) },
+                new UserRoleAssignment { UserUid = "0kl6ETYUu2Ugclow94CBgSUoIEo2", RoleId = roleLookup[RoleKeys.User], GrantedAt = DateTime.UtcNow.AddDays(-3) },
+                new UserRoleAssignment { UserUid = "ph57Iy73tONjxUbXireWIQU5xHD2", RoleId = roleLookup[RoleKeys.User], GrantedAt = DateTime.UtcNow.AddDays(-1) },
+                new UserRoleAssignment { UserUid = "ph57Iy73tONjxUbXireWIQU5xHD2", RoleId = roleLookup[RoleKeys.Admin], GrantedAt = DateTime.UtcNow.AddDays(-1) }
+            };
+
+            context.UserRoles.AddRange(assignments);
+
+            var subscriptions = new List<UserSubscription>
+            {
+                new UserSubscription { UserUid = "user-alice", PlanId = planLookup[SubscriptionPlanKeys.Free], AssignedAt = DateTime.UtcNow.AddDays(-14) },
+                new UserSubscription { UserUid = "user-bob", PlanId = planLookup[SubscriptionPlanKeys.Tier1], AssignedAt = DateTime.UtcNow.AddDays(-10) },
+                new UserSubscription { UserUid = "user-carol", PlanId = planLookup[SubscriptionPlanKeys.Tier2], AssignedAt = DateTime.UtcNow.AddDays(-7) },
+                new UserSubscription { UserUid = "0kl6ETYUu2Ugclow94CBgSUoIEo2", PlanId = planLookup[SubscriptionPlanKeys.Tier3], AssignedAt = DateTime.UtcNow.AddDays(-3) }
+            };
+
+            context.UserSubscriptions.AddRange(subscriptions);
             context.SaveChanges();
         }
 
@@ -255,7 +348,7 @@ public static class SeedDataService
                 {
                     Id = 1,
                     EventId = 1,
-                    UserId = 1,
+                    UserUid = "user-alice",
                     Content = "Looking forward to it!",
                     CreatedAt = DateTime.UtcNow.AddDays(-2)
                 },
@@ -263,7 +356,7 @@ public static class SeedDataService
                 {
                     Id = 2,
                     EventId = 2,
-                    UserId = 2,
+                    UserUid = "user-bob",
                     Content = "Count me in for the museum tour.",
                     CreatedAt = DateTime.UtcNow.AddDays(-1)
                 },
@@ -271,7 +364,7 @@ public static class SeedDataService
                 {
                     Id = 3,
                     EventId = 3,
-                    UserId = 3,
+                    UserUid = "user-carol",
                     Content = "Will there be coffee tastings?",
                     CreatedAt = DateTime.UtcNow.AddHours(-5)
                 }
