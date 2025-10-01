@@ -85,7 +85,7 @@ public class UsersController : ControllerBase
         user.Uid = user.Uid?.Trim() ?? string.Empty;
         user.Name = user.Name?.Trim() ?? string.Empty;
         user.Bio = user.Bio?.Trim() ?? string.Empty;
-        user.Avatar = user.Avatar?.Trim() ?? string.Empty;
+        user.Avatar = AvatarDefaults.Normalize(user.Avatar);
         user.Cover = user.Cover?.Trim() ?? string.Empty;
         user.Followers = Math.Max(0, user.Followers);
         user.Following = Math.Max(0, user.Following);

@@ -8,7 +8,7 @@ public class DomainUsers
     public string Uid { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
     public string Bio { get; set; } = string.Empty;
-    public string Avatar { get; set; } = string.Empty;
+    public string Avatar { get; set; } = AvatarDefaults.FallbackUrl;
     public string Cover { get; set; } = string.Empty;
     public int Followers { get; set; } = 0;
     public int Following { get; set; } = 0;

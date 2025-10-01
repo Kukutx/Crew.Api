@@ -1,5 +1,6 @@
-﻿namespace Crew.Api.Models.Authentication;
+using Crew.Api.Models;
 
+namespace Crew.Api.Models.Authentication;
 
 public class LoginInfo
 {
@@ -24,6 +25,7 @@ public class GoogleToken
     public bool registered { get; set; }
     public string refreshToken { get; set; }
     public string expiresIn { get; set; }
+    public string? photoUrl { get; set; }
 }
 
 public class Token
@@ -35,6 +37,7 @@ public class Token
     public int ext_expires_in { get; set; }
     public string access_token { get; set; }
     public string id_token { get; set; }
+    public string avatar { get; set; } = AvatarDefaults.FallbackUrl;
 }
 
 public class LoginDetail
