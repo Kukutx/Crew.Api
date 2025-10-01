@@ -7,8 +7,6 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi.Any;
-using Microsoft.OpenApi.Interfaces;
 using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -144,21 +142,29 @@ builder.Services.AddAuthorization(options =>
 builder.Services.AddOpenApi();
 builder.Services.AddEndpointsApiExplorer();
 // 配置 Swagger 以针对 Firebase 进行授权
+const string firebaseGoogleScheme = "firebase-google";
+
 builder.Services.AddSwaggerGen(options =>
 {
-    options.AddSecurityDefinition(JwtBearerDefaults.AuthenticationScheme, new OpenApiSecurityScheme
+    options.AddSecurityDefinition(firebaseGoogleScheme, new OpenApiSecurityScheme
     {
         Type = SecuritySchemeType.OAuth2,
-
+        Scheme = JwtBearerDefaults.AuthenticationScheme,
+        In = ParameterLocation.Header,
+        Name = "Authorization",
+        Description = "Use Google sign-in (via Firebase Auth) to request an access token and send it as a Bearer token.",
         Flows = new OpenApiOAuthFlows
         {
-            Password = new OpenApiOAuthFlow
+            AuthorizationCode = new OpenApiOAuthFlow
             {
-                TokenUrl = new Uri("/v1/auth", UriKind.Relative),
-                Extensions = new Dictionary<string, IOpenApiExtension>
+                AuthorizationUrl = new Uri("https://accounts.google.com/o/oauth2/v2/auth"),
+                TokenUrl = new Uri("https://oauth2.googleapis.com/token"),
+                Scopes = new Dictionary<string, string>
                 {
-                    { "returnSecureToken", new OpenApiBoolean(true) },
-                },
+                    { "openid", "Authenticate with your Google account" },
+                    { "email", "Read your email address" },
+                    { "profile", "Read your basic profile information" }
+                }
             }
         }
     });
@@ -171,11 +177,8 @@ builder.Services.AddSwaggerGen(options =>
                 Reference = new OpenApiReference
                 {
                     Type = ReferenceType.SecurityScheme,
-                    Id = JwtBearerDefaults.AuthenticationScheme
-                },
-                Scheme = "oauth2",
-                Name = JwtBearerDefaults.AuthenticationScheme,
-                In = ParameterLocation.Header,
+                    Id = firebaseGoogleScheme
+                }
             },
             new List<string> { "openid", "email", "profile" }
         }
@@ -209,7 +212,22 @@ if (app.Environment.IsDevelopment())
 {
     // 启用 Swagger & Swagger UI
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(options =>
+    {
+        var googleClientId = builder.Configuration["Firebase:ClientId"];
+
+        if (!string.IsNullOrWhiteSpace(googleClientId))
+        {
+            options.OAuthClientId(googleClientId);
+        }
+
+        options.OAuthScopeSeparator(" ");
+        options.OAuthUsePkce();
+        options.OAuthAdditionalQueryStringParams(new Dictionary<string, string>
+        {
+            { "prompt", "select_account" }
+        });
+    });
     app.MapOpenApi();
 }
 
