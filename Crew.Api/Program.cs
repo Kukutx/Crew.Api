@@ -1,10 +1,10 @@
 using Crew.Api.Data.DbContexts;
 using Crew.Api.Models;
-using Crew.Api.Models.Authentication;
 using Crew.Api.Utils;
-using Google;
+using Crew.Api.Security;
+using Crew.Api.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Any;
@@ -13,20 +13,6 @@ using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var client = new HttpClient();
-var keys = client
-    .GetStringAsync(
-        "https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com")
-    .Result;
-var originalKeys = new JsonWebKeySet(keys).GetSigningKeys();
-var additionalkeys = client
-    .GetStringAsync(
-        "https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com")
-    .Result;
-var morekeys = new JsonWebKeySet(additionalkeys).GetSigningKeys();
-var totalkeys = originalKeys.Concat(morekeys);
-
-
 // Add services to the container.
 
 builder.Services.AddControllers();
@@ -34,8 +20,9 @@ builder.Services.AddControllers();
 // 配置 Entity Framework Core数据库连接 和 Identity
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("Default")));
-builder.Services.AddDefaultIdentity<ApplicationUser>().AddEntityFrameworkStores<AppDbContext>();
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddSingleton<IFirebaseAdminService, FirebaseAdminService>();
+builder.Services.AddScoped<IAuthorizationHandler, AdminRequirementHandler>();
 
 // 配置 Firebase 验证
 var projectId = builder.Configuration["Firebase:ProjectId"];
@@ -44,6 +31,11 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
         options.IncludeErrorDetails = true;
+        if (string.IsNullOrWhiteSpace(projectId))
+        {
+            throw new InvalidOperationException("Firebase:ProjectId configuration is required");
+        }
+
         options.Authority = $"https://securetoken.google.com/{projectId}";
         options.TokenValidationParameters = new TokenValidationParameters
         {
@@ -53,7 +45,6 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidAudience = projectId,
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
-            IssuerSigningKeys = totalkeys
         };
 
         options.Events = new JwtBearerEvents
@@ -66,29 +57,87 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 var firebaseUid = firebaseToken?.Claims.FirstOrDefault(c => c.Type == "user_id")?.Value;
                 if (!string.IsNullOrEmpty(firebaseUid))
                 {
-                    // Use the Firebase UID to find or create the user in your Identity system
-                    var userManager = context.HttpContext.RequestServices
-                        .GetRequiredService<UserManager<ApplicationUser>>();
+                    var dbContext = context.HttpContext.RequestServices.GetRequiredService<AppDbContext>();
 
-                    var user = await userManager.FindByNameAsync(firebaseUid);
+                    var user = await dbContext.Users
+                        .Include(u => u.Roles)
+                            .ThenInclude(r => r.Role)
+                        .Include(u => u.Subscriptions)
+                        .FirstOrDefaultAsync(u => u.Uid == firebaseUid, context.HttpContext.RequestAborted);
 
-                    if (user == null)
+                    if (user is null)
                     {
-                        // Create a new ApplicationUser in your database if the user doesn't exist
-                        user = new ApplicationUser
+                        user = new UserAccount
                         {
-                            UserName = firebaseUid,
-                            Email = firebaseToken.Claims.FirstOrDefault(c => c.Type == "email")?.Value,
-                            FirebaseUserId = firebaseUid,
-                            Name = firebaseToken.Claims.FirstOrDefault(c => c.Type == "name")?.Value ??
-                                   $"Planner {firebaseUid}",
+                            Uid = firebaseUid,
+                            Email = firebaseToken?.Claims.FirstOrDefault(c => c.Type == "email")?.Value ?? string.Empty,
+                            UserName = firebaseToken?.Claims.FirstOrDefault(c => c.Type == "email")?.Value ?? string.Empty,
+                            DisplayName = firebaseToken?.Claims.FirstOrDefault(c => c.Type == "name")?.Value ?? string.Empty,
+                            AvatarUrl = AvatarDefaults.Normalize(firebaseToken?.Claims.FirstOrDefault(c => c.Type == "picture")?.Value),
+                            CreatedAt = DateTime.UtcNow,
+                            Status = UserStatuses.Active,
                         };
-                        await userManager.CreateAsync(user);
+
+                        var defaultRole = await dbContext.Roles.FirstOrDefaultAsync(r => r.Key == RoleKeys.User, context.HttpContext.RequestAborted);
+                        if (defaultRole != null)
+                        {
+                            user.Roles.Add(new UserRoleAssignment
+                            {
+                                RoleId = defaultRole.Id,
+                                UserUid = user.Uid,
+                                GrantedAt = DateTime.UtcNow,
+                            });
+                        }
+
+                        var freePlan = await dbContext.SubscriptionPlans.FirstOrDefaultAsync(p => p.Key == SubscriptionPlanKeys.Free, context.HttpContext.RequestAborted);
+                        if (freePlan != null)
+                        {
+                            user.Subscriptions.Add(new UserSubscription
+                            {
+                                PlanId = freePlan.Id,
+                                UserUid = user.Uid,
+                                AssignedAt = DateTime.UtcNow,
+                            });
+                        }
+
+                        dbContext.Users.Add(user);
                     }
+                    else
+                    {
+                        var email = firebaseToken?.Claims.FirstOrDefault(c => c.Type == "email")?.Value;
+                        var name = firebaseToken?.Claims.FirstOrDefault(c => c.Type == "name")?.Value;
+                        var avatar = firebaseToken?.Claims.FirstOrDefault(c => c.Type == "picture")?.Value;
+
+                        if (!string.IsNullOrWhiteSpace(email))
+                        {
+                            user.Email = email;
+                            user.UserName = string.IsNullOrWhiteSpace(user.UserName) ? email : user.UserName;
+                        }
+
+                        if (!string.IsNullOrWhiteSpace(name))
+                        {
+                            user.DisplayName = name;
+                        }
+
+                        if (!string.IsNullOrWhiteSpace(avatar))
+                        {
+                            user.AvatarUrl = AvatarDefaults.Normalize(avatar);
+                        }
+
+                        user.UpdatedAt = DateTime.UtcNow;
+                    }
+
+                    await dbContext.SaveChangesAsync(context.HttpContext.RequestAborted);
                 }
             }
         };
     });
+
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy(AuthorizationPolicies.RequireAdmin, policy =>
+        policy.Requirements.Add(new AdminRequirement()));
+});
 
 
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
