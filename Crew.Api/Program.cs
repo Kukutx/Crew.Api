@@ -16,6 +16,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 
 builder.Services.AddControllers();
+builder.Services.AddHttpClient();
 
 // 配置 Entity Framework Core数据库连接 和 Identity
 builder.Services.AddDbContext<AppDbContext>(options =>
