@@ -1,21 +1,24 @@
 using System.Collections.Generic;
 using System.IO;
+using Crew.Api.Configuration;
 using FirebaseAdmin;
 using FirebaseAdmin.Auth;
 using Google.Apis.Auth.OAuth2;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Crew.Api.Services;
 
 public class FirebaseAdminService : IFirebaseAdminService
 {
     private readonly ILogger<FirebaseAdminService> _logger;
+    private readonly FirebaseOptions _options;
 
-    public FirebaseAdminService(IConfiguration configuration, ILogger<FirebaseAdminService> logger)
+    public FirebaseAdminService(IOptions<FirebaseOptions> options, ILogger<FirebaseAdminService> logger)
     {
         _logger = logger;
-        EnsureFirebaseApp(configuration);
+        _options = options.Value;
+        EnsureFirebaseApp();
     }
 
     public async Task SetAdminClaimAsync(string uid, bool isAdmin, CancellationToken cancellationToken = default)
@@ -34,34 +37,33 @@ public class FirebaseAdminService : IFirebaseAdminService
         await FirebaseAuth.DefaultInstance.SetCustomUserClaimsAsync(uid, claims, cancellationToken);
     }
 
-    private static void EnsureFirebaseApp(IConfiguration configuration)
+    private void EnsureFirebaseApp()
     {
         if (FirebaseApp.DefaultInstance != null)
         {
             return;
         }
 
-        var credentialsPath = configuration["Firebase:CredentialsPath"];
-        var credentialsJson = configuration["Firebase:CredentialsJson"];
-
         GoogleCredential? credential = null;
-        if (!string.IsNullOrWhiteSpace(credentialsJson))
+        if (!string.IsNullOrWhiteSpace(_options.CredentialsJson))
         {
-            credential = GoogleCredential.FromJson(credentialsJson);
+            credential = GoogleCredential.FromJson(_options.CredentialsJson);
         }
-        else if (!string.IsNullOrWhiteSpace(credentialsPath) && File.Exists(credentialsPath))
+        else if (!string.IsNullOrWhiteSpace(_options.CredentialsPath) && File.Exists(_options.CredentialsPath))
         {
-            credential = GoogleCredential.FromFile(credentialsPath);
+            credential = GoogleCredential.FromFile(_options.CredentialsPath);
         }
 
         if (credential == null)
         {
+            _logger.LogWarning("Firebase credentials are not configured. Skipping Firebase Admin initialization.");
             return;
         }
 
         FirebaseApp.Create(new AppOptions
         {
             Credential = credential,
+            ProjectId = string.IsNullOrWhiteSpace(_options.ProjectId) ? null : _options.ProjectId,
         });
     }
 }
