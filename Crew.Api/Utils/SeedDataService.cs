@@ -1,16 +1,28 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using Crew.Api.Configuration;
 using Crew.Api.Data.DbContexts;
 using Crew.Api.Models;
+using Crew.Api.Services;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Crew.Api.Utils;
 
 public static class SeedDataService
 {
-    public static void SeedDatabase(AppDbContext context)
+    public static async Task SeedDatabaseAsync(
+        AppDbContext context,
+        IFirebaseAdminService firebaseAdminService,
+        IOptions<FirebaseOptions> firebaseOptions,
+        ILogger<SeedDataService> logger,
+        CancellationToken cancellationToken = default)
     {
-        if (!context.Events.Any())
+        if (!await context.Events.AnyAsync(cancellationToken))
         {
             var baseTime = DateTime.UtcNow.Date.AddHours(10);
 
@@ -192,11 +204,11 @@ public static class SeedDataService
                     coverImageUrl: "https://i.imgur.com/c7BHAnI.png")
             };
 
-            context.Events.AddRange(seededEvents);
-            context.SaveChanges();
+            await context.Events.AddRangeAsync(seededEvents, cancellationToken);
+            await context.SaveChangesAsync(cancellationToken);
         }
 
-        if (!context.Roles.Any())
+        if (!await context.Roles.AnyAsync(cancellationToken))
         {
             var roles = new List<Role>
             {
@@ -204,47 +216,66 @@ public static class SeedDataService
                 new Role { Id = 2, Key = RoleKeys.Admin, DisplayName = "Admin", IsSystemRole = true },
             };
 
-            context.Roles.AddRange(roles);
-            context.SaveChanges();
+            await context.Roles.AddRangeAsync(roles, cancellationToken);
+            await context.SaveChangesAsync(cancellationToken);
         }
 
-        if (!context.Users.Any(u => u.Uid == "seed-admin"))
+        var firebase = firebaseOptions.Value;
+        var seedAdmin = firebase.SeedAdmin ?? new SeedAdminOptions();
+
+        if (string.IsNullOrWhiteSpace(seedAdmin.Uid))
+        {
+            seedAdmin.Uid = "seed-admin";
+        }
+
+        if (string.IsNullOrWhiteSpace(seedAdmin.Email))
+        {
+            seedAdmin.Email = "admin@crew.local";
+        }
+
+        if (string.IsNullOrWhiteSpace(seedAdmin.DisplayName))
+        {
+            seedAdmin.DisplayName = "Seed Administrator";
+        }
+
+        if (!await context.Users.AnyAsync(u => u.Uid == seedAdmin.Uid, cancellationToken))
         {
             var adminUser = new UserAccount
             {
-                Uid = "seed-admin",
-                Email = "admin@crew.local",
-                UserName = "seed-admin",
-                DisplayName = "Seed Administrator",
+                Uid = seedAdmin.Uid,
+                Email = seedAdmin.Email,
+                UserName = seedAdmin.Uid,
+                DisplayName = seedAdmin.DisplayName,
                 Status = UserStatuses.Active,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             };
 
-            context.Users.Add(adminUser);
-            context.SaveChanges();
+            await context.Users.AddAsync(adminUser, cancellationToken);
+            await context.SaveChangesAsync(cancellationToken);
         }
 
-        var adminRoleId = context.Roles
+        var adminRoleId = await context.Roles
             .Where(r => r.Key == RoleKeys.Admin)
             .Select(r => r.Id)
-            .FirstOrDefault();
+            .FirstOrDefaultAsync(cancellationToken);
 
         if (adminRoleId != 0 &&
-            !context.UserRoles.Any(assignment =>
-                assignment.UserUid == "seed-admin" && assignment.RoleId == adminRoleId))
+            !await context.UserRoles.AnyAsync(
+                assignment => assignment.UserUid == seedAdmin.Uid && assignment.RoleId == adminRoleId,
+                cancellationToken))
         {
             context.UserRoles.Add(new UserRoleAssignment
             {
-                UserUid = "seed-admin",
+                UserUid = seedAdmin.Uid,
                 RoleId = adminRoleId,
                 GrantedAt = DateTime.UtcNow
             });
 
-            context.SaveChanges();
+            await context.SaveChangesAsync(cancellationToken);
         }
 
-        if (!context.SubscriptionPlans.Any())
+        if (!await context.SubscriptionPlans.AnyAsync(cancellationToken))
         {
             var plans = new List<SubscriptionPlan>
             {
@@ -282,10 +313,37 @@ public static class SeedDataService
                 }
             };
 
-            context.SubscriptionPlans.AddRange(plans);
-            context.SaveChanges();
+            await context.SubscriptionPlans.AddRangeAsync(plans, cancellationToken);
+            await context.SaveChangesAsync(cancellationToken);
         }
 
+        if (string.IsNullOrWhiteSpace(seedAdmin.Password))
+        {
+            logger.LogWarning(
+                "Configuration value '{Section}:SeedAdmin:Password' is missing. " +
+                "Create the Firebase credentials manually or configure a password before first use.",
+                FirebaseOptions.SectionName);
+            return;
+        }
+
+        try
+        {
+            await firebaseAdminService.EnsureUserAsync(
+                seedAdmin.Uid,
+                seedAdmin.Email,
+                seedAdmin.DisplayName,
+                seedAdmin.Password,
+                cancellationToken);
+
+            await firebaseAdminService.SetAdminClaimAsync(seedAdmin.Uid, true, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(
+                ex,
+                "Failed to provision Firebase credentials for seed admin user {Email}. Provision the account manually.",
+                seedAdmin.Email);
+        }
     }
 
     private static Event CreateEvent(

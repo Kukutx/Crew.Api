@@ -11,4 +11,17 @@ public class FirebaseOptions
     public string? CredentialsPath { get; set; }
 
     public string? CredentialsJson { get; set; }
+
+    public SeedAdminOptions SeedAdmin { get; set; } = new();
+}
+
+public class SeedAdminOptions
+{
+    public string Uid { get; set; } = "seed-admin";
+
+    public string Email { get; set; } = "admin@crew.local";
+
+    public string DisplayName { get; set; } = "Seed Administrator";
+
+    public string? Password { get; set; }
 }

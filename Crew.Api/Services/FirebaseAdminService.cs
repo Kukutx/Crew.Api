@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using Crew.Api.Configuration;
@@ -35,6 +36,86 @@ public class FirebaseAdminService : IFirebaseAdminService
         };
 
         await FirebaseAuth.DefaultInstance.SetCustomUserClaimsAsync(uid, claims, cancellationToken);
+    }
+
+    public async Task EnsureUserAsync(
+        string uid,
+        string email,
+        string displayName,
+        string? password,
+        CancellationToken cancellationToken = default)
+    {
+        if (FirebaseApp.DefaultInstance is null)
+        {
+            _logger.LogWarning("Firebase app is not configured; skipping user provisioning for {Uid}.", uid);
+            return;
+        }
+
+        UserRecord? user = null;
+        try
+        {
+            user = await FirebaseAuth.DefaultInstance.GetUserAsync(uid, cancellationToken);
+        }
+        catch (FirebaseAuthException ex) when (ex.AuthErrorCode == AuthErrorCode.UserNotFound)
+        {
+            user = null;
+        }
+
+        if (user is null)
+        {
+            if (string.IsNullOrWhiteSpace(password))
+            {
+                _logger.LogWarning(
+                    "Seed admin password is not configured; cannot create Firebase user for {Email}.",
+                    email);
+                return;
+            }
+
+            var request = new UserRecordArgs
+            {
+                Uid = uid,
+                Email = email,
+                DisplayName = displayName,
+                Password = password,
+                EmailVerified = true,
+                Disabled = false,
+            };
+
+            await FirebaseAuth.DefaultInstance.CreateUserAsync(request, cancellationToken);
+            _logger.LogInformation("Created Firebase seed admin user {Email} ({Uid}).", email, uid);
+            return;
+        }
+
+        var updateArgs = new UserRecordArgs
+        {
+            Uid = uid,
+        };
+
+        var needsUpdate = false;
+
+        if (!string.Equals(user.Email, email, StringComparison.OrdinalIgnoreCase))
+        {
+            updateArgs.Email = email;
+            needsUpdate = true;
+        }
+
+        if (!string.Equals(user.DisplayName, displayName, StringComparison.Ordinal))
+        {
+            updateArgs.DisplayName = displayName;
+            needsUpdate = true;
+        }
+
+        if (!string.IsNullOrWhiteSpace(password))
+        {
+            updateArgs.Password = password;
+            needsUpdate = true;
+        }
+
+        if (needsUpdate)
+        {
+            await FirebaseAuth.DefaultInstance.UpdateUserAsync(updateArgs, cancellationToken);
+            _logger.LogInformation("Updated Firebase seed admin user {Uid} to match configuration.", uid);
+        }
     }
 
     private void EnsureFirebaseApp()
