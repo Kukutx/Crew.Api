@@ -1,23 +1,186 @@
-using Crew.Api.Extensions;
+using Crew.Api.Data.DbContexts;
+using Crew.Api.Models;
+using Crew.Api.Configuration;
+using Crew.Api.Security;
+using Crew.Api.Services;
+using Crew.Api.Utils;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Any;
+using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 builder.Services.AddHttpClient();
-builder.Services
-    .AddApplicationOptions(builder.Configuration)
-    .AddApplicationDatabase(builder.Configuration)
-    .AddApplicationServices()
-    .AddApplicationSecurity(builder.Configuration)
-    .AddApplicationSwagger()
-    .AddApplicationCors();
+
+// 配置 Entity Framework Core数据库连接 和 Identity
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseSqlite(builder.Configuration.GetConnectionString("Default")));
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddSingleton<IFirebaseAdminService, FirebaseAdminService>();
+builder.Services.AddScoped<IAuthorizationHandler, AdminRequirementHandler>();
+builder.Services.Configure<InitialAdminOptions>(builder.Configuration.GetSection("InitialAdmin"));
+builder.Services.AddScoped<InitialAdminSeeder>();
+
+// 配置 Firebase 验证
+var projectId = builder.Configuration["Firebase:ProjectId"];
+// Configure Firebase Authentication
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.IncludeErrorDetails = true;
+        if (string.IsNullOrWhiteSpace(projectId))
+        {
+            throw new InvalidOperationException("Firebase:ProjectId configuration is required");
+        }
+
+        options.Authority = $"https://securetoken.google.com/{projectId}";
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidIssuer = $"https://securetoken.google.com/{projectId}",
+            ValidateAudience = true,
+            ValidAudience = projectId,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+        };
+
+        options.Events = new JwtBearerEvents
+        {
+            OnTokenValidated = async context =>
+            {
+                // Receive the JWT token that firebase has provided
+                var firebaseToken = context.SecurityToken as Microsoft.IdentityModel.JsonWebTokens.JsonWebToken;
+                // Get the Firebase UID of this user
+                var firebaseUid = firebaseToken?.Claims.FirstOrDefault(c => c.Type == "user_id")?.Value;
+                if (!string.IsNullOrEmpty(firebaseUid))
+                {
+                    var dbContext = context.HttpContext.RequestServices.GetRequiredService<AppDbContext>();
+
+                    var user = await dbContext.Users
+                        .Include(u => u.Roles)
+                            .ThenInclude(r => r.Role)
+                        .Include(u => u.Subscriptions)
+                        .FirstOrDefaultAsync(u => u.Uid == firebaseUid, context.HttpContext.RequestAborted);
+
+                    if (user is null)
+                    {
+                        user = new UserAccount
+                        {
+                            Uid = firebaseUid,
+                            Email = firebaseToken?.Claims.FirstOrDefault(c => c.Type == "email")?.Value ?? string.Empty,
+                            UserName = firebaseToken?.Claims.FirstOrDefault(c => c.Type == "email")?.Value ?? string.Empty,
+                            DisplayName = firebaseToken?.Claims.FirstOrDefault(c => c.Type == "name")?.Value ?? string.Empty,
+                            AvatarUrl = AvatarDefaults.Normalize(firebaseToken?.Claims.FirstOrDefault(c => c.Type == "picture")?.Value),
+                            CreatedAt = DateTime.UtcNow,
+                            Status = UserStatuses.Active,
+                        };
+
+                        var defaultRole = await dbContext.Roles.FirstOrDefaultAsync(r => r.Key == RoleKeys.User, context.HttpContext.RequestAborted);
+                        if (defaultRole != null)
+                        {
+                            user.Roles.Add(new UserRoleAssignment
+                            {
+                                RoleId = defaultRole.Id,
+                                UserUid = user.Uid,
+                                GrantedAt = DateTime.UtcNow,
+                            });
+                        }
+
+                        var freePlan = await dbContext.SubscriptionPlans.FirstOrDefaultAsync(p => p.Key == SubscriptionPlanKeys.Free, context.HttpContext.RequestAborted);
+                        if (freePlan != null)
+                        {
+                            user.Subscriptions.Add(new UserSubscription
+                            {
+                                PlanId = freePlan.Id,
+                                UserUid = user.Uid,
+                                AssignedAt = DateTime.UtcNow,
+                            });
+                        }
+
+                        dbContext.Users.Add(user);
+                    }
+                    else
+                    {
+                        var email = firebaseToken?.Claims.FirstOrDefault(c => c.Type == "email")?.Value;
+                        var name = firebaseToken?.Claims.FirstOrDefault(c => c.Type == "name")?.Value;
+                        var avatar = firebaseToken?.Claims.FirstOrDefault(c => c.Type == "picture")?.Value;
+
+                        if (!string.IsNullOrWhiteSpace(email))
+                        {
+                            user.Email = email;
+                            user.UserName = string.IsNullOrWhiteSpace(user.UserName) ? email : user.UserName;
+                        }
+
+                        if (!string.IsNullOrWhiteSpace(name))
+                        {
+                            user.DisplayName = name;
+                        }
+
+                        if (!string.IsNullOrWhiteSpace(avatar))
+                        {
+                            user.AvatarUrl = AvatarDefaults.Normalize(avatar);
+                        }
+
+                        user.UpdatedAt = DateTime.UtcNow;
+                    }
+
+                    await dbContext.SaveChangesAsync(context.HttpContext.RequestAborted);
+                }
+            }
+        };
+    });
+
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy(AuthorizationPolicies.RequireAdmin, policy =>
+        policy.Requirements.Add(new AdminRequirement()));
+});
 
 builder.Services.AddOpenApi();
 builder.Services.AddEndpointsApiExplorer();
 
 var app = builder.Build();
 
-await app.ApplyMigrationsAsync();
+// 调用 SeedDataService
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    var context = services.GetRequiredService<AppDbContext>();
+    context.Database.Migrate();
+    SeedDataService.SeedDatabase(context);
+
+    var initialAdminSeeder = services.GetRequiredService<InitialAdminSeeder>();
+    await initialAdminSeeder.EnsureInitialAdminAsync();
+}
+
+// Configure the HTTP request pipeline.
+if (app.Environment.IsDevelopment())
+{
+    // 启用 Swagger & Swagger UI
+    app.UseSwagger();
+    app.UseSwaggerUI(options =>
+    {
+        var googleClientId = builder.Configuration["Firebase:ClientId"];
+
+        if (!string.IsNullOrWhiteSpace(googleClientId))
+        {
+            options.OAuthClientId(googleClientId);
+        }
+
+        options.OAuthScopeSeparator(" ");
+        options.OAuthUsePkce();
+        options.OAuthAdditionalQueryStringParams(new Dictionary<string, string>
+        {
+            { "prompt", "select_account" }
+        });
+    });
+    app.MapOpenApi();
+}
 
 app.UseAppSwagger();
 app.UseHttpsRedirection();
