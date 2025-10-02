@@ -1,8 +1,9 @@
 using Crew.Api.Data.DbContexts;
 using Crew.Api.Models;
-using Crew.Api.Utils;
+using Crew.Api.Configuration;
 using Crew.Api.Security;
 using Crew.Api.Services;
+using Crew.Api.Utils;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
@@ -24,6 +25,8 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddSingleton<IFirebaseAdminService, FirebaseAdminService>();
 builder.Services.AddScoped<IAuthorizationHandler, AdminRequirementHandler>();
+builder.Services.Configure<InitialAdminOptions>(builder.Configuration.GetSection("InitialAdmin"));
+builder.Services.AddScoped<InitialAdminSeeder>();
 
 // 配置 Firebase 验证
 var projectId = builder.Configuration["Firebase:ProjectId"];
@@ -217,9 +220,13 @@ var app = builder.Build();
 // 调用 SeedDataService
 using (var scope = app.Services.CreateScope())
 {
-    var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    var services = scope.ServiceProvider;
+    var context = services.GetRequiredService<AppDbContext>();
     context.Database.Migrate();
     SeedDataService.SeedDatabase(context);
+
+    var initialAdminSeeder = services.GetRequiredService<InitialAdminSeeder>();
+    await initialAdminSeeder.EnsureInitialAdminAsync();
 }
 
 // Configure the HTTP request pipeline.
