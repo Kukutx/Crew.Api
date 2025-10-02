@@ -23,15 +23,27 @@ public class UserController
     [HttpGet]
     public async Task<LoginDetail> GetAuthenticatedUserDetail()
     {
-        var claimsPrincipal = _httpContextAccessor.HttpContext.User;
+        var httpContext = _httpContextAccessor.HttpContext;
+        if (httpContext == null)
+        {
+            throw new InvalidOperationException("No HttpContext available.");
+        }
+
+        var claimsPrincipal = httpContext.User;
         var firebaseId = claimsPrincipal.Claims.First(x => x.Type == "user_id").Value;
         var email = claimsPrincipal.Claims.First(x => x.Type == ClaimTypes.Email).Value;
-        
+
+        var user = await _userManager.FindByEmailAsync(email);
+        if (user == null)
+        {
+            throw new InvalidOperationException($"No user found with email '{email}'.");
+        }
+
         return new()
         {
             FirebaseId = firebaseId,
-            Email = claimsPrincipal.Claims.First(x => x.Type == ClaimTypes.Email).Value,
-            AspNetIdentityId = _userManager.FindByEmailAsync(email).Result.Id,
+            Email = email,
+            AspNetIdentityId = user.Id,
             RespondedAt = DateTime.Now,
         };
     }
