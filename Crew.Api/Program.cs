@@ -8,15 +8,13 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi.Any;
-using Microsoft.OpenApi.Models;
-using Microsoft.OpenApi.Interfaces;
 using Crew.Api.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 builder.Services.AddHttpClient();
+builder.Services.AddApplicationSwagger();
 
 // 配置 Entity Framework Core数据库连接 和 Identity
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -160,29 +158,6 @@ using (var scope = app.Services.CreateScope())
 }
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    // 启用 Swagger & Swagger UI
-    app.UseSwagger();
-    app.UseSwaggerUI(options =>
-    {
-        var googleClientId = builder.Configuration["Firebase:ClientId"];
-
-        if (!string.IsNullOrWhiteSpace(googleClientId))
-        {
-            options.OAuthClientId(googleClientId);
-        }
-
-        options.OAuthScopeSeparator(" ");
-        options.OAuthUsePkce();
-        options.OAuthAdditionalQueryStringParams(new Dictionary<string, string>
-        {
-            { "prompt", "select_account" }
-        });
-    });
-    app.MapOpenApi();
-}
-
 app.UseAppSwagger();
 app.UseHttpsRedirection();
 app.UseCors();
