@@ -56,111 +56,122 @@ public class InitialAdminSeeder
 
     public async Task EnsureInitialAdminAsync(CancellationToken cancellationToken = default)
     {
-        var email = _options.Email?.Trim();
-        var password = _options.Password?.Trim();
-
-        if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
+        try
         {
-            _logger.LogInformation("Initial admin configuration is missing email or password; skipping admin seeding.");
-            return;
-        }
+            var email = _options.Email?.Trim();
+            var password = _options.Password?.Trim();
 
-        var displayName = string.IsNullOrWhiteSpace(_options.DisplayName)
-            ? "Administrator"
-            : _options.DisplayName!.Trim();
+            if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
+            {
+                _logger.LogInformation("Initial admin configuration is missing email or password; skipping admin seeding.");
+                return;
+            }
 
-        var desiredUid = string.IsNullOrWhiteSpace(_options.Uid) ? null : _options.Uid.Trim();
+            var displayName = string.IsNullOrWhiteSpace(_options.DisplayName)
+                ? "Administrator"
+                : _options.DisplayName!.Trim();
 
-        var adminRole = await _dbContext.Roles.FirstOrDefaultAsync(r => r.Key == RoleKeys.Admin, cancellationToken);
-        if (adminRole is null)
-        {
-            _logger.LogWarning("Admin role is not configured; skipping initial admin creation.");
-            return;
-        }
+            var desiredUid = string.IsNullOrWhiteSpace(_options.Uid) ? null : _options.Uid.Trim();
 
-        var firebaseUid = await EnsureFirebaseAccountAsync(desiredUid, email, password, displayName, cancellationToken);
-        if (string.IsNullOrWhiteSpace(firebaseUid))
-        {
-            _logger.LogWarning("Failed to provision Firebase account for the initial admin; skipping database setup.");
-            return;
-        }
+            var adminRole = await _dbContext.Roles.FirstOrDefaultAsync(r => r.Key == RoleKeys.Admin, cancellationToken);
+            if (adminRole is null)
+            {
+                _logger.LogWarning("Admin role is not configured; skipping initial admin creation.");
+                return;
+            }
 
-        var user = await _dbContext.Users
-            .Include(u => u.Roles)
-            .FirstOrDefaultAsync(u => u.Uid == firebaseUid, cancellationToken);
+            var firebaseUid = await EnsureFirebaseAccountAsync(desiredUid, email, password, displayName, cancellationToken);
+            if (string.IsNullOrWhiteSpace(firebaseUid))
+            {
+                _logger.LogWarning("Failed to provision Firebase account for the initial admin; skipping database setup.");
+                return;
+            }
 
-        if (user is null && !string.IsNullOrWhiteSpace(desiredUid) && desiredUid != firebaseUid)
-        {
-            user = await _dbContext.Users
+            var user = await _dbContext.Users
                 .Include(u => u.Roles)
-                .FirstOrDefaultAsync(u => u.Uid == desiredUid, cancellationToken);
-        }
+                .FirstOrDefaultAsync(u => u.Uid == firebaseUid, cancellationToken);
 
-        if (user is null)
-        {
-            user = await _dbContext.Users
-                .Include(u => u.Roles)
-                .FirstOrDefaultAsync(u => u.Email == email, cancellationToken);
-        }
-
-        if (user is null)
-        {
-            user = new UserAccount
+            if (user is null && !string.IsNullOrWhiteSpace(desiredUid) && desiredUid != firebaseUid)
             {
-                Uid = firebaseUid,
-                Email = email,
-                UserName = email,
-                DisplayName = displayName,
-                AvatarUrl = AvatarDefaults.FallbackUrl,
-                CreatedAt = DateTime.UtcNow,
-                Status = UserStatuses.Active,
-            };
-
-            user.Roles.Add(new UserRoleAssignment
-            {
-                RoleId = adminRole.Id,
-                UserUid = firebaseUid,
-                GrantedAt = DateTime.UtcNow,
-            });
-
-            _dbContext.Users.Add(user);
-        }
-        else
-        {
-            if (user.Uid != firebaseUid)
-            {
-                _logger.LogWarning(
-                    "Initial admin Firebase UID {FirebaseUid} does not match existing user UID {UserUid}. Keeping existing UID.",
-                    firebaseUid,
-                    user.Uid);
-                firebaseUid = user.Uid;
+                user = await _dbContext.Users
+                    .Include(u => u.Roles)
+                    .FirstOrDefaultAsync(u => u.Uid == desiredUid, cancellationToken);
             }
 
-            user.Email = email;
-            if (string.IsNullOrWhiteSpace(user.UserName))
+            if (user is null)
             {
-                user.UserName = email;
+                user = await _dbContext.Users
+                    .Include(u => u.Roles)
+                    .FirstOrDefaultAsync(u => u.Email == email, cancellationToken);
             }
 
-            if (string.IsNullOrWhiteSpace(user.DisplayName) || user.DisplayName.Equals(user.Email, StringComparison.OrdinalIgnoreCase))
+            if (user is null)
             {
-                user.DisplayName = displayName;
-            }
+                user = new UserAccount
+                {
+                    Uid = firebaseUid,
+                    Email = email,
+                    UserName = email,
+                    DisplayName = displayName,
+                    AvatarUrl = AvatarDefaults.FallbackUrl,
+                    CreatedAt = DateTime.UtcNow,
+                    Status = UserStatuses.Active,
+                };
 
-            if (!user.Roles.Any(r => r.RoleId == adminRole.Id))
-            {
                 user.Roles.Add(new UserRoleAssignment
                 {
                     RoleId = adminRole.Id,
-                    UserUid = user.Uid,
+                    UserUid = firebaseUid,
                     GrantedAt = DateTime.UtcNow,
                 });
+
+                _dbContext.Users.Add(user);
             }
+            else
+            {
+                if (user.Uid != firebaseUid)
+                {
+                    _logger.LogWarning(
+                        "Initial admin Firebase UID {FirebaseUid} does not match existing user UID {UserUid}. Keeping existing UID.",
+                        firebaseUid,
+                        user.Uid);
+                    firebaseUid = user.Uid;
+                }
+
+                user.Email = email;
+                if (string.IsNullOrWhiteSpace(user.UserName))
+                {
+                    user.UserName = email;
+                }
+
+                if (string.IsNullOrWhiteSpace(user.DisplayName) || user.DisplayName.Equals(user.Email, StringComparison.OrdinalIgnoreCase))
+                {
+                    user.DisplayName = displayName;
+                }
+
+                if (!user.Roles.Any(r => r.RoleId == adminRole.Id))
+                {
+                    user.Roles.Add(new UserRoleAssignment
+                    {
+                        RoleId = adminRole.Id,
+                        UserUid = user.Uid,
+                        GrantedAt = DateTime.UtcNow,
+                    });
+                }
+            }
+
+            await _dbContext.SaveChangesAsync(cancellationToken);
+
+            await _firebaseAdminService.SetAdminClaimAsync(firebaseUid, true, cancellationToken);
         }
-
-        await _dbContext.SaveChangesAsync(cancellationToken);
-
-        await _firebaseAdminService.SetAdminClaimAsync(firebaseUid, true, cancellationToken);
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "An unexpected error occurred while ensuring the initial admin account.");
+        }
     }
 
     private async Task<string?> EnsureFirebaseAccountAsync(
@@ -181,53 +192,70 @@ public class InitialAdminSeeder
             return null;
         }
 
-        var client = _httpClientFactory.CreateClient();
-
-        var signUpUri = string.Format(CultureInfo.InvariantCulture, FirebaseSignupEndpoint, _firebaseApiKey);
-        var request = new FirebaseSignupRequest(email, password);
-        using var response = await client.PostAsJsonAsync(signUpUri, request, _serializerOptions, cancellationToken);
-
-        if (response.IsSuccessStatusCode)
+        try
         {
-            var token = await response.Content.ReadFromJsonAsync<GoogleToken>(_serializerOptions, cancellationToken);
-            if (token is not null)
+            var client = _httpClientFactory.CreateClient();
+
+            var signUpUri = string.Format(CultureInfo.InvariantCulture, FirebaseSignupEndpoint, _firebaseApiKey);
+            var request = new FirebaseSignupRequest(email, password);
+            using var response = await client.PostAsJsonAsync(signUpUri, request, _serializerOptions, cancellationToken);
+
+            if (response.IsSuccessStatusCode)
             {
-                await EnsureDisplayNameAsync(client, token.idToken, displayName, cancellationToken);
-                return token.localId;
+                var token = await response.Content.ReadFromJsonAsync<GoogleToken>(_serializerOptions, cancellationToken);
+                if (token is not null)
+                {
+                    await EnsureDisplayNameAsync(client, token.idToken, displayName, cancellationToken);
+                    return token.localId;
+                }
+
+                _logger.LogWarning("Received empty response when creating the initial admin with Firebase REST API.");
+                return null;
             }
 
-            _logger.LogWarning("Received empty response when creating the initial admin with Firebase REST API.");
-            return null;
-        }
+            var errorPayload = await response.Content.ReadAsStringAsync(cancellationToken);
+            if (!errorPayload.Contains("EMAIL_EXISTS", StringComparison.OrdinalIgnoreCase))
+            {
+                _logger.LogWarning("Failed to create the initial admin via Firebase REST API. Response: {Response}", errorPayload);
+                return null;
+            }
 
-        var errorPayload = await response.Content.ReadAsStringAsync(cancellationToken);
-        if (!errorPayload.Contains("EMAIL_EXISTS", StringComparison.OrdinalIgnoreCase))
+            var verifyUri = string.Format(CultureInfo.InvariantCulture, FirebaseVerifyPasswordEndpoint, _firebaseApiKey);
+            var loginRequest = new FireBaseLoginInfo { Email = email, Password = password };
+            using var loginResponse = await client.PostAsJsonAsync(verifyUri, loginRequest, _serializerOptions, cancellationToken);
+            if (!loginResponse.IsSuccessStatusCode)
+            {
+                var loginPayload = await loginResponse.Content.ReadAsStringAsync(cancellationToken);
+                _logger.LogWarning(
+                    "Initial admin account already exists in Firebase but the configured password could not be verified. Response: {Response}",
+                    loginPayload);
+                return null;
+            }
+
+            var loginToken = await loginResponse.Content.ReadFromJsonAsync<GoogleToken>(_serializerOptions, cancellationToken);
+            if (loginToken is null)
+            {
+                _logger.LogWarning("Failed to parse Firebase login response when verifying the initial admin account.");
+                return null;
+            }
+
+            await EnsureDisplayNameAsync(client, loginToken.idToken, displayName, cancellationToken);
+            return loginToken.localId;
+        }
+        catch (OperationCanceledException)
         {
-            _logger.LogWarning("Failed to create the initial admin via Firebase REST API. Response: {Response}", errorPayload);
-            return null;
+            throw;
         }
-
-        var verifyUri = string.Format(CultureInfo.InvariantCulture, FirebaseVerifyPasswordEndpoint, _firebaseApiKey);
-        var loginRequest = new FireBaseLoginInfo { Email = email, Password = password };
-        using var loginResponse = await client.PostAsJsonAsync(verifyUri, loginRequest, _serializerOptions, cancellationToken);
-        if (!loginResponse.IsSuccessStatusCode)
+        catch (HttpRequestException ex)
         {
-            var loginPayload = await loginResponse.Content.ReadAsStringAsync(cancellationToken);
-            _logger.LogWarning(
-                "Initial admin account already exists in Firebase but the configured password could not be verified. Response: {Response}",
-                loginPayload);
+            _logger.LogWarning(ex, "Network error occurred while communicating with Firebase for the initial admin account.");
             return null;
         }
-
-        var loginToken = await loginResponse.Content.ReadFromJsonAsync<GoogleToken>(_serializerOptions, cancellationToken);
-        if (loginToken is null)
+        catch (JsonException ex)
         {
-            _logger.LogWarning("Failed to parse Firebase login response when verifying the initial admin account.");
+            _logger.LogWarning(ex, "Failed to parse Firebase response when provisioning the initial admin account.");
             return null;
         }
-
-        await EnsureDisplayNameAsync(client, loginToken.idToken, displayName, cancellationToken);
-        return loginToken.localId;
     }
 
     private async Task<string?> EnsureWithAdminSdkAsync(
@@ -237,61 +265,73 @@ public class InitialAdminSeeder
         string displayName,
         CancellationToken cancellationToken)
     {
-        UserRecord? userRecord = null;
         try
         {
-            if (!string.IsNullOrWhiteSpace(desiredUid))
-            {
-                userRecord = await FirebaseAuth.DefaultInstance.GetUserAsync(desiredUid, cancellationToken);
-            }
-        }
-        catch (FirebaseAuthException ex) when (ex.AuthErrorCode == AuthErrorCode.UserNotFound)
-        {
-            userRecord = null;
-        }
-
-        if (userRecord is null)
-        {
+            UserRecord? userRecord = null;
             try
             {
-                userRecord = await FirebaseAuth.DefaultInstance.GetUserByEmailAsync(email, cancellationToken);
+                if (!string.IsNullOrWhiteSpace(desiredUid))
+                {
+                    userRecord = await FirebaseAuth.DefaultInstance.GetUserAsync(desiredUid, cancellationToken);
+                }
             }
             catch (FirebaseAuthException ex) when (ex.AuthErrorCode == AuthErrorCode.UserNotFound)
             {
                 userRecord = null;
             }
-        }
 
-        if (userRecord is null)
-        {
-            var args = new UserRecordArgs
+            if (userRecord is null)
             {
+                try
+                {
+                    userRecord = await FirebaseAuth.DefaultInstance.GetUserByEmailAsync(email, cancellationToken);
+                }
+                catch (FirebaseAuthException ex) when (ex.AuthErrorCode == AuthErrorCode.UserNotFound)
+                {
+                    userRecord = null;
+                }
+            }
+
+            if (userRecord is null)
+            {
+                var args = new UserRecordArgs
+                {
+                    Email = email,
+                    Password = password,
+                    DisplayName = displayName,
+                    EmailVerified = true,
+                };
+
+                if (!string.IsNullOrWhiteSpace(desiredUid))
+                {
+                    args.Uid = desiredUid;
+                }
+
+                userRecord = await FirebaseAuth.DefaultInstance.CreateUserAsync(args, cancellationToken);
+                return userRecord.Uid;
+            }
+
+            var updateArgs = new UserRecordArgs
+            {
+                Uid = userRecord.Uid,
                 Email = email,
                 Password = password,
                 DisplayName = displayName,
                 EmailVerified = true,
             };
 
-            if (!string.IsNullOrWhiteSpace(desiredUid))
-            {
-                args.Uid = desiredUid;
-            }
-
-            userRecord = await FirebaseAuth.DefaultInstance.CreateUserAsync(args, cancellationToken);
-            return userRecord.Uid;
+            var updatedUser = await FirebaseAuth.DefaultInstance.UpdateUserAsync(updateArgs, cancellationToken);
+            return updatedUser.Uid;
         }
-
-        var updateArgs = new UserRecordArgs
+        catch (OperationCanceledException)
         {
-            Uid = userRecord.Uid,
-            Email = email,
-            Password = password,
-            DisplayName = displayName,
-            EmailVerified = true,
-        };
-
-        var updatedUser = await FirebaseAuth.DefaultInstance.UpdateUserAsync(updateArgs, cancellationToken);
-        return updatedUser.Uid;
+            throw;
+        }
+        catch (FirebaseAuthException ex)
+        {
+            _logger.LogWarning(ex, "Firebase admin SDK failed while ensuring the initial admin account.");
+            return null;
+        }
     }
 
     private async Task EnsureDisplayNameAsync(HttpClient client, string idToken, string displayName, CancellationToken cancellationToken)
@@ -301,13 +341,28 @@ public class InitialAdminSeeder
             return;
         }
 
-        var updateUri = string.Format(CultureInfo.InvariantCulture, FirebaseUpdateEndpoint, _firebaseApiKey);
-        var payload = new FirebaseUpdateRequest(idToken, displayName);
-        using var response = await client.PostAsJsonAsync(updateUri, payload, _serializerOptions, cancellationToken);
-        if (!response.IsSuccessStatusCode)
+        try
         {
-            var body = await response.Content.ReadAsStringAsync(cancellationToken);
-            _logger.LogWarning("Failed to update Firebase display name for the initial admin. Response: {Response}", body);
+            var updateUri = string.Format(CultureInfo.InvariantCulture, FirebaseUpdateEndpoint, _firebaseApiKey);
+            var payload = new FirebaseUpdateRequest(idToken, displayName);
+            using var response = await client.PostAsJsonAsync(updateUri, payload, _serializerOptions, cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                var body = await response.Content.ReadAsStringAsync(cancellationToken);
+                _logger.LogWarning("Failed to update Firebase display name for the initial admin. Response: {Response}", body);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogWarning(ex, "Network error occurred while updating the Firebase display name for the initial admin.");
+        }
+        catch (JsonException ex)
+        {
+            _logger.LogWarning(ex, "Failed to parse Firebase response when updating the initial admin display name.");
         }
     }
 
