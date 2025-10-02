@@ -200,9 +200,10 @@ public class FirebaseAdminService : IFirebaseAdminService
 
         try
         {
+            const string firebaseScope = FirebaseRemoteConfigService.ScopeConstants.Firebase;
             return new FirebaseRemoteConfigService(new BaseClientService.Initializer
             {
-                HttpClientInitializer = _credential.CreateScoped(FirebaseRemoteConfigService.Scope.Firebase),
+                HttpClientInitializer = _credential.CreateScoped(firebaseScope),
                 ApplicationName = "Crew.Api Remote Config",
             });
         }
