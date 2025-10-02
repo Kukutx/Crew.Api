@@ -11,6 +11,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Any;
 using Microsoft.OpenApi.Models;
 using Microsoft.OpenApi.Interfaces;
+using Crew.Api.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
