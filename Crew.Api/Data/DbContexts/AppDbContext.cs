@@ -69,6 +69,14 @@ public class AppDbContext : DbContext
                 .HasForeignKey(c => c.UserUid)
                 .OnDelete(DeleteBehavior.Cascade);
         });
+
+        modelBuilder.Entity<Event>(entity =>
+        {
+            entity.HasOne(e => e.User)
+                .WithMany(u => u.Events)
+                .HasForeignKey(e => e.UserUid)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
     }
 }
 

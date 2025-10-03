@@ -13,6 +13,7 @@ public class Event
     public string Location { get; set; } = ""; // 活动地点
     public string Description { get; set; } = ""; // 活动简介
     public int ExpectedParticipants { get; set; } = 0; // 预计参与人数
+    public string UserUid { get; set; } = string.Empty; // 创建活动的用户 UID
 
     // 时间字段
     public DateTime StartTime { get; set; } // 开始时间
@@ -27,4 +28,6 @@ public class Event
     // 图片字段
     public List<string> ImageUrls { get; set; } = new(); // 图片链接列表
     public string CoverImageUrl { get; set; } = ""; // 封面图链接
+
+    public UserAccount? User { get; set; }
 }

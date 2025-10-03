@@ -10,6 +10,36 @@ public static class SeedDataService
 {
     public static void SeedDatabase(AppDbContext context)
     {
+        var userUids = new[]
+        {
+            "znJ7TKLY6CfJA7erPijkGGmHUMo2",
+            "DcklGiovAyY6KK5kRJb1saTE0ue2",
+            "kujZMzf2m4Wkz0iuJ1Xofpe0yb83",
+            "msO0VorfTgdZm9tBfesm60fdbzm1",
+            "Xm26B0NPATNtUhK2YJZjsHFdHXD2",
+            "0cO4ZIGOtWTfISF5XcHEV2JIfMl1",
+            "noOmQhhX1fc5EuCrMEO7n8VScrS2",
+            "0kl6ETYUu2Ugclow94CBgSUoIEo2"
+        };
+
+        if (!context.Users.Any())
+        {
+            var seededUsers = new List<UserAccount>
+            {
+                CreateUser(userUids[0], "admin@casl.io", "admin", "Admin User"),
+                CreateUser(userUids[1], "alice@example.com", "alice", "Alice"),
+                CreateUser(userUids[2], "bob@example.com", "bob", "Bob"),
+                CreateUser(userUids[3], "charlie@example.com", "charlie", "Charlie"),
+                CreateUser(userUids[4], "diana@example.com", "diana", "Diana"),
+                CreateUser(userUids[5], "eric@example.com", "eric", "Eric"),
+                CreateUser(userUids[6], "fiona@example.com", "fiona", "Fiona"),
+                CreateUser(userUids[7], "george@example.com", "george", "George")
+            };
+
+            context.Users.AddRange(seededUsers);
+            context.SaveChanges();
+        }
+
         if (!context.Events.Any())
         {
             var baseTime = DateTime.UtcNow.Date.AddHours(10);
@@ -35,7 +65,8 @@ public static class SeedDataService
                         "https://images.unsplash.com/photo-1529927066849-a6c9a73b73a0",
                         "https://images.unsplash.com/photo-1508057198894-247b23fe5ade"
                     },
-                    coverImageUrl: "https://i.imgur.com/c7BHAnI.png"),
+                    coverImageUrl: "https://i.imgur.com/c7BHAnI.png",
+                    userUid: userUids[0]),
                 CreateEvent(
                     id: 2,
                     title: "Museum Tour",
@@ -55,7 +86,8 @@ public static class SeedDataService
                         "https://images.unsplash.com/photo-1529429617124-aee30bd7e8f9",
                         "https://images.unsplash.com/photo-1441974231531-c6227db76b6e"
                     },
-                    coverImageUrl: "https://i.imgur.com/c7BHAnI.png"),
+                    coverImageUrl: "https://i.imgur.com/c7BHAnI.png",
+                    userUid: userUids[1]),
                 CreateEvent(
                     id: 3,
                     title: "Coffee Meetup",
@@ -75,7 +107,8 @@ public static class SeedDataService
                         "https://images.unsplash.com/photo-1466978913421-dad2ebd01d17",
                         "https://images.unsplash.com/photo-1470337458703-46ad1756a187"
                     },
-                    coverImageUrl: "https://i.imgur.com/c7BHAnI.png"),
+                    coverImageUrl: "https://i.imgur.com/c7BHAnI.png",
+                    userUid: userUids[2]),
                 CreateEvent(
                     id: 4,
                     title: "Art Gallery Walk",
@@ -95,7 +128,8 @@ public static class SeedDataService
                         "https://images.unsplash.com/photo-1487412912498-0447578fcca8",
                         "https://images.unsplash.com/photo-1496317899792-9d7dbcd928a1"
                     },
-                    coverImageUrl: "https://i.imgur.com/c7BHAnI.png"),
+                    coverImageUrl: "https://i.imgur.com/c7BHAnI.png",
+                    userUid: userUids[3]),
                 CreateEvent(
                     id: 5,
                     title: "Hiking Adventure",
@@ -115,7 +149,8 @@ public static class SeedDataService
                         "https://images.unsplash.com/photo-1489515217757-5fd1be406fef",
                         "https://images.unsplash.com/photo-1469474968028-56623f02e42e"
                     },
-                    coverImageUrl: "https://i.imgur.com/c7BHAnI.png"),
+                    coverImageUrl: "https://i.imgur.com/c7BHAnI.png",
+                    userUid: userUids[4]),
                 CreateEvent(
                     id: 6,
                     title: "Board Games Night",
@@ -135,7 +170,8 @@ public static class SeedDataService
                         "https://images.unsplash.com/photo-1489515217757-5fd1be406fef",
                         "https://images.unsplash.com/photo-1521737604893-d14cc237f11d"
                     },
-                    coverImageUrl: "https://i.imgur.com/c7BHAnI.png"),
+                    coverImageUrl: "https://i.imgur.com/c7BHAnI.png",
+                    userUid: userUids[5]),
                 CreateEvent(
                     id: 7,
                     title: "Live Jazz Night",
@@ -150,7 +186,8 @@ public static class SeedDataService
                     latitude: 52.520008,
                     longitude: 13.404954,
                     imageUrls: Array.Empty<string>(),
-                    coverImageUrl: "https://i.imgur.com/c7BHAnI.png"),
+                    coverImageUrl: "https://i.imgur.com/c7BHAnI.png",
+                    userUid: userUids[6]),
                 CreateEvent(
                     id: 8,
                     title: "Open Air Concert",
@@ -170,7 +207,8 @@ public static class SeedDataService
                         "https://images.unsplash.com/photo-1497032628192-86f99bcd76bc",
                         "https://images.unsplash.com/photo-1506157786151-b8491531f063"
                     },
-                    coverImageUrl: "https://i.imgur.com/c7BHAnI.png"),
+                    coverImageUrl: "https://i.imgur.com/c7BHAnI.png",
+                    userUid: userUids[7]),
                 CreateEvent(
                     id: 9,
                     title: "Morning Run Club",
@@ -189,7 +227,8 @@ public static class SeedDataService
                         "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee",
                         "https://images.unsplash.com/photo-1482192596544-9eb780fc7f66"
                     },
-                    coverImageUrl: "https://i.imgur.com/c7BHAnI.png")
+                    coverImageUrl: "https://i.imgur.com/c7BHAnI.png",
+                    userUid: userUids[0])
             };
 
             context.Events.AddRange(seededEvents);
@@ -266,7 +305,8 @@ public static class SeedDataService
         double latitude,
         double longitude,
         IEnumerable<string> imageUrls,
-        string coverImageUrl)
+        string coverImageUrl,
+        string userUid)
     {
         var images = imageUrls?
             .Where(url => !string.IsNullOrWhiteSpace(url))
@@ -307,7 +347,24 @@ public static class SeedDataService
             Latitude = latitude,
             Longitude = longitude,
             ImageUrls = images,
-            CoverImageUrl = cover
+            CoverImageUrl = cover,
+            UserUid = userUid
+        };
+    }
+
+    private static UserAccount CreateUser(string uid, string email, string userName, string displayName)
+    {
+        return new UserAccount
+        {
+            Uid = uid,
+            Email = email,
+            UserName = userName,
+            DisplayName = displayName,
+            Bio = string.Empty,
+            AvatarUrl = AvatarDefaults.FallbackUrl,
+            CoverImageUrl = string.Empty,
+            Status = UserStatuses.Active,
+            CreatedAt = DateTime.UtcNow
         };
     }
 }

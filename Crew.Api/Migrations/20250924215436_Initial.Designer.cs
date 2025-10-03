@@ -110,7 +110,13 @@ namespace Crew.Api.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("UserUid")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("UserUid");
 
                     b.ToTable("Events");
                 });
@@ -300,6 +306,17 @@ namespace Crew.Api.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Crew.Api.Models.Event", b =>
+                {
+                    b.HasOne("Crew.Api.Models.UserAccount", "User")
+                        .WithMany("Events")
+                        .HasForeignKey("UserUid")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("Crew.Api.Models.UserRoleAssignment", b =>
                 {
                     b.HasOne("Crew.Api.Models.Role", "Role")
@@ -351,6 +368,8 @@ namespace Crew.Api.Migrations
             modelBuilder.Entity("Crew.Api.Models.UserAccount", b =>
                 {
                     b.Navigation("Comments");
+
+                    b.Navigation("Events");
 
                     b.Navigation("Roles");
 
