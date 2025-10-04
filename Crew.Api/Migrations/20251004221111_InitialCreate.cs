@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Crew.Api.Migrations
 {
     /// <inheritdoc />
-    public partial class Initial : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -44,6 +44,19 @@ namespace Crew.Api.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "TestData",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    TestEntity = table.Column<string>(type: "TEXT", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_TestData", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Users",
                 columns: table => new
                 {
@@ -76,6 +89,7 @@ namespace Crew.Api.Migrations
                     Location = table.Column<string>(type: "TEXT", nullable: false),
                     Description = table.Column<string>(type: "TEXT", nullable: false),
                     ExpectedParticipants = table.Column<int>(type: "INTEGER", nullable: false),
+                    UserUid = table.Column<string>(type: "TEXT", nullable: false),
                     StartTime = table.Column<DateTime>(type: "TEXT", nullable: false),
                     EndTime = table.Column<DateTime>(type: "TEXT", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
@@ -83,8 +97,7 @@ namespace Crew.Api.Migrations
                     Latitude = table.Column<double>(type: "REAL", nullable: false),
                     Longitude = table.Column<double>(type: "REAL", nullable: false),
                     ImageUrls = table.Column<string>(type: "TEXT", nullable: false),
-                    CoverImageUrl = table.Column<string>(type: "TEXT", nullable: false),
-                    UserUid = table.Column<string>(type: "TEXT", nullable: false)
+                    CoverImageUrl = table.Column<string>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -98,16 +111,28 @@ namespace Crew.Api.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "TestData",
+                name: "UserFollows",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    TestEntity = table.Column<string>(type: "TEXT", nullable: false)
+                    FollowerUid = table.Column<string>(type: "TEXT", nullable: false),
+                    FollowedUid = table.Column<string>(type: "TEXT", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP")
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_TestData", x => x.Id);
+                    table.PrimaryKey("PK_UserFollows", x => new { x.FollowerUid, x.FollowedUid });
+                    table.ForeignKey(
+                        name: "FK_UserFollows_Users_FollowedUid",
+                        column: x => x.FollowedUid,
+                        principalTable: "Users",
+                        principalColumn: "Uid",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_UserFollows_Users_FollowerUid",
+                        column: x => x.FollowerUid,
+                        principalTable: "Users",
+                        principalColumn: "Uid",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -217,6 +242,16 @@ namespace Crew.Api.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_UserFollows_FollowedUid",
+                table: "UserFollows",
+                column: "FollowedUid");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UserFollows_FollowerUid",
+                table: "UserFollows",
+                column: "FollowerUid");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_UserRoles_RoleId",
                 table: "UserRoles",
                 column: "RoleId");
@@ -235,6 +270,9 @@ namespace Crew.Api.Migrations
 
             migrationBuilder.DropTable(
                 name: "TestData");
+
+            migrationBuilder.DropTable(
+                name: "UserFollows");
 
             migrationBuilder.DropTable(
                 name: "UserRoles");
