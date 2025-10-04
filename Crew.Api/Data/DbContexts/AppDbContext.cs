@@ -12,7 +12,7 @@ public class AppDbContext : DbContext
     public DbSet<UserAccount> Users => Set<UserAccount>();
     public DbSet<Role> Roles => Set<Role>();
     public DbSet<UserRoleAssignment> UserRoles => Set<UserRoleAssignment>();
-    public DbSet<Event> Events => Set<Event>();
+    public DbSet<EventEntity> Events => Set<EventEntity>();
     public DbSet<Comment> Comments => Set<Comment>();
     public DbSet<TestData> TestData { get; set; }
     public DbSet<SubscriptionPlan> SubscriptionPlans => Set<SubscriptionPlan>();
@@ -68,9 +68,14 @@ public class AppDbContext : DbContext
                 .WithMany(u => u.Comments)
                 .HasForeignKey(c => c.UserUid)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(c => c.Event)
+                .WithMany(e => e.Comments)
+                .HasForeignKey(c => c.EventId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
-        modelBuilder.Entity<Event>(entity =>
+        modelBuilder.Entity<EventEntity>(entity =>
         {
             entity.HasOne(e => e.User)
                 .WithMany(u => u.Events)
@@ -79,4 +84,3 @@ public class AppDbContext : DbContext
         });
     }
 }
-

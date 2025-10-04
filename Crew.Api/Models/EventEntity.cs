@@ -3,10 +3,7 @@ using System.Collections.Generic;
 
 namespace Crew.Api.Models;
 
-/// <summary>
-/// Simplified event model exposed to the client.
-/// </summary>
-public class Event
+public class EventEntity
 {
     public int Id { get; set; }
     public string Title { get; set; } = string.Empty;
@@ -28,4 +25,7 @@ public class Event
 
     public List<string> ImageUrls { get; set; } = new();
     public string CoverImageUrl { get; set; } = string.Empty;
+
+    public UserAccount? User { get; set; }
+    public ICollection<Comment> Comments { get; set; } = new List<Comment>();
 }

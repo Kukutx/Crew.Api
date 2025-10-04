@@ -43,7 +43,7 @@ public class UserAccount
 
     public ICollection<Comment> Comments { get; set; } = new List<Comment>();
 
-    public ICollection<Event> Events { get; set; } = new List<Event>();
+    public ICollection<EventEntity> Events { get; set; } = new List<EventEntity>();
 }
 
 public static class UserStatuses

@@ -51,7 +51,7 @@ namespace Crew.Api.Migrations
                     b.ToTable("Comments");
                 });
 
-            modelBuilder.Entity("Crew.Api.Models.Event", b =>
+            modelBuilder.Entity("Crew.Api.Models.EventEntity", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -289,8 +289,8 @@ namespace Crew.Api.Migrations
 
             modelBuilder.Entity("Crew.Api.Models.Comment", b =>
                 {
-                    b.HasOne("Crew.Api.Models.Event", "Event")
-                        .WithMany()
+                    b.HasOne("Crew.Api.Models.EventEntity", "Event")
+                        .WithMany("Comments")
                         .HasForeignKey("EventId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -306,13 +306,15 @@ namespace Crew.Api.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("Crew.Api.Models.Event", b =>
+            modelBuilder.Entity("Crew.Api.Models.EventEntity", b =>
                 {
                     b.HasOne("Crew.Api.Models.UserAccount", "User")
                         .WithMany("Events")
                         .HasForeignKey("UserUid")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Comments");
 
                     b.Navigation("User");
                 });

@@ -44,7 +44,7 @@ public static class SeedDataService
         {
             var baseTime = DateTime.UtcNow.Date.AddHours(10);
 
-            var seededEvents = new List<Event>
+            var seededEvents = new List<EventEntity>
             {
                 CreateEvent(
                     id: 1,
@@ -291,7 +291,7 @@ public static class SeedDataService
 
     }
 
-    private static Event CreateEvent(
+    private static EventEntity CreateEvent(
         int id,
         string title,
         string type,
@@ -330,7 +330,7 @@ public static class SeedDataService
             endTime = startTime;
         }
 
-        return new Event
+        return new EventEntity
         {
             Id = id,
             Title = title,

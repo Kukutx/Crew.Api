@@ -7,9 +7,9 @@ public class Comment
     public int Id { get; set; }
     public int EventId { get; set; }
     public string UserUid { get; set; } = string.Empty;
-    public string Content { get; set; } = "";
+    public string Content { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-    public Event? Event { get; set; }
+    public EventEntity? Event { get; set; }
     public UserAccount? User { get; set; }
 }

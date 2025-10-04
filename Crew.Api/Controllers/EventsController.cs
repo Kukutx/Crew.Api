@@ -21,53 +21,64 @@ public class EventsController : ControllerBase
 
     [HttpGet]
     public async Task<ActionResult<IEnumerable<Event>>> GetAll()
-        => Ok(await _context.Events.ToListAsync());
+    {
+        var entities = await _context.Events.ToListAsync();
+        return Ok(entities.Select(MapToDto));
+    }
 
     [HttpGet("{id}")]
     public async Task<ActionResult<Event>> GetById(int id)
     {
-        var ev = await _context.Events.FindAsync(id);
-        if (ev == null) return NotFound();
-        return Ok(ev);
+        var entity = await _context.Events.FindAsync(id);
+        if (entity == null) return NotFound();
+        return Ok(MapToDto(entity));
     }
 
     [HttpPost]
     public async Task<ActionResult<Event>> Create(Event newEvent)
     {
-        newEvent.Id = _context.Events.Any() ? _context.Events.Max(e => e.Id) + 1 : 1;
         SanitizeEvent(newEvent);
 
-        if (newEvent.StartTime == default)
+        if (string.IsNullOrWhiteSpace(newEvent.UserUid))
         {
-            newEvent.StartTime = DateTime.UtcNow;
+            return BadRequest("User UID is required.");
         }
 
-        if (newEvent.EndTime == default)
+        var entity = new EventEntity();
+        ApplyDtoToEntity(newEvent, entity, isUpdate: false);
+
+        entity.Id = _context.Events.Any() ? _context.Events.Max(e => e.Id) + 1 : 1;
+
+        if (entity.StartTime == default)
         {
-            newEvent.EndTime = newEvent.StartTime;
+            entity.StartTime = DateTime.UtcNow;
         }
 
-        if (newEvent.EndTime < newEvent.StartTime)
+        if (entity.EndTime == default)
+        {
+            entity.EndTime = entity.StartTime;
+        }
+
+        if (entity.EndTime < entity.StartTime)
         {
             return BadRequest("End time cannot be earlier than the start time.");
         }
 
-        newEvent.CreatedAt = DateTime.UtcNow;
-        newEvent.LastUpdated = newEvent.CreatedAt;
-        newEvent.ExpectedParticipants = Math.Max(0, newEvent.ExpectedParticipants);
-        newEvent.ImageUrls = NormalizeImageUrls(newEvent.ImageUrls);
-        newEvent.CoverImageUrl = ResolveCoverImage(newEvent.CoverImageUrl, newEvent.ImageUrls);
+        entity.CreatedAt = DateTime.UtcNow;
+        entity.LastUpdated = entity.CreatedAt;
 
-        _context.Events.Add(newEvent);
+        _context.Events.Add(entity);
         await _context.SaveChangesAsync();
-        return CreatedAtAction(nameof(GetById), new { id = newEvent.Id }, newEvent);
+
+        var dto = MapToDto(entity);
+        return CreatedAtAction(nameof(GetById), new { id = dto.Id }, dto);
     }
 
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(int id, Event updatedEvent)
     {
-        var ev = await _context.Events.FindAsync(id);
-        if (ev == null) return NotFound();
+        var entity = await _context.Events.FindAsync(id);
+        if (entity == null) return NotFound();
 
         SanitizeEvent(updatedEvent);
         if (updatedEvent.StartTime != default && updatedEvent.EndTime != default &&
@@ -76,26 +87,8 @@ public class EventsController : ControllerBase
             return BadRequest("End time cannot be earlier than the start time.");
         }
 
-        ev.Title = updatedEvent.Title;
-        ev.Type = updatedEvent.Type;
-        ev.Status = updatedEvent.Status;
-        ev.Organizer = updatedEvent.Organizer;
-        ev.Location = updatedEvent.Location;
-        ev.Description = updatedEvent.Description;
-        ev.ExpectedParticipants = Math.Max(0, updatedEvent.ExpectedParticipants);
-        if (updatedEvent.StartTime != default)
-        {
-            ev.StartTime = updatedEvent.StartTime;
-        }
-        if (updatedEvent.EndTime != default)
-        {
-            ev.EndTime = updatedEvent.EndTime;
-        }
-        ev.Latitude = updatedEvent.Latitude;
-        ev.Longitude = updatedEvent.Longitude;
-        ev.ImageUrls = NormalizeImageUrls(updatedEvent.ImageUrls);
-        ev.CoverImageUrl = ResolveCoverImage(updatedEvent.CoverImageUrl, ev.ImageUrls);
-        ev.LastUpdated = DateTime.UtcNow;
+        ApplyDtoToEntity(updatedEvent, entity, isUpdate: true);
+        entity.LastUpdated = DateTime.UtcNow;
 
         await _context.SaveChangesAsync();
         return NoContent();
@@ -104,10 +97,10 @@ public class EventsController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id)
     {
-        var ev = await _context.Events.FindAsync(id);
-        if (ev == null) return NotFound();
+        var entity = await _context.Events.FindAsync(id);
+        if (entity == null) return NotFound();
 
-        _context.Events.Remove(ev);
+        _context.Events.Remove(entity);
         await _context.SaveChangesAsync();
         return NoContent();
     }
@@ -162,7 +155,7 @@ public class EventsController : ControllerBase
                 .ToList();
         }
 
-        return Ok(result);
+        return Ok(result.Select(MapToDto));
     }
 
     private static void SanitizeEvent(Event eventToSanitize)
@@ -174,7 +167,71 @@ public class EventsController : ControllerBase
         eventToSanitize.Location = eventToSanitize.Location?.Trim() ?? string.Empty;
         eventToSanitize.Description = eventToSanitize.Description?.Trim() ?? string.Empty;
         eventToSanitize.CoverImageUrl = eventToSanitize.CoverImageUrl?.Trim() ?? string.Empty;
+        eventToSanitize.UserUid = eventToSanitize.UserUid?.Trim() ?? string.Empty;
     }
+
+    private static void ApplyDtoToEntity(Event source, EventEntity target, bool isUpdate)
+    {
+        target.Title = source.Title;
+        target.Type = source.Type;
+        target.Status = source.Status;
+        target.Organizer = source.Organizer;
+        target.Location = source.Location;
+        target.Description = source.Description;
+        target.ExpectedParticipants = Math.Max(0, source.ExpectedParticipants);
+
+        if (isUpdate)
+        {
+            if (source.StartTime != default)
+            {
+                target.StartTime = source.StartTime;
+            }
+
+            if (source.EndTime != default)
+            {
+                target.EndTime = source.EndTime;
+            }
+        }
+        else
+        {
+            target.StartTime = source.StartTime;
+            target.EndTime = source.EndTime;
+        }
+
+        target.Latitude = source.Latitude;
+        target.Longitude = source.Longitude;
+
+        var normalizedImages = NormalizeImageUrls(source.ImageUrls);
+        target.ImageUrls = normalizedImages;
+        target.CoverImageUrl = ResolveCoverImage(source.CoverImageUrl, normalizedImages);
+
+        if (!string.IsNullOrEmpty(source.UserUid))
+        {
+            target.UserUid = source.UserUid;
+        }
+    }
+
+    private static Event MapToDto(EventEntity entity)
+        => new()
+        {
+            Id = entity.Id,
+            Title = entity.Title,
+            Type = entity.Type,
+            Status = entity.Status,
+            Organizer = entity.Organizer,
+            Location = entity.Location,
+            Description = entity.Description,
+            ExpectedParticipants = entity.ExpectedParticipants,
+            UserUid = entity.UserUid,
+            StartTime = entity.StartTime,
+            EndTime = entity.EndTime,
+            CreatedAt = entity.CreatedAt,
+            LastUpdated = entity.LastUpdated,
+            Latitude = entity.Latitude,
+            Longitude = entity.Longitude,
+            ImageUrls = entity.ImageUrls?.ToList() ?? new List<string>(),
+            CoverImageUrl = entity.CoverImageUrl
+        };
 
     private static List<string> NormalizeImageUrls(IEnumerable<string>? imageUrls)
     {
