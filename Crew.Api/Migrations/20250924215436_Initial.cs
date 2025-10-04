@@ -155,6 +155,32 @@ namespace Crew.Api.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "UserFollows",
+                columns: table => new
+                {
+                    FollowerUid = table.Column<string>(type: "TEXT", nullable: false),
+                    FollowedUid = table.Column<string>(type: "TEXT", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP")
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_UserFollows", x => new { x.FollowerUid, x.FollowedUid });
+                    table.CheckConstraint("CK_UserFollows_FollowerNotSelf", "\"FollowerUid\" <> \"FollowedUid\"");
+                    table.ForeignKey(
+                        name: "FK_UserFollows_Users_FollowedUid",
+                        column: x => x.FollowedUid,
+                        principalTable: "Users",
+                        principalColumn: "Uid",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_UserFollows_Users_FollowerUid",
+                        column: x => x.FollowerUid,
+                        principalTable: "Users",
+                        principalColumn: "Uid",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Comments",
                 columns: table => new
                 {
@@ -213,6 +239,11 @@ namespace Crew.Api.Migrations
                 name: "IX_UserSubscriptions_PlanId",
                 table: "UserSubscriptions",
                 column: "PlanId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UserFollows_FollowedUid",
+                table: "UserFollows",
+                column: "FollowedUid");
         }
 
         /// <inheritdoc />
@@ -226,6 +257,9 @@ namespace Crew.Api.Migrations
 
             migrationBuilder.DropTable(
                 name: "UserRoles");
+
+            migrationBuilder.DropTable(
+                name: "UserFollows");
 
             migrationBuilder.DropTable(
                 name: "UserSubscriptions");

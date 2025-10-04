@@ -281,6 +281,26 @@ namespace Crew.Api.Migrations
                     b.ToTable("UserSubscriptions");
                 });
 
+            modelBuilder.Entity("Crew.Api.Models.UserFollow", b =>
+                {
+                    b.Property<string>("FollowerUid")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("FollowedUid")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.HasKey("FollowerUid", "FollowedUid");
+
+                    b.HasIndex("FollowedUid");
+
+                    b.ToTable("UserFollows");
+                });
+
             modelBuilder.Entity("Crew.Api.Models.Comment", b =>
                 {
                     b.HasOne("Crew.Api.Models.Event", "Event")
@@ -338,6 +358,25 @@ namespace Crew.Api.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Crew.Api.Models.UserFollow", b =>
+                {
+                    b.HasOne("Crew.Api.Models.UserAccount", "Followed")
+                        .WithMany("Followers")
+                        .HasForeignKey("FollowedUid")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Crew.Api.Models.UserAccount", "Follower")
+                        .WithMany("Following")
+                        .HasForeignKey("FollowerUid")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Followed");
+
+                    b.Navigation("Follower");
+                });
+
             modelBuilder.Entity("Crew.Api.Models.Role", b =>
                 {
                     b.Navigation("UserRoles");
@@ -350,6 +389,10 @@ namespace Crew.Api.Migrations
 
             modelBuilder.Entity("Crew.Api.Models.UserAccount", b =>
                 {
+                    b.Navigation("Followers");
+
+                    b.Navigation("Following");
+
                     b.Navigation("Comments");
 
                     b.Navigation("Roles");

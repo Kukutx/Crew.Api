@@ -17,6 +17,7 @@ public class AppDbContext : DbContext
     public DbSet<TestData> TestData { get; set; }
     public DbSet<SubscriptionPlan> SubscriptionPlans => Set<SubscriptionPlan>();
     public DbSet<UserSubscription> UserSubscriptions => Set<UserSubscription>();
+    public DbSet<UserFollow> UserFollows => Set<UserFollow>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -35,6 +36,14 @@ public class AppDbContext : DbContext
             entity.HasMany(u => u.Subscriptions)
                 .WithOne(s => s.User!)
                 .HasForeignKey(s => s.UserUid)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasMany(u => u.Followers)
+                .WithOne(f => f.Followed!)
+                .HasForeignKey(f => f.FollowedUid)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasMany(u => u.Following)
+                .WithOne(f => f.Follower!)
+                .HasForeignKey(f => f.FollowerUid)
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
@@ -60,6 +69,16 @@ public class AppDbContext : DbContext
         {
             entity.ToTable("UserSubscriptions");
             entity.HasKey(us => new { us.UserUid, us.PlanId });
+        });
+
+        modelBuilder.Entity<UserFollow>(entity =>
+        {
+            entity.ToTable("UserFollows");
+            entity.HasKey(f => new { f.FollowerUid, f.FollowedUid });
+            entity.Property(f => f.CreatedAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.HasIndex(f => f.FollowedUid);
+            entity.HasCheckConstraint("CK_UserFollows_FollowerNotSelf", "\"FollowerUid\" <> \"FollowedUid\"");
         });
 
         modelBuilder.Entity<Comment>(entity =>

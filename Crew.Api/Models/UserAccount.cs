@@ -42,6 +42,10 @@ public class UserAccount
     public ICollection<UserSubscription> Subscriptions { get; set; } = new List<UserSubscription>();
 
     public ICollection<Comment> Comments { get; set; } = new List<Comment>();
+
+    public ICollection<UserFollow> Followers { get; set; } = new List<UserFollow>();
+
+    public ICollection<UserFollow> Following { get; set; } = new List<UserFollow>();
 }
 
 public static class UserStatuses

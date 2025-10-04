@@ -1,3 +1,4 @@
+using System.Linq;
 using Crew.Api.Data;
 using Crew.Api.Data.DbContexts;
 using Crew.Api.Models;
@@ -28,6 +29,9 @@ public class UsersController : ControllerBase
                 .ThenInclude(r => r.Role)
             .Include(u => u.Subscriptions)
                 .ThenInclude(s => s.Plan)
+            .Include(u => u.Followers)
+            .Include(u => u.Following)
+            .AsSplitQuery()
             .OrderBy(u => u.UserName)
             .ToListAsync(cancellationToken);
 
@@ -43,6 +47,9 @@ public class UsersController : ControllerBase
                 .ThenInclude(r => r.Role)
             .Include(u => u.Subscriptions)
                 .ThenInclude(s => s.Plan)
+            .Include(u => u.Followers)
+            .Include(u => u.Following)
+            .AsSplitQuery()
             .FirstOrDefaultAsync(u => u.Uid == uid, cancellationToken);
 
         if (user is null)
@@ -73,6 +80,9 @@ public class UsersController : ControllerBase
                 .ThenInclude(r => r.Role)
             .Include(u => u.Subscriptions)
                 .ThenInclude(s => s.Plan)
+            .Include(u => u.Followers)
+            .Include(u => u.Following)
+            .AsSplitQuery()
             .FirstOrDefaultAsync(u => u.Uid == normalizedUid, cancellationToken);
 
         if (user is null)
@@ -189,7 +199,9 @@ public class UsersController : ControllerBase
                 .Where(s => s.Plan != null)
                 .Select(s => new SubscriptionResponse(s.Plan!.Key, s.Plan.DisplayName, s.AssignedAt, s.ExpiresAt))
                 .OrderBy(s => s.PlanKey)
-                .ToList());
+                .ToList(),
+            user.Followers.Count,
+            user.Following.Count);
 
     public record EnsureUserRequest(
         string Uid,
@@ -209,7 +221,9 @@ public class UsersController : ControllerBase
         DateTime CreatedAt,
         DateTime? UpdatedAt,
         IReadOnlyCollection<RoleAssignmentResponse> Roles,
-        IReadOnlyCollection<SubscriptionResponse> Subscriptions);
+        IReadOnlyCollection<SubscriptionResponse> Subscriptions,
+        int FollowersCount,
+        int FollowingCount);
 
     public record RoleAssignmentResponse(string Key, string DisplayName, DateTime GrantedAt);
 
