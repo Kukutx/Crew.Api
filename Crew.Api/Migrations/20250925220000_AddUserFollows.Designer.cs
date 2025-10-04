@@ -3,6 +3,7 @@ using System;
 using Crew.Api.Data.DbContexts;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Crew.Api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250925220000_AddUserFollows")]
+    partial class AddUserFollows
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -245,6 +248,28 @@ namespace Crew.Api.Migrations
                     b.ToTable("Users");
                 });
 
+            modelBuilder.Entity("Crew.Api.Models.UserFollow", b =>
+                {
+                    b.Property<string>("FollowerUid")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("FollowedUid")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.HasKey("FollowerUid", "FollowedUid");
+
+                    b.HasIndex("FollowedUid");
+
+                    b.HasIndex("FollowerUid");
+
+                    b.ToTable("UserFollows");
+                });
+
             modelBuilder.Entity("Crew.Api.Models.UserRoleAssignment", b =>
                 {
                     b.Property<string>("UserUid")
@@ -284,28 +309,6 @@ namespace Crew.Api.Migrations
                     b.ToTable("UserSubscriptions");
                 });
 
-            modelBuilder.Entity("Crew.Api.Models.UserFollow", b =>
-                {
-                    b.Property<string>("FollowerUid")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("FollowedUid")
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("TEXT")
-                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
-
-                    b.HasKey("FollowerUid", "FollowedUid");
-
-                    b.HasIndex("FollowedUid");
-
-                    b.HasIndex("FollowerUid");
-
-                    b.ToTable("UserFollows");
-                });
-
             modelBuilder.Entity("Crew.Api.Models.Comment", b =>
                 {
                     b.HasOne("Crew.Api.Entities.Event", "Event")
@@ -336,6 +339,25 @@ namespace Crew.Api.Migrations
                     b.Navigation("Comments");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Crew.Api.Models.UserFollow", b =>
+                {
+                    b.HasOne("Crew.Api.Models.UserAccount", "Followed")
+                        .WithMany("Followers")
+                        .HasForeignKey("FollowedUid")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Crew.Api.Models.UserAccount", "Follower")
+                        .WithMany("Following")
+                        .HasForeignKey("FollowerUid")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Followed");
+
+                    b.Navigation("Follower");
                 });
 
             modelBuilder.Entity("Crew.Api.Models.UserRoleAssignment", b =>
@@ -374,25 +396,6 @@ namespace Crew.Api.Migrations
                     b.Navigation("Plan");
 
                     b.Navigation("User");
-                });
-
-            modelBuilder.Entity("Crew.Api.Models.UserFollow", b =>
-                {
-                    b.HasOne("Crew.Api.Models.UserAccount", "Followed")
-                        .WithMany("Followers")
-                        .HasForeignKey("FollowedUid")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Crew.Api.Models.UserAccount", "Follower")
-                        .WithMany("Following")
-                        .HasForeignKey("FollowerUid")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Followed");
-
-                    b.Navigation("Follower");
                 });
 
             modelBuilder.Entity("Crew.Api.Models.Role", b =>

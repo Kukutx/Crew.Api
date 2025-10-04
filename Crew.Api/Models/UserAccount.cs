@@ -45,6 +45,10 @@ public class UserAccount
     public ICollection<Comment> Comments { get; set; } = new List<Comment>();
 
     public ICollection<Event> Events { get; set; } = new List<Event>();
+
+    public ICollection<UserFollow> Followers { get; set; } = new List<UserFollow>();
+
+    public ICollection<UserFollow> Following { get; set; } = new List<UserFollow>();
 }
 
 public static class UserStatuses
