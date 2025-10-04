@@ -31,8 +31,7 @@ public class CommentsController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<Comment>> Create(int eventId, Comment newComment)
     {
-        if (!_context.Events.Any(e => e.Id == eventId)) return NotFound("Event not found");
-        newComment.Id = _context.Comments.Any() ? _context.Comments.Max(c => c.Id) + 1 : 1;
+        if (!await _context.Events.AnyAsync(e => e.Id == eventId)) return NotFound("Event not found");
         newComment.EventId = eventId;
         newComment.CreatedAt = DateTime.UtcNow;
         _context.Comments.Add(newComment);
