@@ -125,24 +125,18 @@ public class EventsController : ControllerBase
                 EF.Functions.Like(e.Location, likeQuery));
         }
 
-        var result = await events.ToListAsync();
-
         if (!string.IsNullOrWhiteSpace(type))
         {
-            var normalizedType = type.Trim();
-            result = result
-                .Where(e => !string.IsNullOrEmpty(e.Type) &&
-                            string.Equals(e.Type, normalizedType, StringComparison.OrdinalIgnoreCase))
-                .ToList();
+            var normalizedType = type.Trim().ToLower();
+            events = events.Where(e =>
+                e.Type != null && e.Type.ToLower() == normalizedType);
         }
 
         if (!string.IsNullOrWhiteSpace(status))
         {
-            var normalizedStatus = status.Trim();
-            result = result
-                .Where(e => !string.IsNullOrEmpty(e.Status) &&
-                            string.Equals(e.Status, normalizedStatus, StringComparison.OrdinalIgnoreCase))
-                .ToList();
+            var normalizedStatus = status.Trim().ToLower();
+            events = events.Where(e =>
+                e.Status != null && e.Status.ToLower() == normalizedStatus);
         }
 
         if (lat.HasValue && lng.HasValue && radiusKm.HasValue && radiusKm.Value > 0)
@@ -151,12 +145,38 @@ public class EventsController : ControllerBase
             var originLng = lng.Value;
             var radius = radiusKm.Value;
 
-            result = result
+            var materialized = await events.ToListAsync();
+            var result = materialized
                 .Where(e => CalculateDistanceKm(originLat, originLng, e.Latitude, e.Longitude) <= radius)
                 .ToList();
+
+            return Ok(result.Select(MapToModal));
         }
 
-        return Ok(result.Select(MapToModal));
+        var projected = await events
+            .Select(e => new EventModal
+            {
+                Id = e.Id,
+                Title = e.Title,
+                Type = e.Type,
+                Status = e.Status,
+                Organizer = e.Organizer,
+                Location = e.Location,
+                Description = e.Description,
+                ExpectedParticipants = e.ExpectedParticipants,
+                UserUid = e.UserUid,
+                StartTime = e.StartTime,
+                EndTime = e.EndTime,
+                CreatedAt = e.CreatedAt,
+                LastUpdated = e.LastUpdated,
+                Latitude = e.Latitude,
+                Longitude = e.Longitude,
+                ImageUrls = e.ImageUrls,
+                CoverImageUrl = e.CoverImageUrl
+            })
+            .ToListAsync();
+
+        return Ok(projected);
     }
 
     private static void SanitizeEvent(EventModal eventToSanitize)
