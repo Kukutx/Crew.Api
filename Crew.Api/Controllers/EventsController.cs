@@ -48,8 +48,6 @@ public class EventsController : ControllerBase
         var entity = new Event();
         ApplyDtoToEntity(newEvent, entity, isUpdate: false);
 
-        entity.Id = _context.Events.Any() ? _context.Events.Max(e => e.Id) + 1 : 1;
-
         if (entity.StartTime == default)
         {
             entity.StartTime = DateTime.UtcNow;
@@ -72,7 +70,7 @@ public class EventsController : ControllerBase
         await _context.SaveChangesAsync();
 
         var dto = MapToModal(entity);
-        return CreatedAtAction(nameof(GetById), new { id = dto.Id }, dto);
+        return CreatedAtAction(nameof(GetById), new { id = entity.Id }, dto);
     }
 
     [HttpPut("{id}")]
