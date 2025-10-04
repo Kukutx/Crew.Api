@@ -248,6 +248,43 @@ public static class SeedDataService
             context.SaveChanges();
         }
 
+        if (!context.UserRoles.Any())
+        {
+            var rolesByKey = context.Roles
+                .Where(role => role.Key == RoleKeys.User || role.Key == RoleKeys.Admin)
+                .ToDictionary(role => role.Key);
+
+            var assignments = new List<UserRoleAssignment>();
+
+            if (rolesByKey.TryGetValue(RoleKeys.User, out var userRole))
+            {
+                var userRoleGrantedAt = DateTime.UtcNow;
+
+                assignments.AddRange(userUids.Select(uid => new UserRoleAssignment
+                {
+                    UserUid = uid,
+                    RoleId = userRole.Id,
+                    GrantedAt = userRoleGrantedAt
+                }));
+            }
+
+            if (rolesByKey.TryGetValue(RoleKeys.Admin, out var adminRole) && userUids.Length > 0)
+            {
+                assignments.Add(new UserRoleAssignment
+                {
+                    UserUid = userUids[0],
+                    RoleId = adminRole.Id,
+                    GrantedAt = DateTime.UtcNow
+                });
+            }
+
+            if (assignments.Count > 0)
+            {
+                context.UserRoles.AddRange(assignments);
+                context.SaveChanges();
+            }
+        }
+
         if (!context.SubscriptionPlans.Any())
         {
             var plans = new List<SubscriptionPlan>
