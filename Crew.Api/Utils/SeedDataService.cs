@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Crew.Api.Data.DbContexts;
+using Crew.Api.Entities;
 using Crew.Api.Models;
 
 namespace Crew.Api.Utils;
@@ -44,7 +45,7 @@ public static class SeedDataService
         {
             var baseTime = DateTime.UtcNow.Date.AddHours(10);
 
-            var seededEvents = new List<EventEntity>
+            var seededEvents = new List<Event>
             {
                 CreateEvent(
                     id: 1,
@@ -291,7 +292,7 @@ public static class SeedDataService
 
     }
 
-    private static EventEntity CreateEvent(
+    private static Event CreateEvent(
         int id,
         string title,
         string type,
@@ -330,7 +331,7 @@ public static class SeedDataService
             endTime = startTime;
         }
 
-        return new EventEntity
+        return new Event
         {
             Id = id,
             Title = title,

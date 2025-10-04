@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Crew.Api.Data.DbContexts;
+using Crew.Api.Entities;
 using Crew.Api.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -20,22 +21,22 @@ public class EventsController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Event>>> GetAll()
+    public async Task<ActionResult<IEnumerable<EventModal>>> GetAll()
     {
         var entities = await _context.Events.ToListAsync();
-        return Ok(entities.Select(MapToDto));
+        return Ok(entities.Select(MapToModal));
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<Event>> GetById(int id)
+    public async Task<ActionResult<EventModal>> GetById(int id)
     {
         var entity = await _context.Events.FindAsync(id);
         if (entity == null) return NotFound();
-        return Ok(MapToDto(entity));
+        return Ok(MapToModal(entity));
     }
 
     [HttpPost]
-    public async Task<ActionResult<Event>> Create(Event newEvent)
+    public async Task<ActionResult<EventModal>> Create(EventModal newEvent)
     {
         SanitizeEvent(newEvent);
 
@@ -44,7 +45,7 @@ public class EventsController : ControllerBase
             return BadRequest("User UID is required.");
         }
 
-        var entity = new EventEntity();
+        var entity = new Event();
         ApplyDtoToEntity(newEvent, entity, isUpdate: false);
 
         entity.Id = _context.Events.Any() ? _context.Events.Max(e => e.Id) + 1 : 1;
@@ -70,12 +71,12 @@ public class EventsController : ControllerBase
         _context.Events.Add(entity);
         await _context.SaveChangesAsync();
 
-        var dto = MapToDto(entity);
+        var dto = MapToModal(entity);
         return CreatedAtAction(nameof(GetById), new { id = dto.Id }, dto);
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> Update(int id, Event updatedEvent)
+    public async Task<IActionResult> Update(int id, EventModal updatedEvent)
     {
         var entity = await _context.Events.FindAsync(id);
         if (entity == null) return NotFound();
@@ -106,7 +107,7 @@ public class EventsController : ControllerBase
     }
 
     [HttpGet("search")]
-    public async Task<ActionResult<IEnumerable<Event>>> SearchEvents(
+    public async Task<ActionResult<IEnumerable<EventModal>>> SearchEvents(
         string? query,
         double? lat,
         double? lng,
@@ -155,10 +156,10 @@ public class EventsController : ControllerBase
                 .ToList();
         }
 
-        return Ok(result.Select(MapToDto));
+        return Ok(result.Select(MapToModal));
     }
 
-    private static void SanitizeEvent(Event eventToSanitize)
+    private static void SanitizeEvent(EventModal eventToSanitize)
     {
         eventToSanitize.Title = eventToSanitize.Title?.Trim() ?? string.Empty;
         eventToSanitize.Type = eventToSanitize.Type?.Trim() ?? string.Empty;
@@ -170,7 +171,7 @@ public class EventsController : ControllerBase
         eventToSanitize.UserUid = eventToSanitize.UserUid?.Trim() ?? string.Empty;
     }
 
-    private static void ApplyDtoToEntity(Event source, EventEntity target, bool isUpdate)
+    private static void ApplyDtoToEntity(EventModal source, Event target, bool isUpdate)
     {
         target.Title = source.Title;
         target.Type = source.Type;
@@ -211,7 +212,7 @@ public class EventsController : ControllerBase
         }
     }
 
-    private static Event MapToDto(EventEntity entity)
+    private static EventModal MapToModal(Event entity)
         => new()
         {
             Id = entity.Id,

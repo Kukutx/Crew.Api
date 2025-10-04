@@ -1,3 +1,4 @@
+using Crew.Api.Entities;
 using Crew.Api.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -12,7 +13,7 @@ public class AppDbContext : DbContext
     public DbSet<UserAccount> Users => Set<UserAccount>();
     public DbSet<Role> Roles => Set<Role>();
     public DbSet<UserRoleAssignment> UserRoles => Set<UserRoleAssignment>();
-    public DbSet<EventEntity> Events => Set<EventEntity>();
+    public DbSet<Event> Events => Set<Event>();
     public DbSet<Comment> Comments => Set<Comment>();
     public DbSet<TestData> TestData { get; set; }
     public DbSet<SubscriptionPlan> SubscriptionPlans => Set<SubscriptionPlan>();
@@ -75,7 +76,7 @@ public class AppDbContext : DbContext
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
-        modelBuilder.Entity<EventEntity>(entity =>
+        modelBuilder.Entity<Event>(entity =>
         {
             entity.HasOne(e => e.User)
                 .WithMany(u => u.Events)

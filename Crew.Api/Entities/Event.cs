@@ -1,11 +1,9 @@
 using System;
 using System.Collections.Generic;
+using Crew.Api.Models;
 
-namespace Crew.Api.Models;
+namespace Crew.Api.Entities;
 
-/// <summary>
-/// Simplified event model exposed to the client.
-/// </summary>
 public class Event
 {
     public int Id { get; set; }
@@ -28,4 +26,7 @@ public class Event
 
     public List<string> ImageUrls { get; set; } = new();
     public string CoverImageUrl { get; set; } = string.Empty;
+
+    public UserAccount? User { get; set; }
+    public ICollection<Comment> Comments { get; set; } = new List<Comment>();
 }

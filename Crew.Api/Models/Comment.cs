@@ -1,4 +1,5 @@
 using System;
+using Crew.Api.Entities;
 
 namespace Crew.Api.Models;
 
@@ -10,6 +11,6 @@ public class Comment
     public string Content { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-    public EventEntity? Event { get; set; }
+    public Event? Event { get; set; }
     public UserAccount? User { get; set; }
 }
