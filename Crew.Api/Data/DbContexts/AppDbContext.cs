@@ -41,7 +41,7 @@ public class AppDbContext : DbContext
             entity.HasMany(u => u.Followers)
                 .WithOne(f => f.Followed)
                 .HasForeignKey(f => f.FollowedUid)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.Restrict);
             entity.HasMany(u => u.Following)
                 .WithOne(f => f.Follower)
                 .HasForeignKey(f => f.FollowerUid)
