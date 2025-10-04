@@ -248,19 +248,22 @@ public static class SeedDataService
             context.SaveChanges();
         }
 
-        if (!context.UserRoles.Any())
-        {
-            var rolesByKey = context.Roles
-                .Where(role => role.Key == RoleKeys.User || role.Key == RoleKeys.Admin)
-                .ToDictionary(role => role.Key);
+        var rolesByKey = context.Roles
+            .Where(role => role.Key == RoleKeys.User || role.Key == RoleKeys.Admin)
+            .ToDictionary(role => role.Key);
 
-            var assignments = new List<UserRoleAssignment>();
+        if (rolesByKey.Count > 0)
+        {
+            var adminUid = userUids.FirstOrDefault();
+            var distinctUserUids = userUids.Distinct(StringComparer.Ordinal).ToArray();
+
+            var requestedAssignments = new List<UserRoleAssignment>();
 
             if (rolesByKey.TryGetValue(RoleKeys.User, out var userRole))
             {
                 var userRoleGrantedAt = DateTime.UtcNow;
 
-                assignments.AddRange(userUids.Select(uid => new UserRoleAssignment
+                requestedAssignments.AddRange(distinctUserUids.Select(uid => new UserRoleAssignment
                 {
                     UserUid = uid,
                     RoleId = userRole.Id,
@@ -268,20 +271,48 @@ public static class SeedDataService
                 }));
             }
 
-            if (rolesByKey.TryGetValue(RoleKeys.Admin, out var adminRole) && userUids.Length > 0)
+            if (!string.IsNullOrEmpty(adminUid) && rolesByKey.TryGetValue(RoleKeys.Admin, out var adminRole))
             {
-                assignments.Add(new UserRoleAssignment
+                requestedAssignments.Add(new UserRoleAssignment
                 {
-                    UserUid = userUids[0],
+                    UserUid = adminUid,
                     RoleId = adminRole.Id,
                     GrantedAt = DateTime.UtcNow
                 });
             }
 
+            var assignments = requestedAssignments
+                .GroupBy(assignment => new { assignment.UserUid, assignment.RoleId })
+                .Select(group => group.OrderBy(a => a.GrantedAt).First())
+                .ToList();
+
             if (assignments.Count > 0)
             {
-                context.UserRoles.AddRange(assignments);
-                context.SaveChanges();
+                var assignmentUsers = assignments
+                    .Select(assignment => assignment.UserUid)
+                    .Distinct()
+                    .ToList();
+                var assignmentRoles = assignments
+                    .Select(assignment => assignment.RoleId)
+                    .Distinct()
+                    .ToList();
+
+                var existingAssignments = context.UserRoles
+                    .Where(assignment => assignmentUsers.Contains(assignment.UserUid) && assignmentRoles.Contains(assignment.RoleId))
+                    .Select(assignment => new { assignment.UserUid, assignment.RoleId })
+                    .ToList()
+                    .Select(assignment => (assignment.UserUid, assignment.RoleId))
+                    .ToHashSet();
+
+                var newAssignments = assignments
+                    .Where(assignment => !existingAssignments.Contains((assignment.UserUid, assignment.RoleId)))
+                    .ToList();
+
+                if (newAssignments.Count > 0)
+                {
+                    context.UserRoles.AddRange(newAssignments);
+                    context.SaveChanges();
+                }
             }
         }
 
