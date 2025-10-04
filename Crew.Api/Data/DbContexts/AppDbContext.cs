@@ -1,3 +1,4 @@
+using Crew.Api.Entities;
 using Crew.Api.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -68,7 +69,19 @@ public class AppDbContext : DbContext
                 .WithMany(u => u.Comments)
                 .HasForeignKey(c => c.UserUid)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(c => c.Event)
+                .WithMany(e => e.Comments)
+                .HasForeignKey(c => c.EventId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<Event>(entity =>
+        {
+            entity.HasOne(e => e.User)
+                .WithMany(u => u.Events)
+                .HasForeignKey(e => e.UserUid)
+                .OnDelete(DeleteBehavior.Cascade);
         });
     }
 }
-

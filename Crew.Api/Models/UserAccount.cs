@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Crew.Api.Entities;
 
 namespace Crew.Api.Models;
 
@@ -42,6 +43,8 @@ public class UserAccount
     public ICollection<UserSubscription> Subscriptions { get; set; } = new List<UserSubscription>();
 
     public ICollection<Comment> Comments { get; set; } = new List<Comment>();
+
+    public ICollection<Event> Events { get; set; } = new List<Event>();
 }
 
 public static class UserStatuses

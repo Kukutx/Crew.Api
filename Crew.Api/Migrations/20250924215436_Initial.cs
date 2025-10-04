@@ -83,11 +83,18 @@ namespace Crew.Api.Migrations
                     Latitude = table.Column<double>(type: "REAL", nullable: false),
                     Longitude = table.Column<double>(type: "REAL", nullable: false),
                     ImageUrls = table.Column<string>(type: "TEXT", nullable: false),
-                    CoverImageUrl = table.Column<string>(type: "TEXT", nullable: false)
+                    CoverImageUrl = table.Column<string>(type: "TEXT", nullable: false),
+                    UserUid = table.Column<string>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Events", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Events_Users_UserUid",
+                        column: x => x.UserUid,
+                        principalTable: "Users",
+                        principalColumn: "Uid",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -190,6 +197,11 @@ namespace Crew.Api.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_Comments_UserUid",
                 table: "Comments",
+                column: "UserUid");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Events_UserUid",
+                table: "Events",
                 column: "UserUid");
 
             migrationBuilder.CreateIndex(

@@ -51,7 +51,7 @@ namespace Crew.Api.Migrations
                     b.ToTable("Comments");
                 });
 
-            modelBuilder.Entity("Crew.Api.Models.Event", b =>
+            modelBuilder.Entity("Crew.Api.Entities.Event", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -110,7 +110,13 @@ namespace Crew.Api.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("UserUid")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("UserUid");
 
                     b.ToTable("Events");
                 });
@@ -283,8 +289,8 @@ namespace Crew.Api.Migrations
 
             modelBuilder.Entity("Crew.Api.Models.Comment", b =>
                 {
-                    b.HasOne("Crew.Api.Models.Event", "Event")
-                        .WithMany()
+                    b.HasOne("Crew.Api.Entities.Event", "Event")
+                        .WithMany("Comments")
                         .HasForeignKey("EventId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -296,6 +302,19 @@ namespace Crew.Api.Migrations
                         .IsRequired();
 
                     b.Navigation("Event");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Crew.Api.Entities.Event", b =>
+                {
+                    b.HasOne("Crew.Api.Models.UserAccount", "User")
+                        .WithMany("Events")
+                        .HasForeignKey("UserUid")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Comments");
 
                     b.Navigation("User");
                 });
@@ -351,6 +370,8 @@ namespace Crew.Api.Migrations
             modelBuilder.Entity("Crew.Api.Models.UserAccount", b =>
                 {
                     b.Navigation("Comments");
+
+                    b.Navigation("Events");
 
                     b.Navigation("Roles");
 
