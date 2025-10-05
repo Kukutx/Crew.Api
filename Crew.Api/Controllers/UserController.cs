@@ -1,8 +1,9 @@
-﻿using System.Security.Claims;
+using System.Security.Claims;
+using System.Threading;
+using Crew.Api.Data.DbContexts;
 using Crew.Api.Models.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Crew.Api.Data.DbContexts;
 using Microsoft.EntityFrameworkCore;
 
 namespace Crew.Api.Controllers;
@@ -10,36 +11,33 @@ namespace Crew.Api.Controllers;
 [ApiController]
 [Authorize]
 [Route("[controller]/[action]")]
-public class UserController
+public class UserController : ControllerBase
 {
-    private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly AppDbContext _dbContext;
 
-    public UserController(IHttpContextAccessor httpContextAccessor, AppDbContext dbContext)
+    public UserController(AppDbContext dbContext)
     {
-        _httpContextAccessor = httpContextAccessor;
         _dbContext = dbContext;
     }
 
     [HttpGet]
-    public async Task<LoginDetail> GetAuthenticatedUserDetail()
+    public async Task<ActionResult<LoginDetail>> GetAuthenticatedUserDetail()
     {
-        var httpContext = _httpContextAccessor.HttpContext;
-        if (httpContext == null)
+        var claimsPrincipal = User;
+        if (claimsPrincipal == null)
         {
-            throw new InvalidOperationException("No HttpContext available.");
+            return Unauthorized();
         }
 
-        var claimsPrincipal = httpContext.User;
         var firebaseId = claimsPrincipal.Claims.FirstOrDefault(x => x.Type == "user_id")?.Value;
         var email = claimsPrincipal.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Email)?.Value;
 
         if (string.IsNullOrWhiteSpace(firebaseId) && string.IsNullOrWhiteSpace(email))
         {
-            throw new InvalidOperationException("Authenticated user is missing Firebase UID and email claims.");
+            return Unauthorized();
         }
 
-        var cancellationToken = httpContext.RequestAborted;
+        var cancellationToken = HttpContext?.RequestAborted ?? CancellationToken.None;
 
         var user = !string.IsNullOrWhiteSpace(firebaseId)
             ? await _dbContext.Users
@@ -56,10 +54,10 @@ public class UserController
 
         if (user == null)
         {
-            throw new InvalidOperationException("No user found for the authenticated principal.");
+            return NotFound();
         }
 
-        return new()
+        return new LoginDetail
         {
             FirebaseId = firebaseId ?? user.Uid,
             Email = user.Email,
