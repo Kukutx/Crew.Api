@@ -1,9 +1,12 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
+using System.Threading;
 using Crew.Api.Data.DbContexts;
 using Crew.Api.Entities;
 using Crew.Api.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -21,22 +24,24 @@ public class EventsController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<EventModal>>> GetAll()
+    public async Task<ActionResult<IEnumerable<EventModal>>> GetAll(CancellationToken cancellationToken)
     {
-        var entities = await _context.Events.ToListAsync();
+        var entities = await _context.Events
+            .AsNoTracking()
+            .ToListAsync(cancellationToken);
         return Ok(entities.Select(MapToModal));
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<EventModal>> GetById(int id)
+    public async Task<ActionResult<EventModal>> GetById(int id, CancellationToken cancellationToken)
     {
-        var entity = await _context.Events.FindAsync(id);
+        var entity = await _context.Events.FindAsync(new object?[] { id }, cancellationToken);
         if (entity == null) return NotFound();
         return Ok(MapToModal(entity));
     }
 
     [HttpPost]
-    public async Task<ActionResult<EventModal>> Create(EventModal newEvent)
+    public async Task<ActionResult<EventModal>> Create(EventModal newEvent, CancellationToken cancellationToken)
     {
         SanitizeEvent(newEvent);
 
@@ -67,16 +72,16 @@ public class EventsController : ControllerBase
         entity.LastUpdated = entity.CreatedAt;
 
         _context.Events.Add(entity);
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(cancellationToken);
 
         var dto = MapToModal(entity);
         return CreatedAtAction(nameof(GetById), new { id = entity.Id }, dto);
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> Update(int id, EventModal updatedEvent)
+    public async Task<IActionResult> Update(int id, EventModal updatedEvent, CancellationToken cancellationToken)
     {
-        var entity = await _context.Events.FindAsync(id);
+        var entity = await _context.Events.FindAsync(new object?[] { id }, cancellationToken);
         if (entity == null) return NotFound();
 
         SanitizeEvent(updatedEvent);
@@ -89,19 +94,118 @@ public class EventsController : ControllerBase
         ApplyDtoToEntity(updatedEvent, entity, isUpdate: true);
         entity.LastUpdated = DateTime.UtcNow;
 
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(cancellationToken);
         return NoContent();
     }
 
     [HttpDelete("{id}")]
-    public async Task<IActionResult> Delete(int id)
+    public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
     {
-        var entity = await _context.Events.FindAsync(id);
+        var entity = await _context.Events.FindAsync(new object?[] { id }, cancellationToken);
         if (entity == null) return NotFound();
 
         _context.Events.Remove(entity);
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(cancellationToken);
         return NoContent();
+    }
+
+    [HttpPost("{id}/favorite")]
+    [Authorize]
+    public async Task<IActionResult> FavoriteEvent(int id, CancellationToken cancellationToken)
+    {
+        var currentUid = GetCurrentUserUid();
+        if (currentUid is null)
+        {
+            return Forbid();
+        }
+
+        var eventExists = await _context.Events
+            .AsNoTracking()
+            .AnyAsync(e => e.Id == id, cancellationToken);
+        if (!eventExists)
+        {
+            return NotFound();
+        }
+
+        var existing = await _context.EventFavorites.FindAsync(new object?[] { id, currentUid }, cancellationToken);
+        if (existing != null)
+        {
+            return NoContent();
+        }
+
+        _context.EventFavorites.Add(new EventFavorite
+        {
+            EventId = id,
+            UserUid = currentUid,
+            CreatedAt = DateTime.UtcNow,
+        });
+
+        await _context.SaveChangesAsync(cancellationToken);
+        return NoContent();
+    }
+
+    [HttpDelete("{id}/favorite")]
+    [Authorize]
+    public async Task<IActionResult> UnfavoriteEvent(int id, CancellationToken cancellationToken)
+    {
+        var currentUid = GetCurrentUserUid();
+        if (currentUid is null)
+        {
+            return Forbid();
+        }
+
+        var favorite = await _context.EventFavorites.FindAsync(new object?[] { id, currentUid }, cancellationToken);
+        if (favorite == null)
+        {
+            return NoContent();
+        }
+
+        _context.EventFavorites.Remove(favorite);
+        await _context.SaveChangesAsync(cancellationToken);
+        return NoContent();
+    }
+
+    [HttpGet("user/{uid}")]
+    public async Task<ActionResult<UserEventsResponse>> GetEventsForUser(string uid, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(uid))
+        {
+            return BadRequest("User UID is required.");
+        }
+
+        var normalizedUid = uid.Trim();
+
+        var userExists = await _context.Users
+            .AsNoTracking()
+            .AnyAsync(u => u.Uid == normalizedUid, cancellationToken);
+        if (!userExists)
+        {
+            return NotFound();
+        }
+
+        var createdEvents = await _context.Events
+            .AsNoTracking()
+            .Where(e => e.UserUid == normalizedUid)
+            .OrderByDescending(e => e.StartTime)
+            .ToListAsync(cancellationToken);
+
+        var favoritedEvents = await _context.EventFavorites
+            .AsNoTracking()
+            .Where(f => f.UserUid == normalizedUid)
+            .Join(
+                _context.Events.AsNoTracking(),
+                favorite => favorite.EventId,
+                evt => evt.Id,
+                (favorite, evt) => evt)
+            .OrderByDescending(e => e.StartTime)
+            .ToListAsync(cancellationToken);
+
+        var response = new UserEventsResponse(
+            normalizedUid,
+            createdEvents.Select(MapToModal).ToList(),
+            favoritedEvents.Select(MapToModal).ToList());
+
+        return Ok(response);
     }
 
     [HttpGet("search")]
@@ -295,4 +399,6 @@ public class EventsController : ControllerBase
 
     private static double DegreesToRadians(double degrees)
         => degrees * (Math.PI / 180.0);
+    private string? GetCurrentUserUid()
+        => User.FindFirstValue("user_id") ?? User.FindFirstValue(ClaimTypes.NameIdentifier);
 }
