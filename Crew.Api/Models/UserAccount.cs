@@ -49,6 +49,7 @@ public class UserAccount
     public ICollection<UserFollow> Followers { get; set; } = new List<UserFollow>();
 
     public ICollection<UserFollow> Following { get; set; } = new List<UserFollow>();
+    public ICollection<EventFavorite> FavoriteEvents { get; set; } = new List<EventFavorite>();
 }
 
 public static class UserStatuses

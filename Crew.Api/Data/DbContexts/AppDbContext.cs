@@ -18,6 +18,7 @@ public class AppDbContext : DbContext
     public DbSet<SubscriptionPlan> SubscriptionPlans => Set<SubscriptionPlan>();
     public DbSet<UserSubscription> UserSubscriptions => Set<UserSubscription>();
     public DbSet<UserFollow> UserFollows => Set<UserFollow>();
+    public DbSet<EventFavorite> EventFavorites => Set<EventFavorite>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -99,6 +100,24 @@ public class AppDbContext : DbContext
             entity.HasOne(e => e.User)
                 .WithMany(u => u.Events)
                 .HasForeignKey(e => e.UserUid)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<EventFavorite>(entity =>
+        {
+            entity.ToTable("EventFavorites");
+            entity.HasKey(f => new { f.EventId, f.UserUid });
+            entity.Property(f => f.CreatedAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+            entity.HasOne(f => f.Event)
+                .WithMany(e => e.Favorites)
+                .HasForeignKey(f => f.EventId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(f => f.User)
+                .WithMany(u => u.FavoriteEvents)
+                .HasForeignKey(f => f.UserUid)
                 .OnDelete(DeleteBehavior.Cascade);
         });
     }

@@ -29,4 +29,5 @@ public class Event
 
     public UserAccount? User { get; set; }
     public ICollection<Comment> Comments { get; set; } = new List<Comment>();
+    public ICollection<EventFavorite> Favorites { get; set; } = new List<EventFavorite>();
 }
