@@ -44,19 +44,6 @@ namespace Crew.Api.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "TestData",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    TestEntity = table.Column<string>(type: "TEXT", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_TestData", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "Users",
                 columns: table => new
                 {
@@ -267,9 +254,6 @@ namespace Crew.Api.Migrations
         {
             migrationBuilder.DropTable(
                 name: "Comments");
-
-            migrationBuilder.DropTable(
-                name: "TestData");
 
             migrationBuilder.DropTable(
                 name: "UserFollows");

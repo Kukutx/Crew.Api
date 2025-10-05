@@ -15,7 +15,6 @@ public class AppDbContext : DbContext
     public DbSet<UserRoleAssignment> UserRoles => Set<UserRoleAssignment>();
     public DbSet<Event> Events => Set<Event>();
     public DbSet<Comment> Comments => Set<Comment>();
-    public DbSet<TestData> TestData { get; set; }
     public DbSet<SubscriptionPlan> SubscriptionPlans => Set<SubscriptionPlan>();
     public DbSet<UserSubscription> UserSubscriptions => Set<UserSubscription>();
     public DbSet<UserFollow> UserFollows => Set<UserFollow>();

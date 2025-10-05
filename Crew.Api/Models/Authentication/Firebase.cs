@@ -30,7 +30,7 @@ public class GoogleToken
 
 public class Token
 {
-    internal string refresh_token;
+    public string refresh_token { get; set; } = string.Empty;
 
     public string token_type { get; set; }
     public int expires_in { get; set; }

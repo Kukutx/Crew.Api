@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Crew.Api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20251004221111_InitialCreate")]
+    [Migration("20251004223000_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -176,21 +176,6 @@ namespace Crew.Api.Migrations
                         .IsUnique();
 
                     b.ToTable("Plans", (string)null);
-                });
-
-            modelBuilder.Entity("Crew.Api.Models.TestData", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("TestEntity")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("TestData");
                 });
 
             modelBuilder.Entity("Crew.Api.Models.UserAccount", b =>

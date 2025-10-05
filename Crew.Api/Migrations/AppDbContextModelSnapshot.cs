@@ -175,21 +175,6 @@ namespace Crew.Api.Migrations
                     b.ToTable("Plans", (string)null);
                 });
 
-            modelBuilder.Entity("Crew.Api.Models.TestData", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("TestEntity")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("TestData");
-                });
-
             modelBuilder.Entity("Crew.Api.Models.UserAccount", b =>
                 {
                     b.Property<string>("Uid")
