@@ -2,6 +2,7 @@ using Crew.Api.Data;
 using Crew.Api.Data.DbContexts;
 using Crew.Api.Models;
 using Crew.Api.Security;
+using System.Linq;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -20,7 +21,7 @@ public class UsersController : ControllerBase
     }
 
     [HttpGet]
-    [Authorize(Policy = AuthorizationPolicies.RequireAdmin)]
+    [Authorize]
     public async Task<ActionResult<IEnumerable<UserAccountResponse>>> GetAll(CancellationToken cancellationToken)
     {
         var users = await _context.Users
@@ -35,7 +36,7 @@ public class UsersController : ControllerBase
     }
 
     [HttpGet("{uid}")]
-    [Authorize(Policy = AuthorizationPolicies.RequireAdmin)]
+    [Authorize]
     public async Task<ActionResult<UserAccountResponse>> GetByUid(string uid, CancellationToken cancellationToken)
     {
         var user = await _context.Users
@@ -135,6 +136,41 @@ public class UsersController : ControllerBase
         await _context.SaveChangesAsync(cancellationToken);
 
         return Ok(MapToResponse(user));
+    }
+
+    [HttpDelete("{uid}")]
+    [Authorize(Policy = AuthorizationPolicies.RequireAdmin)]
+    public async Task<IActionResult> Delete(string uid, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(uid))
+        {
+            return BadRequest("uid is required");
+        }
+
+        var user = await _context.Users
+            .Include(u => u.Followers)
+            .Include(u => u.Following)
+            .FirstOrDefaultAsync(u => u.Uid == uid, cancellationToken);
+
+        if (user is null)
+        {
+            return NotFound();
+        }
+
+        if (user.Followers.Any())
+        {
+            _context.UserFollows.RemoveRange(user.Followers);
+        }
+
+        if (user.Following.Any())
+        {
+            _context.UserFollows.RemoveRange(user.Following);
+        }
+
+        _context.Users.Remove(user);
+        await _context.SaveChangesAsync(cancellationToken);
+
+        return NoContent();
     }
 
     private async Task ApplyDefaultRoleAsync(UserAccount user, CancellationToken cancellationToken)
