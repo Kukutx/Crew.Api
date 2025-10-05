@@ -6,6 +6,7 @@ using System.Threading;
 using Crew.Api.Data.DbContexts;
 using Crew.Api.Entities;
 using Crew.Api.Models;
+using Crew.Api.Security;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -17,10 +18,12 @@ namespace Crew.Api.Controllers;
 public class EventsController : ControllerBase
 {
     private readonly AppDbContext _context;
+    private readonly IAuthorizationService _authorizationService;
 
-    public EventsController(AppDbContext context)
+    public EventsController(AppDbContext context, IAuthorizationService authorizationService)
     {
         _context = context;
+        _authorizationService = authorizationService;
     }
 
     [HttpGet]
@@ -41,17 +44,21 @@ public class EventsController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<EventModal>> Create(EventModal newEvent, CancellationToken cancellationToken)
+    [Authorize]
+    public async Task<ActionResult<EventModal>> Create(EventInputModel newEvent, CancellationToken cancellationToken)
     {
-        SanitizeEvent(newEvent);
-
-        if (string.IsNullOrWhiteSpace(newEvent.UserUid))
+        var currentUid = GetCurrentUserUid();
+        if (string.IsNullOrWhiteSpace(currentUid))
         {
-            return BadRequest("User UID is required.");
+            return Forbid();
         }
+
+        SanitizeEvent(newEvent);
 
         var entity = new Event();
         ApplyDtoToEntity(newEvent, entity, isUpdate: false);
+
+        entity.UserUid = currentUid;
 
         if (entity.StartTime == default)
         {
@@ -79,14 +86,30 @@ public class EventsController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> Update(int id, EventModal updatedEvent, CancellationToken cancellationToken)
+    [Authorize]
+    public async Task<IActionResult> Update(int id, EventInputModel updatedEvent, CancellationToken cancellationToken)
     {
         var entity = await _context.Events.FindAsync(new object?[] { id }, cancellationToken);
         if (entity == null) return NotFound();
 
+        var currentUid = GetCurrentUserUid();
+        if (string.IsNullOrWhiteSpace(currentUid))
+        {
+            return Forbid();
+        }
+
+        if (!string.Equals(entity.UserUid, currentUid, StringComparison.Ordinal))
+        {
+            var authorizationResult = await _authorizationService.AuthorizeAsync(User, null, AuthorizationPolicies.RequireAdmin);
+            if (!authorizationResult.Succeeded)
+            {
+                return Forbid();
+            }
+        }
+
         SanitizeEvent(updatedEvent);
-        if (updatedEvent.StartTime != default && updatedEvent.EndTime != default &&
-            updatedEvent.EndTime < updatedEvent.StartTime)
+        if (updatedEvent.StartTime.HasValue && updatedEvent.EndTime.HasValue &&
+            updatedEvent.EndTime.Value < updatedEvent.StartTime.Value)
         {
             return BadRequest("End time cannot be earlier than the start time.");
         }
@@ -99,10 +122,26 @@ public class EventsController : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [Authorize]
     public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
     {
         var entity = await _context.Events.FindAsync(new object?[] { id }, cancellationToken);
         if (entity == null) return NotFound();
+
+        var currentUid = GetCurrentUserUid();
+        if (string.IsNullOrWhiteSpace(currentUid))
+        {
+            return Forbid();
+        }
+
+        if (!string.Equals(entity.UserUid, currentUid, StringComparison.Ordinal))
+        {
+            var authorizationResult = await _authorizationService.AuthorizeAsync(User, null, AuthorizationPolicies.RequireAdmin);
+            if (!authorizationResult.Succeeded)
+            {
+                return Forbid();
+            }
+        }
 
         _context.Events.Remove(entity);
         await _context.SaveChangesAsync(cancellationToken);
@@ -281,7 +320,7 @@ public class EventsController : ControllerBase
         return Ok(projected);
     }
 
-    private static void SanitizeEvent(EventModal eventToSanitize)
+    private static void SanitizeEvent(EventInputModel eventToSanitize)
     {
         eventToSanitize.Title = eventToSanitize.Title?.Trim() ?? string.Empty;
         eventToSanitize.Type = eventToSanitize.Type?.Trim() ?? string.Empty;
@@ -290,10 +329,10 @@ public class EventsController : ControllerBase
         eventToSanitize.Location = eventToSanitize.Location?.Trim() ?? string.Empty;
         eventToSanitize.Description = eventToSanitize.Description?.Trim() ?? string.Empty;
         eventToSanitize.CoverImageUrl = eventToSanitize.CoverImageUrl?.Trim() ?? string.Empty;
-        eventToSanitize.UserUid = eventToSanitize.UserUid?.Trim() ?? string.Empty;
+        eventToSanitize.ImageUrls ??= new List<string>();
     }
 
-    private static void ApplyDtoToEntity(EventModal source, Event target, bool isUpdate)
+    private static void ApplyDtoToEntity(EventInputModel source, Event target, bool isUpdate)
     {
         target.Title = source.Title;
         target.Type = source.Type;
@@ -305,20 +344,27 @@ public class EventsController : ControllerBase
 
         if (isUpdate)
         {
-            if (source.StartTime != default)
+            if (source.StartTime.HasValue)
             {
-                target.StartTime = source.StartTime;
+                target.StartTime = source.StartTime.Value;
             }
 
-            if (source.EndTime != default)
+            if (source.EndTime.HasValue)
             {
-                target.EndTime = source.EndTime;
+                target.EndTime = source.EndTime.Value;
             }
         }
         else
         {
-            target.StartTime = source.StartTime;
-            target.EndTime = source.EndTime;
+            if (source.StartTime.HasValue)
+            {
+                target.StartTime = source.StartTime.Value;
+            }
+
+            if (source.EndTime.HasValue)
+            {
+                target.EndTime = source.EndTime.Value;
+            }
         }
 
         target.Latitude = source.Latitude;
@@ -327,11 +373,6 @@ public class EventsController : ControllerBase
         var normalizedImages = NormalizeImageUrls(source.ImageUrls);
         target.ImageUrls = normalizedImages;
         target.CoverImageUrl = ResolveCoverImage(source.CoverImageUrl, normalizedImages);
-
-        if (!string.IsNullOrEmpty(source.UserUid))
-        {
-            target.UserUid = source.UserUid;
-        }
     }
 
     private static EventModal MapToModal(Event entity)
@@ -400,5 +441,5 @@ public class EventsController : ControllerBase
     private static double DegreesToRadians(double degrees)
         => degrees * (Math.PI / 180.0);
     private string? GetCurrentUserUid()
-        => User.FindFirstValue("user_id") ?? User.FindFirstValue(ClaimTypes.NameIdentifier);
+        => (User.FindFirstValue("user_id") ?? User.FindFirstValue(ClaimTypes.NameIdentifier))?.Trim();
 }
