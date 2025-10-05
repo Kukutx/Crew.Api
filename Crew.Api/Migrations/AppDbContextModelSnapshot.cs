@@ -119,12 +119,10 @@ namespace Crew.Api.Migrations
             modelBuilder.Entity("Crew.Api.Models.EventFavorite", b =>
                 {
                     b.Property<int>("EventId")
-                        .HasColumnType("INTEGER")
-                        .HasColumnOrder(0);
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("UserUid")
-                        .HasColumnType("TEXT")
-                        .HasColumnOrder(1);
+                        .HasColumnType("TEXT");
 
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
@@ -324,25 +322,6 @@ namespace Crew.Api.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("Crew.Api.Models.EventFavorite", b =>
-                {
-                    b.HasOne("Crew.Api.Entities.Event", "Event")
-                        .WithMany("Favorites")
-                        .HasForeignKey("EventId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Crew.Api.Models.UserAccount", "User")
-                        .WithMany("FavoriteEvents")
-                        .HasForeignKey("UserUid")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Event");
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("Crew.Api.Models.Comment", b =>
                 {
                     b.HasOne("Crew.Api.Entities.Event", "Event")
@@ -353,6 +332,25 @@ namespace Crew.Api.Migrations
 
                     b.HasOne("Crew.Api.Models.UserAccount", "User")
                         .WithMany("Comments")
+                        .HasForeignKey("UserUid")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Event");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Crew.Api.Models.EventFavorite", b =>
+                {
+                    b.HasOne("Crew.Api.Entities.Event", "Event")
+                        .WithMany("Favorites")
+                        .HasForeignKey("EventId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Crew.Api.Models.UserAccount", "User")
+                        .WithMany("FavoriteEvents")
                         .HasForeignKey("UserUid")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -422,6 +420,7 @@ namespace Crew.Api.Migrations
             modelBuilder.Entity("Crew.Api.Entities.Event", b =>
                 {
                     b.Navigation("Comments");
+
                     b.Navigation("Favorites");
                 });
 
@@ -439,9 +438,9 @@ namespace Crew.Api.Migrations
                 {
                     b.Navigation("Comments");
 
-                    b.Navigation("FavoriteEvents");
-
                     b.Navigation("Events");
+
+                    b.Navigation("FavoriteEvents");
 
                     b.Navigation("Followers");
 

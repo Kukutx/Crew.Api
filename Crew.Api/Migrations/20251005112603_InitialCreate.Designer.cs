@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Crew.Api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20251004223000_InitialCreate")]
+    [Migration("20251005112603_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -117,6 +117,26 @@ namespace Crew.Api.Migrations
                     b.HasIndex("UserUid");
 
                     b.ToTable("Comments");
+                });
+
+            modelBuilder.Entity("Crew.Api.Models.EventFavorite", b =>
+                {
+                    b.Property<int>("EventId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("UserUid")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.HasKey("EventId", "UserUid");
+
+                    b.HasIndex("UserUid");
+
+                    b.ToTable("EventFavorites", (string)null);
                 });
 
             modelBuilder.Entity("Crew.Api.Models.Role", b =>
@@ -324,6 +344,25 @@ namespace Crew.Api.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Crew.Api.Models.EventFavorite", b =>
+                {
+                    b.HasOne("Crew.Api.Entities.Event", "Event")
+                        .WithMany("Favorites")
+                        .HasForeignKey("EventId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Crew.Api.Models.UserAccount", "User")
+                        .WithMany("FavoriteEvents")
+                        .HasForeignKey("UserUid")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Event");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("Crew.Api.Models.UserFollow", b =>
                 {
                     b.HasOne("Crew.Api.Models.UserAccount", "Followed")
@@ -384,6 +423,8 @@ namespace Crew.Api.Migrations
             modelBuilder.Entity("Crew.Api.Entities.Event", b =>
                 {
                     b.Navigation("Comments");
+
+                    b.Navigation("Favorites");
                 });
 
             modelBuilder.Entity("Crew.Api.Models.Role", b =>
@@ -401,6 +442,8 @@ namespace Crew.Api.Migrations
                     b.Navigation("Comments");
 
                     b.Navigation("Events");
+
+                    b.Navigation("FavoriteEvents");
 
                     b.Navigation("Followers");
 
