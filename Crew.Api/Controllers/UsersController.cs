@@ -25,11 +25,7 @@ public class UsersController : ControllerBase
     [Authorize]
     public async Task<ActionResult<IEnumerable<UserAccountResponse>>> GetAll(CancellationToken cancellationToken)
     {
-        var users = await _context.Users
-            .Include(u => u.Roles)
-                .ThenInclude(r => r.Role)
-            .Include(u => u.Subscriptions)
-                .ThenInclude(s => s.Plan)
+        var users = await GetUserQuery()
             .OrderBy(u => u.UserName)
             .ToListAsync(cancellationToken);
 
@@ -45,11 +41,7 @@ public class UsersController : ControllerBase
     [Authorize]
     public async Task<ActionResult<UserAccountResponse>> GetByUid(string uid, CancellationToken cancellationToken)
     {
-        var user = await _context.Users
-            .Include(u => u.Roles)
-                .ThenInclude(r => r.Role)
-            .Include(u => u.Subscriptions)
-                .ThenInclude(s => s.Plan)
+        var user = await GetUserQuery()
             .FirstOrDefaultAsync(u => u.Uid == uid, cancellationToken);
 
         if (user is null)
@@ -85,11 +77,7 @@ public class UsersController : ControllerBase
         }
 
         var normalizedUid = request.Uid.Trim();
-        var user = await _context.Users
-            .Include(u => u.Roles)
-                .ThenInclude(r => r.Role)
-            .Include(u => u.Subscriptions)
-                .ThenInclude(s => s.Plan)
+        var user = await GetUserQuery(asTracking: true)
             .FirstOrDefaultAsync(u => u.Uid == normalizedUid, cancellationToken);
 
         if (user is null)
@@ -232,6 +220,18 @@ public class UsersController : ControllerBase
         });
     }
 
+    private IQueryable<UserAccount> GetUserQuery(bool asTracking = false)
+    {
+        var query = _context.Users
+            .Include(u => u.Roles)
+                .ThenInclude(r => r.Role)
+            .Include(u => u.Subscriptions)
+                .ThenInclude(s => s.Plan)
+            .AsQueryable();
+
+        return asTracking ? query : query.AsNoTracking();
+    }
+
     private async Task<(Dictionary<string, int> followerCounts, Dictionary<string, int> followingCounts)> GetFollowCountsAsync(
         IEnumerable<string> uids,
         CancellationToken cancellationToken)
@@ -246,17 +246,32 @@ public class UsersController : ControllerBase
             return (new Dictionary<string, int>(), new Dictionary<string, int>());
         }
 
-        var followerCounts = await _context.UserFollows
-            .Where(f => uidList.Contains(f.FollowedUid))
-            .GroupBy(f => f.FollowedUid)
-            .Select(g => new { Uid = g.Key, Count = g.Count() })
-            .ToDictionaryAsync(x => x.Uid, x => x.Count, cancellationToken);
+        var uidSet = new HashSet<string>(uidList);
 
-        var followingCounts = await _context.UserFollows
-            .Where(f => uidList.Contains(f.FollowerUid))
-            .GroupBy(f => f.FollowerUid)
-            .Select(g => new { Uid = g.Key, Count = g.Count() })
-            .ToDictionaryAsync(x => x.Uid, x => x.Count, cancellationToken);
+        var followEdges = await _context.UserFollows
+            .Where(f => uidSet.Contains(f.FollowedUid) || uidSet.Contains(f.FollowerUid))
+            .Select(f => new { f.FollowedUid, f.FollowerUid })
+            .ToListAsync(cancellationToken);
+
+        var followerCounts = new Dictionary<string, int>(uidList.Count);
+        var followingCounts = new Dictionary<string, int>(uidList.Count);
+
+        foreach (var edge in followEdges)
+        {
+            if (!string.IsNullOrEmpty(edge.FollowedUid) && uidSet.Contains(edge.FollowedUid))
+            {
+                followerCounts[edge.FollowedUid] = followerCounts.TryGetValue(edge.FollowedUid, out var count)
+                    ? count + 1
+                    : 1;
+            }
+
+            if (!string.IsNullOrEmpty(edge.FollowerUid) && uidSet.Contains(edge.FollowerUid))
+            {
+                followingCounts[edge.FollowerUid] = followingCounts.TryGetValue(edge.FollowerUid, out var count)
+                    ? count + 1
+                    : 1;
+            }
+        }
 
         return (followerCounts, followingCounts);
     }
