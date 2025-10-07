@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -71,30 +71,47 @@ namespace Crew.Api.Migrations
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
                     Title = table.Column<string>(type: "TEXT", nullable: false),
-                    Type = table.Column<string>(type: "TEXT", nullable: false),
-                    Status = table.Column<string>(type: "TEXT", nullable: false),
-                    Organizer = table.Column<string>(type: "TEXT", nullable: false),
-                    Location = table.Column<string>(type: "TEXT", nullable: false),
+                    OrganizerUid = table.Column<string>(type: "TEXT", nullable: false),
+                    StartDate = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    EndDate = table.Column<DateTime>(type: "TEXT", nullable: false),
                     Description = table.Column<string>(type: "TEXT", nullable: false),
-                    ExpectedParticipants = table.Column<int>(type: "INTEGER", nullable: false),
-                    UserUid = table.Column<string>(type: "TEXT", nullable: false),
-                    StartTime = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    EndTime = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    LastUpdated = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    Latitude = table.Column<double>(type: "REAL", nullable: false),
-                    Longitude = table.Column<double>(type: "REAL", nullable: false),
-                    ImageUrls = table.Column<string>(type: "TEXT", nullable: false),
-                    CoverImageUrl = table.Column<string>(type: "TEXT", nullable: false)
+                    Status = table.Column<string>(type: "TEXT", maxLength: 32, nullable: false, defaultValue: "draft"),
+                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP"),
+                    LastUpdated = table.Column<DateTime>(type: "TEXT", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP")
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Events", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Events_Users_UserUid",
-                        column: x => x.UserUid,
+                        name: "FK_Events_Users_OrganizerUid",
+                        column: x => x.OrganizerUid,
                         principalTable: "Users",
                         principalColumn: "Uid",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Trips",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "INTEGER", nullable: false),
+                    StartLocation = table.Column<string>(type: "TEXT", nullable: false),
+                    EndLocation = table.Column<string>(type: "TEXT", nullable: false),
+                    ExpectedParticipants = table.Column<int>(type: "INTEGER", nullable: false),
+                    StartLatitude = table.Column<double>(type: "REAL", nullable: true),
+                    StartLongitude = table.Column<double>(type: "REAL", nullable: true),
+                    EndLatitude = table.Column<double>(type: "REAL", nullable: true),
+                    EndLongitude = table.Column<double>(type: "REAL", nullable: true),
+                    CoverImageUrl = table.Column<string>(type: "TEXT", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Trips", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Trips_Events_Id",
+                        column: x => x.Id,
+                        principalTable: "Events",
+                        principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
 
@@ -175,27 +192,98 @@ namespace Crew.Api.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Comments",
+                name: "TripImages",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    EventId = table.Column<int>(type: "INTEGER", nullable: false),
-                    UserUid = table.Column<string>(type: "TEXT", nullable: false),
-                    Content = table.Column<string>(type: "TEXT", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false)
+                    TripId = table.Column<int>(type: "INTEGER", nullable: false),
+                    Url = table.Column<string>(type: "TEXT", nullable: false),
+                    UploaderUid = table.Column<string>(type: "TEXT", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP")
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Comments", x => x.Id);
+                    table.PrimaryKey("PK_TripImages", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Comments_Events_EventId",
-                        column: x => x.EventId,
-                        principalTable: "Events",
+                        name: "FK_TripImages_Trips_TripId",
+                        column: x => x.TripId,
+                        principalTable: "Trips",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "TripRoutes",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    TripId = table.Column<int>(type: "INTEGER", nullable: false),
+                    OrderIndex = table.Column<int>(type: "INTEGER", nullable: false),
+                    Name = table.Column<string>(type: "TEXT", nullable: false),
+                    Latitude = table.Column<double>(type: "REAL", nullable: true),
+                    Longitude = table.Column<double>(type: "REAL", nullable: true),
+                    Description = table.Column<string>(type: "TEXT", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_TripRoutes", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_TripRoutes_Trips_TripId",
+                        column: x => x.TripId,
+                        principalTable: "Trips",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "TripSchedules",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    TripId = table.Column<int>(type: "INTEGER", nullable: false),
+                    Date = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    Content = table.Column<string>(type: "TEXT", nullable: false),
+                    Hotel = table.Column<string>(type: "TEXT", nullable: false),
+                    Meal = table.Column<string>(type: "TEXT", nullable: false),
+                    Note = table.Column<string>(type: "TEXT", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_TripSchedules", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_TripSchedules_Trips_TripId",
+                        column: x => x.TripId,
+                        principalTable: "Trips",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "TripComments",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    TripId = table.Column<int>(type: "INTEGER", nullable: false),
+                    UserUid = table.Column<string>(type: "TEXT", nullable: false),
+                    Content = table.Column<string>(type: "TEXT", nullable: false),
+                    Rating = table.Column<int>(type: "INTEGER", nullable: false, defaultValue: 0),
+                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP")
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_TripComments", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_TripComments_Trips_TripId",
+                        column: x => x.TripId,
+                        principalTable: "Trips",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_Comments_Users_UserUid",
+                        name: "FK_TripComments_Users_UserUid",
                         column: x => x.UserUid,
                         principalTable: "Users",
                         principalColumn: "Uid",
@@ -203,24 +291,24 @@ namespace Crew.Api.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "EventFavorites",
+                name: "TripFavorites",
                 columns: table => new
                 {
-                    EventId = table.Column<int>(type: "INTEGER", nullable: false),
+                    TripId = table.Column<int>(type: "INTEGER", nullable: false),
                     UserUid = table.Column<string>(type: "TEXT", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP")
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_EventFavorites", x => new { x.EventId, x.UserUid });
+                    table.PrimaryKey("PK_TripFavorites", x => new { x.TripId, x.UserUid });
                     table.ForeignKey(
-                        name: "FK_EventFavorites_Events_EventId",
-                        column: x => x.EventId,
-                        principalTable: "Events",
+                        name: "FK_TripFavorites_Trips_TripId",
+                        column: x => x.TripId,
+                        principalTable: "Trips",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_EventFavorites_Users_UserUid",
+                        name: "FK_TripFavorites_Users_UserUid",
                         column: x => x.UserUid,
                         principalTable: "Users",
                         principalColumn: "Uid",
@@ -228,56 +316,31 @@ namespace Crew.Api.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "EventRegistrations",
+                name: "TripParticipants",
                 columns: table => new
                 {
-                    EventId = table.Column<int>(type: "INTEGER", nullable: false),
+                    TripId = table.Column<int>(type: "INTEGER", nullable: false),
                     UserUid = table.Column<string>(type: "TEXT", nullable: false),
-                    RegisteredAt = table.Column<DateTime>(type: "TEXT", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP"),
-                    Status = table.Column<string>(type: "TEXT", maxLength: 32, nullable: false, defaultValue: "pending"),
-                    StatusUpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP")
+                    Role = table.Column<string>(type: "TEXT", nullable: false),
+                    JoinTime = table.Column<DateTime>(type: "TEXT", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP"),
+                    Status = table.Column<string>(type: "TEXT", maxLength: 32, nullable: false, defaultValue: "pending")
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_EventRegistrations", x => new { x.EventId, x.UserUid });
+                    table.PrimaryKey("PK_TripParticipants", x => new { x.TripId, x.UserUid });
                     table.ForeignKey(
-                        name: "FK_EventRegistrations_Events_EventId",
-                        column: x => x.EventId,
-                        principalTable: "Events",
+                        name: "FK_TripParticipants_Trips_TripId",
+                        column: x => x.TripId,
+                        principalTable: "Trips",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_EventRegistrations_Users_UserUid",
+                        name: "FK_TripParticipants_Users_UserUid",
                         column: x => x.UserUid,
                         principalTable: "Users",
                         principalColumn: "Uid",
                         onDelete: ReferentialAction.Cascade);
                 });
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Comments_EventId",
-                table: "Comments",
-                column: "EventId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Comments_UserUid",
-                table: "Comments",
-                column: "UserUid");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_EventFavorites_UserUid",
-                table: "EventFavorites",
-                column: "UserUid");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_EventRegistrations_UserUid",
-                table: "EventRegistrations",
-                column: "UserUid");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Events_UserUid",
-                table: "Events",
-                column: "UserUid");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Plans_Key",
@@ -290,6 +353,47 @@ namespace Crew.Api.Migrations
                 table: "Roles",
                 column: "Key",
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TripComments_TripId",
+                table: "TripComments",
+                column: "TripId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TripComments_UserUid",
+                table: "TripComments",
+                column: "UserUid");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TripFavorites_UserUid",
+                table: "TripFavorites",
+                column: "UserUid");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TripImages_TripId",
+                table: "TripImages",
+                column: "TripId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TripParticipants_UserUid",
+                table: "TripParticipants",
+                column: "UserUid");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TripRoutes_TripId_OrderIndex",
+                table: "TripRoutes",
+                columns: new[] { "TripId", "OrderIndex" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TripSchedules_TripId",
+                table: "TripSchedules",
+                column: "TripId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Events_OrganizerUid",
+                table: "Events",
+                column: "OrganizerUid");
 
             migrationBuilder.CreateIndex(
                 name: "IX_UserFollows_FollowedUid",
@@ -316,13 +420,22 @@ namespace Crew.Api.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "Comments");
+                name: "TripComments");
 
             migrationBuilder.DropTable(
-                name: "EventFavorites");
+                name: "TripFavorites");
 
             migrationBuilder.DropTable(
-                name: "EventRegistrations");
+                name: "TripImages");
+
+            migrationBuilder.DropTable(
+                name: "TripParticipants");
+
+            migrationBuilder.DropTable(
+                name: "TripRoutes");
+
+            migrationBuilder.DropTable(
+                name: "TripSchedules");
 
             migrationBuilder.DropTable(
                 name: "UserFollows");
@@ -332,6 +445,9 @@ namespace Crew.Api.Migrations
 
             migrationBuilder.DropTable(
                 name: "UserSubscriptions");
+
+            migrationBuilder.DropTable(
+                name: "Trips");
 
             migrationBuilder.DropTable(
                 name: "Events");

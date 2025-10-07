@@ -41,223 +41,110 @@ public static class SeedDataService
             context.SaveChanges();
         }
 
-        if (!context.Events.Any())
+        if (!context.Trips.Any())
         {
-            var baseTime = DateTime.UtcNow.Date.AddHours(10);
+            var baseDate = DateTime.UtcNow.Date.AddDays(3);
 
-            var seededEvents = new List<Event>
+            var seededTrips = new List<Trip>
             {
-                CreateEvent(
-                    id: 1,
-                    title: "City Walk",
-                    type: "Outdoor",
-                    status: "Upcoming",
-                    organizer: "Urban Explorers",
-                    location: "Berlin",
-                    description: "A walk through the city center",
-                    expectedParticipants: 40,
-                    startTime: baseTime.AddDays(1),
-                    endTime: baseTime.AddDays(1).AddHours(2),
-                    latitude: 52.520008,
-                    longitude: 13.404954,
-                    imageUrls: new[]
+                CreateTrip(
+                    title: "川西环线自驾",
+                    organizerUid: userUids[1],
+                    startDate: baseDate,
+                    endDate: baseDate.AddDays(5),
+                    startLocation: "成都",
+                    endLocation: "成都",
+                    description: "5 天环线探索川西秘境，适合 4-6 辆车同行。",
+                    status: TripStatuses.Published,
+                    expectedParticipants: 12,
+                    coverImageUrl: "https://images.unsplash.com/photo-1499696010181-ef48a3d9d4c4",
+                    startLatitude: 30.5728,
+                    startLongitude: 104.0668,
+                    endLatitude: 30.5728,
+                    endLongitude: 104.0668,
+                    routes: new[]
                     {
-                        "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee",
-                        "https://images.unsplash.com/photo-1529927066849-a6c9a73b73a0",
-                        "https://images.unsplash.com/photo-1508057198894-247b23fe5ade"
+                        new TripRoute { OrderIndex = 1, Name = "成都集合", Latitude = 30.5728, Longitude = 104.0668, Description = "车友会面及车辆检查" },
+                        new TripRoute { OrderIndex = 2, Name = "四姑娘山", Latitude = 31.0594, Longitude = 102.8790, Description = "观景拍照" },
+                        new TripRoute { OrderIndex = 3, Name = "丹巴藏寨", Latitude = 30.8783, Longitude = 101.8861, Description = "入住民宿体验藏式文化" },
+                        new TripRoute { OrderIndex = 4, Name = "成都返程", Latitude = 30.5728, Longitude = 104.0668, Description = "总结分享" },
                     },
-                    coverImageUrl: "https://i.imgur.com/c7BHAnI.png",
-                    userUid: userUids[0]),
-                CreateEvent(
-                    id: 2,
-                    title: "Museum Tour",
-                    type: "Culture",
-                    status: "Upcoming",
-                    organizer: "Art Lovers Club",
-                    location: "Paris",
-                    description: "A tour of the Louvre Museum",
-                    expectedParticipants: 30,
-                    startTime: baseTime.AddDays(2),
-                    endTime: baseTime.AddDays(2).AddHours(4),
-                    latitude: 48.856614,
-                    longitude: 2.3522219,
-                    imageUrls: new[]
+                    schedules: new[]
                     {
-                        "https://images.unsplash.com/photo-1520975928316-56c6f6f163a4",
-                        "https://images.unsplash.com/photo-1529429617124-aee30bd7e8f9",
-                        "https://images.unsplash.com/photo-1441974231531-c6227db76b6e"
-                    },
-                    coverImageUrl: "https://i.imgur.com/c7BHAnI.png",
-                    userUid: userUids[1]),
-                CreateEvent(
-                    id: 3,
-                    title: "Coffee Meetup",
-                    type: "Networking",
-                    status: "Upcoming",
-                    organizer: "Startup Stories",
-                    location: "Paris",
-                    description: "聊聊创业和生活",
-                    expectedParticipants: 20,
-                    startTime: baseTime.AddDays(3).AddHours(2),
-                    endTime: baseTime.AddDays(3).AddHours(4),
-                    latitude: 48.8566,
-                    longitude: 2.3522,
-                    imageUrls: new[]
-                    {
-                        "https://images.unsplash.com/photo-1519681393784-d120267933ba",
-                        "https://images.unsplash.com/photo-1466978913421-dad2ebd01d17",
-                        "https://images.unsplash.com/photo-1470337458703-46ad1756a187"
-                    },
-                    coverImageUrl: "https://i.imgur.com/c7BHAnI.png",
-                    userUid: userUids[2]),
-                CreateEvent(
-                    id: 4,
-                    title: "Art Gallery Walk",
-                    type: "Culture",
-                    status: "Upcoming",
-                    organizer: "Creative Fridays",
-                    location: "Berlin",
-                    description: "一起探索当代艺术",
-                    expectedParticipants: 25,
-                    startTime: baseTime.AddDays(4).AddHours(1),
-                    endTime: baseTime.AddDays(4).AddHours(3),
-                    latitude: 52.5200,
-                    longitude: 13.4050,
-                    imageUrls: new[]
-                    {
-                        "https://images.unsplash.com/photo-1529101091764-c3526daf38fe",
-                        "https://images.unsplash.com/photo-1487412912498-0447578fcca8",
-                        "https://images.unsplash.com/photo-1496317899792-9d7dbcd928a1"
-                    },
-                    coverImageUrl: "https://i.imgur.com/c7BHAnI.png",
-                    userUid: userUids[3]),
-                CreateEvent(
-                    id: 5,
-                    title: "Hiking Adventure",
-                    type: "Outdoor",
-                    status: "Planning",
-                    organizer: "Alpine Treks",
-                    location: "Zurich",
-                    description: "阿尔卑斯山徒步",
-                    expectedParticipants: 18,
-                    startTime: baseTime.AddDays(7),
-                    endTime: baseTime.AddDays(7).AddHours(6),
-                    latitude: 46.2044,
-                    longitude: 6.1432,
-                    imageUrls: new[]
-                    {
-                        "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429",
-                        "https://images.unsplash.com/photo-1489515217757-5fd1be406fef",
-                        "https://images.unsplash.com/photo-1469474968028-56623f02e42e"
-                    },
-                    coverImageUrl: "https://i.imgur.com/c7BHAnI.png",
-                    userUid: userUids[4]),
-                CreateEvent(
-                    id: 6,
-                    title: "Board Games Night",
-                    type: "Community",
-                    status: "Completed",
-                    organizer: "Tabletop Circle",
-                    location: "Paris",
-                    description: "桌游+社交",
+                        new TripSchedule { Date = baseDate, Content = "成都集合，车辆检查", Hotel = "成都首日晚酒店", Meal = "欢迎晚餐", Note = "晚上自由活动" },
+                        new TripSchedule { Date = baseDate.AddDays(1), Content = "前往四姑娘山徒步", Hotel = "四姑娘山特色客栈", Meal = "藏式火锅", Note = "注意高原反应" },
+                        new TripSchedule { Date = baseDate.AddDays(2), Content = "翻越夹金山前往丹巴", Hotel = "甲居藏寨民宿", Meal = "藏家宴", Note = "体验藏族歌舞" },
+                        new TripSchedule { Date = baseDate.AddDays(4), Content = "返程总结，午餐后返回成都", Hotel = string.Empty, Meal = "回程简餐", Note = "行程结束" },
+                    }),
+                CreateTrip(
+                    title: "海南环岛轻奢之旅",
+                    organizerUid: userUids[2],
+                    startDate: baseDate.AddDays(10),
+                    endDate: baseDate.AddDays(15),
+                    startLocation: "海口",
+                    endLocation: "三亚",
+                    description: "海口出发环岛自驾，精选海景酒店与特色美食。",
+                    status: TripStatuses.Planning,
                     expectedParticipants: 16,
-                    startTime: baseTime.AddDays(-2).AddHours(18),
-                    endTime: baseTime.AddDays(-2).AddHours(22),
-                    latitude: 48.8566,
-                    longitude: 2.3522,
-                    imageUrls: new[]
+                    coverImageUrl: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e",
+                    startLatitude: 20.0440,
+                    startLongitude: 110.1999,
+                    endLatitude: 18.2528,
+                    endLongitude: 109.5119,
+                    routes: new[]
                     {
-                        "https://images.unsplash.com/photo-1472214103451-9374bd1c798e",
-                        "https://images.unsplash.com/photo-1489515217757-5fd1be406fef",
-                        "https://images.unsplash.com/photo-1521737604893-d14cc237f11d"
+                        new TripRoute { OrderIndex = 1, Name = "海口集合", Latitude = 20.0440, Longitude = 110.1999, Description = "交车&欢迎晚宴" },
+                        new TripRoute { OrderIndex = 2, Name = "博鳌东屿岛", Latitude = 19.1480, Longitude = 110.5093, Description = "五星级温泉度假" },
+                        new TripRoute { OrderIndex = 3, Name = "万宁日月湾", Latitude = 18.7995, Longitude = 110.4006, Description = "冲浪体验" },
+                        new TripRoute { OrderIndex = 4, Name = "三亚亚龙湾", Latitude = 18.2293, Longitude = 109.5220, Description = "海景酒店休闲" },
                     },
-                    coverImageUrl: "https://i.imgur.com/c7BHAnI.png",
-                    userUid: userUids[5]),
-                CreateEvent(
-                    id: 7,
-                    title: "Live Jazz Night",
-                    type: "Music",
-                    status: "Upcoming",
-                    organizer: "Blue Note Crew",
-                    location: "Berlin",
-                    description: "一起听爵士",
-                    expectedParticipants: 60,
-                    startTime: baseTime.AddDays(5).AddHours(20),
-                    endTime: baseTime.AddDays(5).AddHours(23),
-                    latitude: 52.520008,
-                    longitude: 13.404954,
-                    imageUrls: Array.Empty<string>(),
-                    coverImageUrl: "https://i.imgur.com/c7BHAnI.png",
-                    userUid: userUids[6]),
-                CreateEvent(
-                    id: 8,
-                    title: "Open Air Concert",
-                    type: "Music",
-                    status: "Upcoming",
-                    organizer: "Milan Sound Collective",
-                    location: "Milan",
-                    description: "一起听音乐",
-                    expectedParticipants: 120,
-                    startTime: baseTime.AddDays(6).AddHours(19),
-                    endTime: baseTime.AddDays(6).AddHours(23),
-                    latitude: 45.4642,
-                    longitude: 9.19,
-                    imageUrls: new[]
+                    schedules: new[]
                     {
-                        "https://images.unsplash.com/photo-1469474968028-56623f02e42e",
-                        "https://images.unsplash.com/photo-1497032628192-86f99bcd76bc",
-                        "https://images.unsplash.com/photo-1506157786151-b8491531f063"
-                    },
-                    coverImageUrl: "https://i.imgur.com/c7BHAnI.png",
-                    userUid: userUids[7]),
-                CreateEvent(
-                    id: 9,
-                    title: "Morning Run Club",
-                    type: "Sports",
-                    status: "Upcoming",
-                    organizer: "Roma Runners",
-                    location: "Rome",
-                    description: "运动",
-                    expectedParticipants: 35,
-                    startTime: baseTime.AddDays(8).AddHours(7),
-                    endTime: baseTime.AddDays(8).AddHours(9),
-                    latitude: 41.9028,
-                    longitude: 12.4964,
-                    imageUrls: new[]
+                        new TripSchedule { Date = baseDate.AddDays(10), Content = "海口集合交车", Hotel = "海口香格里拉", Meal = "欢迎自助餐", Note = "领取行程礼包" },
+                        new TripSchedule { Date = baseDate.AddDays(11), Content = "前往博鳌入住度假酒店", Hotel = "博鳌金海岸", Meal = "海鲜盛宴", Note = "晚间泡温泉" },
+                        new TripSchedule { Date = baseDate.AddDays(12), Content = "经万宁至陵水", Hotel = "清水湾假日酒店", Meal = "黎家风味", Note = "安排冲浪课程" },
+                        new TripSchedule { Date = baseDate.AddDays(14), Content = "抵达三亚自由活动", Hotel = "三亚艾迪逊酒店", Meal = "海边烧烤", Note = "可选深潜活动" },
+                    }),
+                CreateTrip(
+                    title: "北疆秋色摄影行",
+                    organizerUid: userUids[3],
+                    startDate: baseDate.AddDays(20),
+                    endDate: baseDate.AddDays(27),
+                    startLocation: "乌鲁木齐",
+                    endLocation: "乌鲁木齐",
+                    description: "秋日北疆摄影专线，阿勒泰至喀纳斯金秋美景。",
+                    status: TripStatuses.Published,
+                    expectedParticipants: 10,
+                    coverImageUrl: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee",
+                    startLatitude: 43.8256,
+                    startLongitude: 87.6168,
+                    endLatitude: 43.8256,
+                    endLongitude: 87.6168,
+                    routes: new[]
                     {
-                        "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee",
-                        "https://images.unsplash.com/photo-1482192596544-9eb780fc7f66"
+                        new TripRoute { OrderIndex = 1, Name = "乌鲁木齐集合", Latitude = 43.8256, Longitude = 87.6168, Description = "越野车调试" },
+                        new TripRoute { OrderIndex = 2, Name = "可可托海", Latitude = 47.2011, Longitude = 89.5722, Description = "峡谷日落摄影" },
+                        new TripRoute { OrderIndex = 3, Name = "禾木村", Latitude = 47.0196, Longitude = 86.4189, Description = "日出拍摄白桦林" },
+                        new TripRoute { OrderIndex = 4, Name = "喀纳斯湖", Latitude = 48.9980, Longitude = 87.3650, Description = "金色湖畔徒步" },
+                        new TripRoute { OrderIndex = 5, Name = "乌鲁木齐返程", Latitude = 43.8256, Longitude = 87.6168, Description = "分享交流" },
                     },
-                    coverImageUrl: "https://i.imgur.com/c7BHAnI.png",
-                    userUid: userUids[0])
+                    schedules: new[]
+                    {
+                        new TripSchedule { Date = baseDate.AddDays(20), Content = "乌鲁木齐集合办理手续", Hotel = "乌鲁木齐君悦酒店", Meal = "新疆手抓饭", Note = "讲解安全事项" },
+                        new TripSchedule { Date = baseDate.AddDays(21), Content = "驱车前往可可托海", Hotel = "可可托海度假山庄", Meal = "哈萨克烤全羊", Note = "傍晚拍摄日落" },
+                        new TripSchedule { Date = baseDate.AddDays(23), Content = "途经布尔津到禾木", Hotel = "禾木小木屋", Meal = "图瓦家宴", Note = "安排马队体验" },
+                        new TripSchedule { Date = baseDate.AddDays(25), Content = "喀纳斯湖自由创作", Hotel = "喀纳斯宾馆", Meal = "当地特色餐", Note = "夜间星空摄影" },
+                        new TripSchedule { Date = baseDate.AddDays(27), Content = "返程总结分享", Hotel = string.Empty, Meal = "送机早餐", Note = "行程圆满结束" },
+                    })
             };
 
-            context.Events.AddRange(seededEvents);
+            context.Trips.AddRange(seededTrips);
             context.SaveChanges();
 
-            var organizerUids = seededEvents
-                .Select(e => e.UserUid)
+            var organizerUids = seededTrips
+                .Select(t => t.OrganizerUid)
                 .Distinct(StringComparer.Ordinal)
                 .ToList();
-
-            if (organizerUids.Count > 0)
-            {
-                var organizers = context.Users
-                    .Where(user => organizerUids.Contains(user.Uid))
-                    .ToList();
-
-                if (organizers.Count > 0)
-                {
-                    foreach (var organizer in organizers)
-                    {
-                        organizer.IdentityLabel = UserIdentityLabels.Organizer;
-                    }
-
-                    context.SaveChanges();
-                }
-            }
-        }
-
         if (!context.Roles.Any())
         {
             var roles = new List<Role>
@@ -382,66 +269,77 @@ public static class SeedDataService
 
     }
 
-    private static Event CreateEvent(
-        int id,
+    private static Trip CreateTrip(
         string title,
-        string type,
-        string status,
-        string organizer,
-        string location,
+        string organizerUid,
+        DateTime startDate,
+        DateTime endDate,
+        string startLocation,
+        string endLocation,
         string description,
+        string status,
         int expectedParticipants,
-        DateTime startTime,
-        DateTime endTime,
-        double latitude,
-        double longitude,
-        IEnumerable<string> imageUrls,
         string coverImageUrl,
-        string userUid)
+        double? startLatitude,
+        double? startLongitude,
+        double? endLatitude,
+        double? endLongitude,
+        IEnumerable<TripRoute> routes,
+        IEnumerable<TripSchedule> schedules)
     {
-        var images = imageUrls?
-            .Where(url => !string.IsNullOrWhiteSpace(url))
-            .Select(url => url.Trim())
-            .Take(5)
-            .ToList() ?? new List<string>();
+        var normalizedStatus = !string.IsNullOrWhiteSpace(status) && TripStatuses.IsValid(status)
+            ? status.Trim()
+            : TripStatuses.Planning;
 
-        var cover = !string.IsNullOrWhiteSpace(coverImageUrl)
-            ? coverImageUrl.Trim()
-            : images.FirstOrDefault() ?? string.Empty;
+        if (endDate < startDate)
+        {
+            endDate = startDate;
+        }
 
-        var createdAt = startTime.AddDays(-7);
+        var createdAt = startDate.AddDays(-7);
         var lastUpdated = createdAt.AddDays(2);
         if (lastUpdated < createdAt)
         {
             lastUpdated = createdAt;
         }
 
-        if (endTime < startTime)
+        return new Trip
         {
-            endTime = startTime;
-        }
-
-        return new Event
-        {
-            Id = id,
             Title = title,
-            Type = type,
-            Status = status,
-            Organizer = organizer,
-            Location = location,
+            OrganizerUid = organizerUid,
+            StartDate = startDate,
+            EndDate = endDate,
+            StartLocation = startLocation,
+            EndLocation = endLocation,
             Description = description,
+            Status = normalizedStatus,
             ExpectedParticipants = Math.Max(0, expectedParticipants),
-            StartTime = startTime,
-            EndTime = endTime,
             CreatedAt = createdAt,
             LastUpdated = lastUpdated,
-            Latitude = latitude,
-            Longitude = longitude,
-            ImageUrls = images,
-            CoverImageUrl = cover,
-            UserUid = userUid
+            StartLatitude = startLatitude,
+            StartLongitude = startLongitude,
+            EndLatitude = endLatitude,
+            EndLongitude = endLongitude,
+            CoverImageUrl = string.IsNullOrWhiteSpace(coverImageUrl) ? string.Empty : coverImageUrl.Trim(),
+            Routes = routes?.OrderBy(r => r.OrderIndex).Select(r => new TripRoute
+            {
+                OrderIndex = r.OrderIndex,
+                Name = r.Name,
+                Latitude = r.Latitude,
+                Longitude = r.Longitude,
+                Description = r.Description
+            }).ToList() ?? new List<TripRoute>(),
+            Schedules = schedules?.OrderBy(s => s.Date).Select(s => new TripSchedule
+            {
+                Date = s.Date,
+                Content = s.Content,
+                Hotel = s.Hotel,
+                Meal = s.Meal,
+                Note = s.Note
+            }).ToList() ?? new List<TripSchedule>(),
         };
     }
+
 
     private static UserAccount CreateUser(string uid, string email, string userName, string displayName)
     {
