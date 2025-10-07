@@ -33,6 +33,9 @@ public class UserAccount
     [MaxLength(32)]
     public string Status { get; set; } = UserStatuses.Active;
 
+    [MaxLength(32)]
+    public string IdentityLabel { get; set; } = UserIdentityLabels.Visitor;
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     public DateTime? UpdatedAt { get; set; }
@@ -50,10 +53,25 @@ public class UserAccount
 
     public ICollection<UserFollow> Following { get; set; } = new List<UserFollow>();
     public ICollection<EventFavorite> FavoriteEvents { get; set; } = new List<EventFavorite>();
+    public ICollection<EventRegistration> EventRegistrations { get; set; } = new List<EventRegistration>();
 }
 
 public static class UserStatuses
 {
     public const string Active = "active";
     public const string Suspended = "suspended";
+}
+
+public static class UserIdentityLabels
+{
+    public const string Visitor = "游客";
+    public const string Participant = "participant";
+    public const string Organizer = "组织者";
+
+    public static readonly IReadOnlySet<string> All = new HashSet<string>(StringComparer.Ordinal)
+    {
+        Visitor,
+        Participant,
+        Organizer,
+    };
 }
