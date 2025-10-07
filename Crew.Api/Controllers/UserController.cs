@@ -59,7 +59,7 @@ public class UserController : ControllerBase
 
         return new LoginDetail
         {
-            FirebaseId = firebaseId ?? user.Uid,
+            UID = firebaseId ?? user.Uid,
             Email = user.Email,
             AspNetIdentityId = user.Uid,
             RespondedAt = DateTime.Now,

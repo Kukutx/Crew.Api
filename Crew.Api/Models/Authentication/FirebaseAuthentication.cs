@@ -42,8 +42,8 @@ public class Token
 
 public class LoginDetail
 {
-    public string FirebaseId { get; set; }
-    public string AspNetIdentityId { get; set; }
-    public string Email { get; set; }
+    public required string UID { get; set; }
+    public required string AspNetIdentityId { get; set; }
+    public required string Email { get; set; }
     public DateTime RespondedAt { get; set; }
 }
