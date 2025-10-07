@@ -2,6 +2,7 @@ using Crew.Api.Data;
 using Crew.Api.Data.DbContexts;
 using Crew.Api.Models;
 using Crew.Api.Security;
+using System.Collections.Generic;
 using System.Linq;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -32,7 +33,12 @@ public class UsersController : ControllerBase
             .OrderBy(u => u.UserName)
             .ToListAsync(cancellationToken);
 
-        return Ok(users.Select(MapToResponse));
+        var (followerCounts, followingCounts) = await GetFollowCountsAsync(users.Select(u => u.Uid), cancellationToken);
+
+        return Ok(users.Select(u => MapToResponse(
+            u,
+            GetFollowCount(followerCounts, u.Uid),
+            GetFollowCount(followingCounts, u.Uid))));
     }
 
     [HttpGet("{uid}")]
@@ -51,7 +57,12 @@ public class UsersController : ControllerBase
             return NotFound();
         }
 
-        return Ok(MapToResponse(user));
+        var (followerCounts, followingCounts) = await GetFollowCountsAsync(new[] { user.Uid }, cancellationToken);
+
+        return Ok(MapToResponse(
+            user,
+            GetFollowCount(followerCounts, user.Uid),
+            GetFollowCount(followingCounts, user.Uid)));
     }
 
     [HttpPost("ensure")]
@@ -146,7 +157,12 @@ public class UsersController : ControllerBase
 
         await _context.SaveChangesAsync(cancellationToken);
 
-        return Ok(MapToResponse(user));
+        var (followerCounts, followingCounts) = await GetFollowCountsAsync(new[] { user.Uid }, cancellationToken);
+
+        return Ok(MapToResponse(
+            user,
+            GetFollowCount(followerCounts, user.Uid),
+            GetFollowCount(followingCounts, user.Uid)));
     }
 
     [HttpDelete("{uid}")]
@@ -216,7 +232,39 @@ public class UsersController : ControllerBase
         });
     }
 
-    private static UserAccountResponse MapToResponse(UserAccount user)
+    private async Task<(Dictionary<string, int> followerCounts, Dictionary<string, int> followingCounts)> GetFollowCountsAsync(
+        IEnumerable<string> uids,
+        CancellationToken cancellationToken)
+    {
+        var uidList = uids
+            .Where(uid => !string.IsNullOrWhiteSpace(uid))
+            .Distinct()
+            .ToList();
+
+        if (uidList.Count == 0)
+        {
+            return (new Dictionary<string, int>(), new Dictionary<string, int>());
+        }
+
+        var followerCounts = await _context.UserFollows
+            .Where(f => uidList.Contains(f.FollowedUid))
+            .GroupBy(f => f.FollowedUid)
+            .Select(g => new { Uid = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.Uid, x => x.Count, cancellationToken);
+
+        var followingCounts = await _context.UserFollows
+            .Where(f => uidList.Contains(f.FollowerUid))
+            .GroupBy(f => f.FollowerUid)
+            .Select(g => new { Uid = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.Uid, x => x.Count, cancellationToken);
+
+        return (followerCounts, followingCounts);
+    }
+
+    private static int GetFollowCount(IReadOnlyDictionary<string, int> counts, string uid)
+        => counts.TryGetValue(uid, out var count) ? count : 0;
+
+    private static UserAccountResponse MapToResponse(UserAccount user, int followerCount, int followingCount)
         => new(
             user.Uid,
             user.Email,
@@ -228,6 +276,8 @@ public class UsersController : ControllerBase
             user.IdentityLabel,
             user.CreatedAt,
             user.UpdatedAt,
+            followerCount,
+            followingCount,
             user.Roles
                 .Where(r => r.Role != null)
                 .Select(r => new RoleAssignmentResponse(r.Role!.Key, r.Role.DisplayName, r.GrantedAt))
@@ -258,6 +308,8 @@ public class UsersController : ControllerBase
         string IdentityLabel,
         DateTime CreatedAt,
         DateTime? UpdatedAt,
+        int FollowerCount,
+        int FollowingCount,
         IReadOnlyCollection<RoleAssignmentResponse> Roles,
         IReadOnlyCollection<SubscriptionResponse> Subscriptions);
 
