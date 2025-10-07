@@ -55,6 +55,7 @@ namespace Crew.Api.Migrations
                     AvatarUrl = table.Column<string>(type: "TEXT", maxLength: 512, nullable: false),
                     CoverImageUrl = table.Column<string>(type: "TEXT", maxLength: 512, nullable: false),
                     Status = table.Column<string>(type: "TEXT", maxLength: 32, nullable: false),
+                    IdentityLabel = table.Column<string>(type: "TEXT", maxLength: 32, nullable: false, defaultValue: "游客"),
                     CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP"),
                     UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: true)
                 },
@@ -226,6 +227,33 @@ namespace Crew.Api.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "EventRegistrations",
+                columns: table => new
+                {
+                    EventId = table.Column<int>(type: "INTEGER", nullable: false),
+                    UserUid = table.Column<string>(type: "TEXT", nullable: false),
+                    RegisteredAt = table.Column<DateTime>(type: "TEXT", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP"),
+                    Status = table.Column<string>(type: "TEXT", maxLength: 32, nullable: false, defaultValue: "pending"),
+                    StatusUpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP")
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_EventRegistrations", x => new { x.EventId, x.UserUid });
+                    table.ForeignKey(
+                        name: "FK_EventRegistrations_Events_EventId",
+                        column: x => x.EventId,
+                        principalTable: "Events",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_EventRegistrations_Users_UserUid",
+                        column: x => x.UserUid,
+                        principalTable: "Users",
+                        principalColumn: "Uid",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
             migrationBuilder.CreateIndex(
                 name: "IX_Comments_EventId",
                 table: "Comments",
@@ -239,6 +267,11 @@ namespace Crew.Api.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_EventFavorites_UserUid",
                 table: "EventFavorites",
+                column: "UserUid");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_EventRegistrations_UserUid",
+                table: "EventRegistrations",
                 column: "UserUid");
 
             migrationBuilder.CreateIndex(
@@ -287,6 +320,9 @@ namespace Crew.Api.Migrations
 
             migrationBuilder.DropTable(
                 name: "EventFavorites");
+
+            migrationBuilder.DropTable(
+                name: "EventRegistrations");
 
             migrationBuilder.DropTable(
                 name: "UserFollows");

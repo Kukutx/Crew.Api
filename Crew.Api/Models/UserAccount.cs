@@ -65,7 +65,7 @@ public static class UserStatuses
 public static class UserIdentityLabels
 {
     public const string Visitor = "游客";
-    public const string Participant = "participant";
+    public const string Participant = "参与者";
     public const string Organizer = "组织者";
 
     public static readonly IReadOnlySet<string> All = new HashSet<string>(StringComparer.Ordinal)

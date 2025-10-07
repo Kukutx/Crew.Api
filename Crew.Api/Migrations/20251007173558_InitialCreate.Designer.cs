@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Crew.Api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20251005112603_InitialCreate")]
+    [Migration("20251007173558_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -139,6 +139,38 @@ namespace Crew.Api.Migrations
                     b.ToTable("EventFavorites", (string)null);
                 });
 
+            modelBuilder.Entity("Crew.Api.Models.EventRegistration", b =>
+                {
+                    b.Property<int>("EventId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("UserUid")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("RegisteredAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(32)
+                        .HasColumnType("TEXT")
+                        .HasDefaultValue("pending");
+
+                    b.Property<DateTime>("StatusUpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.HasKey("EventId", "UserUid");
+
+                    b.HasIndex("UserUid");
+
+                    b.ToTable("EventRegistrations", (string)null);
+                });
+
             modelBuilder.Entity("Crew.Api.Models.Role", b =>
                 {
                     b.Property<int>("Id")
@@ -232,6 +264,13 @@ namespace Crew.Api.Migrations
                         .IsRequired()
                         .HasMaxLength(256)
                         .HasColumnType("TEXT");
+
+                    b.Property<string>("IdentityLabel")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(32)
+                        .HasColumnType("TEXT")
+                        .HasDefaultValue("游客");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -363,6 +402,25 @@ namespace Crew.Api.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Crew.Api.Models.EventRegistration", b =>
+                {
+                    b.HasOne("Crew.Api.Entities.Event", "Event")
+                        .WithMany("Registrations")
+                        .HasForeignKey("EventId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Crew.Api.Models.UserAccount", "User")
+                        .WithMany("EventRegistrations")
+                        .HasForeignKey("UserUid")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Event");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("Crew.Api.Models.UserFollow", b =>
                 {
                     b.HasOne("Crew.Api.Models.UserAccount", "Followed")
@@ -425,6 +483,8 @@ namespace Crew.Api.Migrations
                     b.Navigation("Comments");
 
                     b.Navigation("Favorites");
+
+                    b.Navigation("Registrations");
                 });
 
             modelBuilder.Entity("Crew.Api.Models.Role", b =>
@@ -440,6 +500,8 @@ namespace Crew.Api.Migrations
             modelBuilder.Entity("Crew.Api.Models.UserAccount", b =>
                 {
                     b.Navigation("Comments");
+
+                    b.Navigation("EventRegistrations");
 
                     b.Navigation("Events");
 

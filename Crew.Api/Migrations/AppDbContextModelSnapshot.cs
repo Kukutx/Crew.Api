@@ -151,6 +151,7 @@ namespace Crew.Api.Migrations
 
                     b.Property<string>("Status")
                         .IsRequired()
+                        .ValueGeneratedOnAdd()
                         .HasMaxLength(32)
                         .HasColumnType("TEXT")
                         .HasDefaultValue("pending");
@@ -263,6 +264,7 @@ namespace Crew.Api.Migrations
 
                     b.Property<string>("IdentityLabel")
                         .IsRequired()
+                        .ValueGeneratedOnAdd()
                         .HasMaxLength(32)
                         .HasColumnType("TEXT")
                         .HasDefaultValue("游客");
