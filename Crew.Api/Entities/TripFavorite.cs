@@ -1,14 +1,14 @@
 using System;
-using Crew.Api.Entities;
+using Crew.Api.Models;
 
-namespace Crew.Api.Models;
+namespace Crew.Api.Entities;
 
-public class EventFavorite
+public class TripFavorite
 {
-    public int EventId { get; set; }
+    public int TripId { get; set; }
     public string UserUid { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-    public Event? Event { get; set; }
+    public Trip? Trip { get; set; }
     public UserAccount? User { get; set; }
 }

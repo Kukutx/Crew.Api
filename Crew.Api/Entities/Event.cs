@@ -4,31 +4,38 @@ using Crew.Api.Models;
 
 namespace Crew.Api.Entities;
 
-public class Event
+public abstract class Event
 {
     public int Id { get; set; }
     public string Title { get; set; } = string.Empty;
-    public string Type { get; set; } = string.Empty;
-    public string Status { get; set; } = string.Empty;
-    public string Organizer { get; set; } = string.Empty;
-    public string Location { get; set; } = string.Empty;
+    public string OrganizerUid { get; set; } = string.Empty;
+    public DateTime StartDate { get; set; }
+    public DateTime EndDate { get; set; }
     public string Description { get; set; } = string.Empty;
-    public int ExpectedParticipants { get; set; }
-    public string UserUid { get; set; } = string.Empty;
-
-    public DateTime StartTime { get; set; }
-    public DateTime EndTime { get; set; }
+    public string Status { get; set; } = EventStatuses.Draft;
     public DateTime CreatedAt { get; set; }
     public DateTime LastUpdated { get; set; }
 
-    public double Latitude { get; set; }
-    public double Longitude { get; set; }
+    public UserAccount? Organizer { get; set; }
+}
 
-    public List<string> ImageUrls { get; set; } = new();
-    public string CoverImageUrl { get; set; } = string.Empty;
+public static class EventStatuses
+{
+    public const string Draft = "draft";
+    public const string Planning = "planning";
+    public const string Published = "published";
+    public const string Completed = "completed";
+    public const string Cancelled = "cancelled";
 
-    public UserAccount? User { get; set; }
-    public ICollection<Comment> Comments { get; set; } = new List<Comment>();
-    public ICollection<EventFavorite> Favorites { get; set; } = new List<EventFavorite>();
-    public ICollection<EventRegistration> Registrations { get; set; } = new List<EventRegistration>();
+    public static readonly IReadOnlySet<string> All = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+    {
+        Draft,
+        Planning,
+        Published,
+        Completed,
+        Cancelled,
+    };
+
+    public static bool IsValid(string? value)
+        => !string.IsNullOrWhiteSpace(value) && All.Contains(value.Trim());
 }

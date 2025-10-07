@@ -45,15 +45,15 @@ public class UserAccount
 
     public ICollection<UserSubscription> Subscriptions { get; set; } = new List<UserSubscription>();
 
-    public ICollection<Comment> Comments { get; set; } = new List<Comment>();
+    public ICollection<TripComment> Comments { get; set; } = new List<TripComment>();
 
-    public ICollection<Event> Events { get; set; } = new List<Event>();
+    public ICollection<Event> OrganizedEvents { get; set; } = new List<Event>();
 
     public ICollection<UserFollow> Followers { get; set; } = new List<UserFollow>();
 
     public ICollection<UserFollow> Following { get; set; } = new List<UserFollow>();
-    public ICollection<EventFavorite> FavoriteEvents { get; set; } = new List<EventFavorite>();
-    public ICollection<EventRegistration> EventRegistrations { get; set; } = new List<EventRegistration>();
+    public ICollection<TripFavorite> FavoriteTrips { get; set; } = new List<TripFavorite>();
+    public ICollection<TripParticipant> TripParticipants { get; set; } = new List<TripParticipant>();
 }
 
 public static class UserStatuses
