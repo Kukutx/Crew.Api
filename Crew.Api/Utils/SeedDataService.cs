@@ -433,6 +433,7 @@ public static class SeedDataService
             AvatarUrl = AvatarDefaults.FallbackUrl,
             CoverImageUrl = string.Empty,
             Status = UserStatuses.Active,
+            IdentityLabel = UserIdentityLabels.Visitor,
             CreatedAt = DateTime.UtcNow
         };
     }

@@ -68,6 +68,11 @@ public class UsersController : ControllerBase
             return BadRequest("uid is required");
         }
 
+        if (!TryNormalizeIdentityLabel(request.IdentityLabel, out var normalizedIdentityLabel, out var identityLabelError))
+        {
+            return BadRequest(identityLabelError);
+        }
+
         var normalizedUid = request.Uid.Trim();
         var user = await _context.Users
             .Include(u => u.Roles)
@@ -100,6 +105,7 @@ public class UsersController : ControllerBase
                 AvatarUrl = AvatarDefaults.Normalize(request.AvatarUrl),
                 CreatedAt = DateTime.UtcNow,
                 Status = UserStatuses.Active,
+                IdentityLabel = normalizedIdentityLabel ?? UserIdentityLabels.Visitor,
             };
 
             await ApplyDefaultRoleAsync(user, cancellationToken);
@@ -130,6 +136,11 @@ public class UsersController : ControllerBase
             user.AvatarUrl = AvatarDefaults.Normalize(string.IsNullOrWhiteSpace(request.AvatarUrl)
                 ? user.AvatarUrl
                 : request.AvatarUrl);
+
+            if (!string.IsNullOrWhiteSpace(request.IdentityLabel) && normalizedIdentityLabel is not null)
+            {
+                user.IdentityLabel = normalizedIdentityLabel;
+            }
             user.UpdatedAt = DateTime.UtcNow;
         }
 
@@ -214,6 +225,7 @@ public class UsersController : ControllerBase
             user.AvatarUrl,
             user.CoverImageUrl,
             user.Status,
+            user.IdentityLabel,
             user.CreatedAt,
             user.UpdatedAt,
             user.Roles
@@ -232,7 +244,8 @@ public class UsersController : ControllerBase
         string? Email,
         string? UserName,
         string? DisplayName,
-        string? AvatarUrl);
+        string? AvatarUrl,
+        string? IdentityLabel = null);
 
     public record UserAccountResponse(
         string Uid,
@@ -242,6 +255,7 @@ public class UsersController : ControllerBase
         string AvatarUrl,
         string CoverImageUrl,
         string Status,
+        string IdentityLabel,
         DateTime CreatedAt,
         DateTime? UpdatedAt,
         IReadOnlyCollection<RoleAssignmentResponse> Roles,
@@ -250,4 +264,26 @@ public class UsersController : ControllerBase
     public record RoleAssignmentResponse(string Key, string DisplayName, DateTime GrantedAt);
 
     public record SubscriptionResponse(string PlanKey, string PlanName, DateTime AssignedAt, DateTime? ExpiresAt);
+
+    private static bool TryNormalizeIdentityLabel(string? identityLabel, out string? normalized, out string? errorMessage)
+    {
+        if (string.IsNullOrWhiteSpace(identityLabel))
+        {
+            normalized = null;
+            errorMessage = null;
+            return true;
+        }
+
+        var trimmed = identityLabel.Trim();
+        if (!UserIdentityLabels.All.Contains(trimmed))
+        {
+            normalized = null;
+            errorMessage = $"identity label must be one of: {string.Join(" / ", UserIdentityLabels.All)}.";
+            return false;
+        }
+
+        normalized = trimmed;
+        errorMessage = null;
+        return true;
+    }
 }
