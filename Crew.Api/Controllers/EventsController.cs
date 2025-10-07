@@ -18,7 +18,7 @@ namespace Crew.Api.Controllers;
 [Route("api/[controller]")]
 public class EventsController : ControllerBase
 {
-    private const int MaxParticipants = 5;
+    private const int MaxParticipants = 7;
     private readonly AppDbContext _context;
     private readonly IAuthorizationService _authorizationService;
 

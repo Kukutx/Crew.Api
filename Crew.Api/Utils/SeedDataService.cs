@@ -419,7 +419,7 @@ public static class SeedDataService
             Status = status,
             Location = location,
             Description = description,
-            Participants = Math.Max(0, Math.Min(5, participants)),
+            Participants = Math.Max(0, Math.Min(7, participants)),
             StartTime = startTime,
             EndTime = endTime,
             CreatedAt = createdAt,
