@@ -18,6 +18,7 @@ namespace Crew.Api.Controllers;
 [Route("api/[controller]")]
 public class EventsController : ControllerBase
 {
+    private const int MaxParticipants = 5;
     private readonly AppDbContext _context;
     private readonly IAuthorizationService _authorizationService;
 
@@ -147,6 +148,11 @@ public class EventsController : ControllerBase
         var existing = await _context.EventRegistrations.FindAsync(new object?[] { id, currentUid }, cancellationToken);
         if (existing is null)
         {
+            if (@event.Participants >= MaxParticipants)
+            {
+                return BadRequest($"Event is full. Maximum participants: {MaxParticipants}.");
+            }
+
             var now = DateTime.UtcNow;
             existing = new EventRegistration
             {
@@ -157,6 +163,7 @@ public class EventsController : ControllerBase
                 StatusUpdatedAt = now,
             };
             _context.EventRegistrations.Add(existing);
+            @event.Participants = Math.Min(MaxParticipants, @event.Participants + 1);
         }
 
         var user = await _context.Users.FindAsync(new object?[] { currentUid }, cancellationToken);
@@ -270,6 +277,10 @@ public class EventsController : ControllerBase
         }
 
         _context.EventRegistrations.Remove(registration);
+        if (@event.Participants > 0)
+        {
+            @event.Participants -= 1;
+        }
         await _context.SaveChangesAsync(cancellationToken);
         return NoContent();
     }
@@ -492,10 +503,9 @@ public class EventsController : ControllerBase
                 Title = e.Title,
                 Type = e.Type,
                 Status = e.Status,
-                Organizer = e.Organizer,
                 Location = e.Location,
                 Description = e.Description,
-                ExpectedParticipants = e.ExpectedParticipants,
+                Participants = e.Participants,
                 UserUid = e.UserUid,
                 StartTime = e.StartTime,
                 EndTime = e.EndTime,
@@ -516,7 +526,6 @@ public class EventsController : ControllerBase
         eventToSanitize.Title = eventToSanitize.Title?.Trim() ?? string.Empty;
         eventToSanitize.Type = eventToSanitize.Type?.Trim() ?? string.Empty;
         eventToSanitize.Status = eventToSanitize.Status?.Trim() ?? string.Empty;
-        eventToSanitize.Organizer = eventToSanitize.Organizer?.Trim() ?? string.Empty;
         eventToSanitize.Location = eventToSanitize.Location?.Trim() ?? string.Empty;
         eventToSanitize.Description = eventToSanitize.Description?.Trim() ?? string.Empty;
         eventToSanitize.CoverImageUrl = eventToSanitize.CoverImageUrl?.Trim() ?? string.Empty;
@@ -528,10 +537,12 @@ public class EventsController : ControllerBase
         target.Title = source.Title;
         target.Type = source.Type;
         target.Status = source.Status;
-        target.Organizer = source.Organizer;
         target.Location = source.Location;
         target.Description = source.Description;
-        target.ExpectedParticipants = Math.Max(0, source.ExpectedParticipants);
+        if (!isUpdate)
+        {
+            target.Participants = Math.Max(0, Math.Min(MaxParticipants, source.Participants));
+        }
 
         if (isUpdate)
         {
@@ -573,10 +584,9 @@ public class EventsController : ControllerBase
             Title = entity.Title,
             Type = entity.Type,
             Status = entity.Status,
-            Organizer = entity.Organizer,
             Location = entity.Location,
             Description = entity.Description,
-            ExpectedParticipants = entity.ExpectedParticipants,
+            Participants = entity.Participants,
             UserUid = entity.UserUid,
             StartTime = entity.StartTime,
             EndTime = entity.EndTime,

@@ -37,7 +37,7 @@ namespace Crew.Api.Migrations
                     b.Property<DateTime>("EndTime")
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("ExpectedParticipants")
+                    b.Property<int>("Participants")
                         .HasColumnType("INTEGER");
 
                     b.PrimitiveCollection<string>("ImageUrls")
@@ -57,9 +57,6 @@ namespace Crew.Api.Migrations
                     b.Property<double>("Longitude")
                         .HasColumnType("REAL");
 
-                    b.Property<string>("Organizer")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
 
                     b.Property<DateTime>("StartTime")
                         .HasColumnType("TEXT");

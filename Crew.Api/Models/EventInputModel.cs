@@ -8,10 +8,9 @@ public class EventInputModel
     public string? Title { get; set; }
     public string? Type { get; set; }
     public string? Status { get; set; }
-    public string? Organizer { get; set; }
     public string? Location { get; set; }
     public string? Description { get; set; }
-    public int ExpectedParticipants { get; set; }
+    public int Participants { get; set; }
 
     public DateTime? StartTime { get; set; }
     public DateTime? EndTime { get; set; }

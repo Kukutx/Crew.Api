@@ -10,10 +10,9 @@ public class Event
     public string Title { get; set; } = string.Empty;
     public string Type { get; set; } = string.Empty;
     public string Status { get; set; } = string.Empty;
-    public string Organizer { get; set; } = string.Empty;
     public string Location { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
-    public int ExpectedParticipants { get; set; }
+    public int Participants { get; set; }
     public string UserUid { get; set; } = string.Empty;
 
     public DateTime StartTime { get; set; }

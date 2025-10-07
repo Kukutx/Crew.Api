@@ -22,7 +22,6 @@ public class UsersController : ControllerBase
     }
 
     [HttpGet]
-    [Authorize]
     public async Task<ActionResult<IEnumerable<UserAccountResponse>>> GetAll(CancellationToken cancellationToken)
     {
         var users = await GetUserQuery()
@@ -38,7 +37,6 @@ public class UsersController : ControllerBase
     }
 
     [HttpGet("{uid}")]
-    [Authorize]
     public async Task<ActionResult<UserAccountResponse>> GetByUid(string uid, CancellationToken cancellationToken)
     {
         var user = await GetUserQuery()
