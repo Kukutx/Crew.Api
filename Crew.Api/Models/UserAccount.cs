@@ -53,6 +53,7 @@ public class UserAccount
 
     public ICollection<UserFollow> Following { get; set; } = new List<UserFollow>();
     public ICollection<EventFavorite> FavoriteEvents { get; set; } = new List<EventFavorite>();
+    public ICollection<EventRegistration> EventRegistrations { get; set; } = new List<EventRegistration>();
 }
 
 public static class UserStatuses
@@ -64,13 +65,13 @@ public static class UserStatuses
 public static class UserIdentityLabels
 {
     public const string Visitor = "游客";
-    public const string Registrant = "participant";
+    public const string Participant = "participant";
     public const string Organizer = "组织者";
 
     public static readonly IReadOnlySet<string> All = new HashSet<string>(StringComparer.Ordinal)
     {
         Visitor,
-        Registrant,
+        Participant,
         Organizer,
     };
 }

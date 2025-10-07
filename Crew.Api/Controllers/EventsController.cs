@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading;
+using System.Threading.Tasks;
 using Crew.Api.Data.DbContexts;
 using Crew.Api.Entities;
 using Crew.Api.Models;
@@ -59,6 +60,12 @@ public class EventsController : ControllerBase
         ApplyDtoToEntity(newEvent, entity, isUpdate: false);
 
         entity.UserUid = currentUid;
+
+        var creator = await _context.Users.FindAsync(new object?[] { currentUid }, cancellationToken);
+        if (creator is not null && !string.Equals(creator.IdentityLabel, UserIdentityLabels.Organizer, StringComparison.Ordinal))
+        {
+            creator.IdentityLabel = UserIdentityLabels.Organizer;
+        }
 
         if (entity.StartTime == default)
         {
@@ -119,6 +126,190 @@ public class EventsController : ControllerBase
 
         await _context.SaveChangesAsync(cancellationToken);
         return NoContent();
+    }
+
+    [HttpPost("{id}/registrations")]
+    [Authorize]
+    public async Task<IActionResult> RegisterForEvent(int id, CancellationToken cancellationToken)
+    {
+        var currentUid = GetCurrentUserUid();
+        if (string.IsNullOrWhiteSpace(currentUid))
+        {
+            return Forbid();
+        }
+
+        var @event = await _context.Events.FindAsync(new object?[] { id }, cancellationToken);
+        if (@event is null)
+        {
+            return NotFound();
+        }
+
+        var existing = await _context.EventRegistrations.FindAsync(new object?[] { id, currentUid }, cancellationToken);
+        if (existing is null)
+        {
+            var now = DateTime.UtcNow;
+            existing = new EventRegistration
+            {
+                EventId = id,
+                UserUid = currentUid,
+                RegisteredAt = now,
+                Status = EventRegistrationStatuses.Pending,
+                StatusUpdatedAt = now,
+            };
+            _context.EventRegistrations.Add(existing);
+        }
+
+        var user = await _context.Users.FindAsync(new object?[] { currentUid }, cancellationToken);
+        if (user is not null && !string.Equals(user.IdentityLabel, UserIdentityLabels.Organizer, StringComparison.Ordinal))
+        {
+            user.IdentityLabel = UserIdentityLabels.Participant;
+        }
+
+        await _context.SaveChangesAsync(cancellationToken);
+        return NoContent();
+    }
+
+    [HttpPatch("{id}/registrations/{userUid}")]
+    [Authorize]
+    public async Task<IActionResult> UpdateRegistration(int id, string userUid, UpdateEventRegistrationRequest request, CancellationToken cancellationToken)
+    {
+        if (request is null || string.IsNullOrWhiteSpace(request.Status))
+        {
+            return BadRequest("status is required.");
+        }
+
+        if (string.IsNullOrWhiteSpace(userUid))
+        {
+            return BadRequest("user id is required.");
+        }
+
+        var normalizedUserUid = userUid.Trim();
+
+        var normalizedStatus = request.Status.Trim().ToLowerInvariant();
+        if (!EventRegistrationStatuses.IsValid(normalizedStatus))
+        {
+            return BadRequest($"status must be one of: {string.Join(" / ", EventRegistrationStatuses.All)}.");
+        }
+
+        var @event = await _context.Events.FindAsync(new object?[] { id }, cancellationToken);
+        if (@event is null)
+        {
+            return NotFound();
+        }
+
+        var currentUid = GetCurrentUserUid();
+        if (string.IsNullOrWhiteSpace(currentUid))
+        {
+            return Forbid();
+        }
+
+        if (!string.Equals(@event.UserUid, currentUid, StringComparison.Ordinal))
+        {
+            var authorizationResult = await _authorizationService.AuthorizeAsync(User, null, AuthorizationPolicies.RequireAdmin);
+            if (!authorizationResult.Succeeded)
+            {
+                return Forbid();
+            }
+        }
+
+        var registration = await _context.EventRegistrations.FindAsync(new object?[] { id, normalizedUserUid }, cancellationToken);
+        if (registration is null)
+        {
+            return NotFound();
+        }
+
+        if (!string.Equals(registration.Status, normalizedStatus, StringComparison.Ordinal))
+        {
+            registration.Status = normalizedStatus;
+            registration.StatusUpdatedAt = DateTime.UtcNow;
+        }
+
+        await _context.SaveChangesAsync(cancellationToken);
+        return NoContent();
+    }
+
+    [HttpDelete("{id}/registrations/{userUid}")]
+    [Authorize]
+    public async Task<IActionResult> DeleteRegistration(int id, string userUid, CancellationToken cancellationToken)
+    {
+        var @event = await _context.Events.FindAsync(new object?[] { id }, cancellationToken);
+        if (@event is null)
+        {
+            return NotFound();
+        }
+
+        if (string.IsNullOrWhiteSpace(userUid))
+        {
+            return BadRequest("user id is required.");
+        }
+
+        var normalizedUserUid = userUid.Trim();
+
+        var registration = await _context.EventRegistrations.FindAsync(new object?[] { id, normalizedUserUid }, cancellationToken);
+        if (registration is null)
+        {
+            return NoContent();
+        }
+
+        var currentUid = GetCurrentUserUid();
+        if (string.IsNullOrWhiteSpace(currentUid))
+        {
+            return Forbid();
+        }
+
+        var isSelf = string.Equals(registration.UserUid, currentUid, StringComparison.Ordinal);
+        var isOrganizer = string.Equals(@event.UserUid, currentUid, StringComparison.Ordinal);
+
+        if (!isSelf && !isOrganizer)
+        {
+            var authorizationResult = await _authorizationService.AuthorizeAsync(User, null, AuthorizationPolicies.RequireAdmin);
+            if (!authorizationResult.Succeeded)
+            {
+                return Forbid();
+            }
+        }
+
+        _context.EventRegistrations.Remove(registration);
+        await _context.SaveChangesAsync(cancellationToken);
+        return NoContent();
+    }
+
+    [HttpGet("{id}/participants")]
+    public async Task<ActionResult<IReadOnlyCollection<EventParticipantResponse>>> GetParticipants(int id, CancellationToken cancellationToken)
+    {
+        var participants = await _context.EventRegistrations
+            .AsNoTracking()
+            .Where(r => r.EventId == id && r.Status == EventRegistrationStatuses.Confirmed)
+            .Join(
+                _context.Users.AsNoTracking(),
+                registration => registration.UserUid,
+                user => user.Uid,
+                (registration, user) => new EventParticipantResponse(
+                    user.Uid,
+                    string.IsNullOrWhiteSpace(user.DisplayName)
+                        ? (string.IsNullOrWhiteSpace(user.UserName)
+                            ? (string.IsNullOrWhiteSpace(user.Email) ? user.Uid : user.Email)
+                            : user.UserName)
+                        : user.DisplayName,
+                    user.AvatarUrl,
+                    registration.RegisteredAt,
+                    registration.StatusUpdatedAt))
+            .OrderByDescending(p => p.StatusUpdatedAt)
+            .ToListAsync(cancellationToken);
+
+        if (participants.Count == 0)
+        {
+            var eventExists = await _context.Events
+                .AsNoTracking()
+                .AnyAsync(e => e.Id == id, cancellationToken);
+
+            if (!eventExists)
+            {
+                return NotFound();
+            }
+        }
+
+        return Ok(participants);
     }
 
     [HttpDelete("{id}")]
@@ -443,3 +634,12 @@ public class EventsController : ControllerBase
     private string? GetCurrentUserUid()
         => (User.FindFirstValue("user_id") ?? User.FindFirstValue(ClaimTypes.NameIdentifier))?.Trim();
 }
+
+public record UpdateEventRegistrationRequest(string Status);
+
+public record EventParticipantResponse(
+    string Uid,
+    string DisplayName,
+    string AvatarUrl,
+    DateTime RegisteredAt,
+    DateTime StatusUpdatedAt);

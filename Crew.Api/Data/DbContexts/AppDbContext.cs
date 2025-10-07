@@ -19,6 +19,7 @@ public class AppDbContext : DbContext
     public DbSet<UserSubscription> UserSubscriptions => Set<UserSubscription>();
     public DbSet<UserFollow> UserFollows => Set<UserFollow>();
     public DbSet<EventFavorite> EventFavorites => Set<EventFavorite>();
+    public DbSet<EventRegistration> EventRegistrations => Set<EventRegistration>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -121,6 +122,29 @@ public class AppDbContext : DbContext
             entity.HasOne(f => f.User)
                 .WithMany(u => u.FavoriteEvents)
                 .HasForeignKey(f => f.UserUid)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<EventRegistration>(entity =>
+        {
+            entity.ToTable("EventRegistrations");
+            entity.HasKey(r => new { r.EventId, r.UserUid });
+            entity.Property(r => r.RegisteredAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(r => r.Status)
+                .HasMaxLength(32)
+                .HasDefaultValue(EventRegistrationStatuses.Pending);
+            entity.Property(r => r.StatusUpdatedAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+            entity.HasOne(r => r.Event)
+                .WithMany(e => e.Registrations)
+                .HasForeignKey(r => r.EventId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(r => r.User)
+                .WithMany(u => u.EventRegistrations)
+                .HasForeignKey(r => r.UserUid)
                 .OnDelete(DeleteBehavior.Cascade);
         });
     }

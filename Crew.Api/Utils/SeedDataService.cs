@@ -234,6 +234,28 @@ public static class SeedDataService
 
             context.Events.AddRange(seededEvents);
             context.SaveChanges();
+
+            var organizerUids = seededEvents
+                .Select(e => e.UserUid)
+                .Distinct(StringComparer.Ordinal)
+                .ToList();
+
+            if (organizerUids.Count > 0)
+            {
+                var organizers = context.Users
+                    .Where(user => organizerUids.Contains(user.Uid))
+                    .ToList();
+
+                if (organizers.Count > 0)
+                {
+                    foreach (var organizer in organizers)
+                    {
+                        organizer.IdentityLabel = UserIdentityLabels.Organizer;
+                    }
+
+                    context.SaveChanges();
+                }
+            }
         }
 
         if (!context.Roles.Any())
