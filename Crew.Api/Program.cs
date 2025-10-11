@@ -18,6 +18,16 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddHttpClient();
 
+// 配置 Google Places API 的 HttpClient
+var apiKey = builder.Configuration["Google:Places:ApiKey"] ?? "";
+builder.Services.AddHttpClient("GooglePlaces", c =>
+{
+    c.BaseAddress = new Uri("https://places.googleapis.com/v1/");
+    c.DefaultRequestHeaders.Add("X-Goog-Api-Key", apiKey);
+    // 统一用 JSON
+    c.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
+});
+
 // 配置 Entity Framework Core数据库连接 和 Identity
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("Default")));
@@ -144,8 +154,6 @@ builder.Services.AddAuthorization(options =>
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 builder.Services.AddEndpointsApiExplorer();
-// 配置 Swagger 以针对 Firebase 进行授权
-const string firebaseGoogleScheme = "firebase-google";
 
 builder.Services.AddSwaggerGen(options =>
 {
