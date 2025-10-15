@@ -54,6 +54,11 @@ public class UserAccount
     public ICollection<UserFollow> Following { get; set; } = new List<UserFollow>();
     public ICollection<EventFavorite> FavoriteEvents { get; set; } = new List<EventFavorite>();
     public ICollection<EventRegistration> EventRegistrations { get; set; } = new List<EventRegistration>();
+
+    public ICollection<TripParticipant> TripParticipations { get; set; } = new List<TripParticipant>();
+    public ICollection<TripFavorite> TripFavorites { get; set; } = new List<TripFavorite>();
+    public ICollection<TripComment> TripComments { get; set; } = new List<TripComment>();
+    public ICollection<TripImage> TripImages { get; set; } = new List<TripImage>();
 }
 
 public static class UserStatuses

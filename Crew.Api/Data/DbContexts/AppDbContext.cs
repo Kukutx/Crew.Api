@@ -20,6 +20,13 @@ public class AppDbContext : DbContext
     public DbSet<UserFollow> UserFollows => Set<UserFollow>();
     public DbSet<EventFavorite> EventFavorites => Set<EventFavorite>();
     public DbSet<EventRegistration> EventRegistrations => Set<EventRegistration>();
+    public DbSet<Trip> Trips => Set<Trip>();
+    public DbSet<TripRoute> TripRoutes => Set<TripRoute>();
+    public DbSet<TripSchedule> TripSchedules => Set<TripSchedule>();
+    public DbSet<TripParticipant> TripParticipants => Set<TripParticipant>();
+    public DbSet<TripComment> TripComments => Set<TripComment>();
+    public DbSet<TripFavorite> TripFavorites => Set<TripFavorite>();
+    public DbSet<TripImage> TripImages => Set<TripImage>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -101,9 +108,139 @@ public class AppDbContext : DbContext
 
         modelBuilder.Entity<Event>(entity =>
         {
+            entity.ToTable("Events");
+
             entity.HasOne(e => e.User)
                 .WithMany(u => u.Events)
                 .HasForeignKey(e => e.UserUid)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<Trip>(entity =>
+        {
+            entity.ToTable("Trips");
+
+            entity.Property(t => t.StartLocation)
+                .HasMaxLength(256);
+            entity.Property(t => t.EndLocation)
+                .HasMaxLength(256);
+            entity.Property(t => t.ItineraryDescription)
+                .HasMaxLength(2048);
+
+            entity.HasMany(t => t.Routes)
+                .WithOne(r => r.Trip!)
+                .HasForeignKey(r => r.TripId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasMany(t => t.Schedules)
+                .WithOne(s => s.Trip!)
+                .HasForeignKey(s => s.TripId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasMany(t => t.Participants)
+                .WithOne(p => p.Trip!)
+                .HasForeignKey(p => p.TripId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasMany(t => t.TripComments)
+                .WithOne(c => c.Trip!)
+                .HasForeignKey(c => c.TripId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasMany(t => t.TripFavorites)
+                .WithOne(f => f.Trip!)
+                .HasForeignKey(f => f.TripId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasMany(t => t.TripImages)
+                .WithOne(i => i.Trip!)
+                .HasForeignKey(i => i.TripId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<TripRoute>(entity =>
+        {
+            entity.ToTable("TripRoutes");
+            entity.HasIndex(r => new { r.TripId, r.OrderIndex }).IsUnique();
+            entity.Property(r => r.Name)
+                .HasMaxLength(256);
+            entity.Property(r => r.Description)
+                .HasMaxLength(512);
+        });
+
+        modelBuilder.Entity<TripSchedule>(entity =>
+        {
+            entity.ToTable("TripSchedules");
+            entity.Property(ts => ts.Content)
+                .HasMaxLength(1024);
+            entity.Property(ts => ts.Hotel)
+                .HasMaxLength(256);
+            entity.Property(ts => ts.Meal)
+                .HasMaxLength(256);
+            entity.Property(ts => ts.Note)
+                .HasMaxLength(512);
+        });
+
+        modelBuilder.Entity<TripParticipant>(entity =>
+        {
+            entity.ToTable("TripParticipants");
+            entity.HasIndex(tp => new { tp.TripId, tp.UserUid }).IsUnique();
+
+            entity.Property(tp => tp.Role)
+                .HasMaxLength(32)
+                .HasDefaultValue(TripParticipantRoles.Passenger);
+            entity.Property(tp => tp.Status)
+                .HasMaxLength(32)
+                .HasDefaultValue(TripParticipantStatuses.Pending);
+            entity.Property(tp => tp.JoinTime)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+            entity.HasOne(tp => tp.User)
+                .WithMany(u => u.TripParticipations)
+                .HasForeignKey(tp => tp.UserUid)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<TripComment>(entity =>
+        {
+            entity.ToTable("TripComments");
+            entity.Property(tc => tc.CreatedAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(tc => tc.Rating)
+                .HasDefaultValue(0);
+            entity.Property(tc => tc.Content)
+                .HasMaxLength(1024);
+
+            entity.HasOne(tc => tc.User)
+                .WithMany(u => u.TripComments)
+                .HasForeignKey(tc => tc.UserUid)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<TripFavorite>(entity =>
+        {
+            entity.ToTable("TripFavorites");
+            entity.HasKey(tf => new { tf.TripId, tf.UserUid });
+            entity.Property(tf => tf.CreatedAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+            entity.HasOne(tf => tf.User)
+                .WithMany(u => u.TripFavorites)
+                .HasForeignKey(tf => tf.UserUid)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<TripImage>(entity =>
+        {
+            entity.ToTable("TripImages");
+            entity.Property(ti => ti.CreatedAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(ti => ti.Url)
+                .HasMaxLength(512);
+
+            entity.HasOne(ti => ti.Uploader)
+                .WithMany(u => u.TripImages)
+                .HasForeignKey(ti => ti.UploaderUid)
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
