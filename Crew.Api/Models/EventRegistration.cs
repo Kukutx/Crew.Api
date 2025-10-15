@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.Serialization;
 using Crew.Api.Entities;
 
 namespace Crew.Api.Models;
@@ -9,26 +10,27 @@ public class EventRegistration
     public int EventId { get; set; }
     public string UserUid { get; set; } = string.Empty;
     public DateTime RegisteredAt { get; set; } = DateTime.UtcNow;
-    public string Status { get; set; } = EventRegistrationStatuses.Pending;
+    public EventRegistrationStatus Status { get; set; } = EventRegistrationStatus.Pending;
     public DateTime StatusUpdatedAt { get; set; } = DateTime.UtcNow;
 
     public Event? Event { get; set; }
     public UserAccount? User { get; set; }
 }
 
-public static class EventRegistrationStatuses
+/// <summary>
+/// Describes the processing status of an event registration.
+/// </summary>
+public enum EventRegistrationStatus
 {
-    public const string Pending = "pending";
-    public const string Confirmed = "confirmed";
+    /// <summary>
+    /// The registration has been received and is awaiting confirmation.
+    /// </summary>
+    [EnumMember(Value = "pending")]
+    Pending,
 
-    public static readonly IReadOnlyList<string> All = new[]
-    {
-        Pending,
-        Confirmed,
-    };
-
-    public static bool IsValid(string? value)
-        => value is not null &&
-           (string.Equals(value, Pending, StringComparison.Ordinal) ||
-            string.Equals(value, Confirmed, StringComparison.Ordinal));
+    /// <summary>
+    /// The registration has been approved and the participant is confirmed.
+    /// </summary>
+    [EnumMember(Value = "confirmed")]
+    Confirmed,
 }

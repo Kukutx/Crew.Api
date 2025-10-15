@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.Serialization;
 
 namespace Crew.Api.Models;
 
@@ -17,10 +18,32 @@ public class UserSubscription
     public SubscriptionPlan? Plan { get; set; }
 }
 
-public static class SubscriptionPlanKeys
+/// <summary>
+/// Identifies the built-in subscription plan tiers.
+/// </summary>
+public enum SubscriptionPlanKey
 {
-    public const string Free = "free";
-    public const string Tier1 = "tier1";
-    public const string Tier2 = "tier2";
-    public const string Tier3 = "tier3";
+    /// <summary>
+    /// The complimentary plan granted to all users.
+    /// </summary>
+    [EnumMember(Value = "free")]
+    Free,
+
+    /// <summary>
+    /// The first paid subscription tier.
+    /// </summary>
+    [EnumMember(Value = "tier1")]
+    Tier1,
+
+    /// <summary>
+    /// The second paid subscription tier.
+    /// </summary>
+    [EnumMember(Value = "tier2")]
+    Tier2,
+
+    /// <summary>
+    /// The highest paid subscription tier currently available.
+    /// </summary>
+    [EnumMember(Value = "tier3")]
+    Tier3,
 }

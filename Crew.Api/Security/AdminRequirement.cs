@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Crew.Api.Data;
 using Crew.Api.Data.DbContexts;
+using Crew.Api.Extensions;
 using Crew.Api.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
@@ -28,7 +29,7 @@ public class AdminRequirementHandler : AuthorizationHandler<AdminRequirement>
 
         var isAdmin = await _dbContext.UserRoles
             .Include(ur => ur.Role)
-            .AnyAsync(ur => ur.UserUid == uid && ur.Role != null && ur.Role.Key == RoleKeys.Admin);
+            .AnyAsync(ur => ur.UserUid == uid && ur.Role != null && ur.Role.Key == RoleKey.Admin.GetEnumMemberValue());
 
         if (isAdmin)
         {

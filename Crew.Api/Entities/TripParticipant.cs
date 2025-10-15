@@ -1,6 +1,4 @@
 using System;
-using System.Text.Json.Serialization;
-using Crew.Api.Models;
 
 namespace Crew.Api.Entities;
 
@@ -9,10 +7,8 @@ public class TripParticipant
     public int Id { get; set; }
     public int TripId { get; set; }
     public string UserUid { get; set; } = string.Empty;
-    [JsonConverter(typeof(JsonStringEnumConverter))]
     public TripParticipantRole Role { get; set; } = TripParticipantRole.Passenger;
     public DateTime JoinTime { get; set; } = DateTime.UtcNow;
-    [JsonConverter(typeof(JsonStringEnumConverter))]
     public TripParticipantStatus Status { get; set; } = TripParticipantStatus.Pending;
 
     public Trip? Trip { get; set; }

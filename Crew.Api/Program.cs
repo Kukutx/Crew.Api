@@ -1,5 +1,7 @@
 using Crew.Api.Data.DbContexts;
 using Crew.Api.Models;
+using Crew.Api.Serialization;
+using Crew.Api.Extensions;
 using Crew.Api.Utils;
 using Crew.Api.Security;
 using Crew.Api.Services;
@@ -10,7 +12,6 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Any;
 using Microsoft.OpenApi.Models;
 using Microsoft.OpenApi.Interfaces;
-using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,7 +19,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
-        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
+        options.JsonSerializerOptions.Converters.Add(new EnumMemberJsonConverterFactory()));
 builder.Services.AddHttpClient();
 
 // 配置 Google Places API 的 HttpClient
@@ -89,10 +90,10 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                             DisplayName = firebaseToken?.Claims.FirstOrDefault(c => c.Type == "name")?.Value ?? string.Empty,
                             AvatarUrl = AvatarDefaults.Normalize(firebaseToken?.Claims.FirstOrDefault(c => c.Type == "picture")?.Value),
                             CreatedAt = DateTime.UtcNow,
-                            Status = UserStatuses.Active,
+                            Status = UserStatus.Active,
                         };
 
-                        var defaultRole = await dbContext.Roles.FirstOrDefaultAsync(r => r.Key == RoleKeys.User, context.HttpContext.RequestAborted);
+                        var defaultRole = await dbContext.Roles.FirstOrDefaultAsync(r => r.Key == RoleKey.User.GetEnumMemberValue(), context.HttpContext.RequestAborted);
                         if (defaultRole != null)
                         {
                             user.Roles.Add(new UserRoleAssignment
@@ -103,7 +104,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                             });
                         }
 
-                        var freePlan = await dbContext.SubscriptionPlans.FirstOrDefaultAsync(p => p.Key == SubscriptionPlanKeys.Free, context.HttpContext.RequestAborted);
+                        var freePlan = await dbContext.SubscriptionPlans.FirstOrDefaultAsync(p => p.Key == SubscriptionPlanKey.Free.GetEnumMemberValue(), context.HttpContext.RequestAborted);
                         if (freePlan != null)
                         {
                             user.Subscriptions.Add(new UserSubscription

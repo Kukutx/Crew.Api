@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Crew.Api.Data.DbContexts;
 using Crew.Api.Entities;
+using Crew.Api.Extensions;
 using Crew.Api.Models;
 using Crew.Api.Security;
 using Microsoft.AspNetCore.Authorization;
@@ -63,9 +64,9 @@ public class EventsController : ControllerBase
         entity.UserUid = currentUid;
 
         var creator = await _context.Users.FindAsync(new object?[] { currentUid }, cancellationToken);
-        if (creator is not null && !string.Equals(creator.IdentityLabel, UserIdentityLabels.Organizer, StringComparison.Ordinal))
+        if (creator is not null && creator.IdentityLabel != UserIdentityLabel.Organizer)
         {
-            creator.IdentityLabel = UserIdentityLabels.Organizer;
+            creator.IdentityLabel = UserIdentityLabel.Organizer;
         }
 
         if (entity.StartTime == default)
@@ -159,7 +160,7 @@ public class EventsController : ControllerBase
                 EventId = id,
                 UserUid = currentUid,
                 RegisteredAt = now,
-                Status = EventRegistrationStatuses.Pending,
+                Status = EventRegistrationStatus.Pending,
                 StatusUpdatedAt = now,
             };
             _context.EventRegistrations.Add(existing);
@@ -167,9 +168,9 @@ public class EventsController : ControllerBase
         }
 
         var user = await _context.Users.FindAsync(new object?[] { currentUid }, cancellationToken);
-        if (user is not null && !string.Equals(user.IdentityLabel, UserIdentityLabels.Organizer, StringComparison.Ordinal))
+        if (user is not null && user.IdentityLabel != UserIdentityLabel.Organizer)
         {
-            user.IdentityLabel = UserIdentityLabels.Participant;
+            user.IdentityLabel = UserIdentityLabel.Participant;
         }
 
         await _context.SaveChangesAsync(cancellationToken);
@@ -192,10 +193,10 @@ public class EventsController : ControllerBase
 
         var normalizedUserUid = userUid.Trim();
 
-        var normalizedStatus = request.Status.Trim().ToLowerInvariant();
-        if (!EventRegistrationStatuses.IsValid(normalizedStatus))
+        var trimmedStatus = request.Status.Trim();
+        if (!EnumExtensions.TryParseEnumMemberValue(trimmedStatus, out EventRegistrationStatus desiredStatus))
         {
-            return BadRequest($"status must be one of: {string.Join(" / ", EventRegistrationStatuses.All)}.");
+            return BadRequest($"status must be one of: {string.Join(" / ", EnumExtensions.GetEnumMemberValues<EventRegistrationStatus>())}.");
         }
 
         var @event = await _context.Events.FindAsync(new object?[] { id }, cancellationToken);
@@ -225,9 +226,9 @@ public class EventsController : ControllerBase
             return NotFound();
         }
 
-        if (!string.Equals(registration.Status, normalizedStatus, StringComparison.Ordinal))
+        if (registration.Status != desiredStatus)
         {
-            registration.Status = normalizedStatus;
+            registration.Status = desiredStatus;
             registration.StatusUpdatedAt = DateTime.UtcNow;
         }
 
@@ -290,7 +291,7 @@ public class EventsController : ControllerBase
     {
         var participants = await _context.EventRegistrations
             .AsNoTracking()
-            .Where(r => r.EventId == id && r.Status == EventRegistrationStatuses.Confirmed)
+            .Where(r => r.EventId == id && r.Status == EventRegistrationStatus.Confirmed)
             .Join(
                 _context.Users.AsNoTracking(),
                 registration => registration.UserUid,

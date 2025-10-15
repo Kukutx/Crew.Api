@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Crew.Api.Data.DbContexts;
 using Crew.Api.Entities;
+using Crew.Api.Extensions;
 using Crew.Api.Models;
 
 namespace Crew.Api.Utils;
@@ -241,7 +242,7 @@ public static class SeedDataService
                 {
                     foreach (var organizer in organizers)
                     {
-                        organizer.IdentityLabel = UserIdentityLabels.Organizer;
+                        organizer.IdentityLabel = UserIdentityLabel.Organizer;
                     }
 
                     context.SaveChanges();
@@ -253,16 +254,19 @@ public static class SeedDataService
         {
             var roles = new List<Role>
             {
-                new Role { Id = 1, Key = RoleKeys.User, DisplayName = "User", IsSystemRole = true },
-                new Role { Id = 2, Key = RoleKeys.Admin, DisplayName = "Admin", IsSystemRole = true },
+                new Role { Id = 1, Key = RoleKey.User.GetEnumMemberValue(), DisplayName = "User", IsSystemRole = true },
+                new Role { Id = 2, Key = RoleKey.Admin.GetEnumMemberValue(), DisplayName = "Admin", IsSystemRole = true },
             };
 
             context.Roles.AddRange(roles);
             context.SaveChanges();
         }
 
+        var userRoleKey = RoleKey.User.GetEnumMemberValue();
+        var adminRoleKey = RoleKey.Admin.GetEnumMemberValue();
+
         var rolesByKey = context.Roles
-            .Where(role => role.Key == RoleKeys.User || role.Key == RoleKeys.Admin)
+            .Where(role => role.Key == userRoleKey || role.Key == adminRoleKey)
             .ToDictionary(role => role.Key);
 
         if (rolesByKey.Count > 0)
@@ -272,7 +276,7 @@ public static class SeedDataService
 
             var requestedAssignments = new List<UserRoleAssignment>();
 
-            if (rolesByKey.TryGetValue(RoleKeys.User, out var userRole))
+            if (rolesByKey.TryGetValue(userRoleKey, out var userRole))
             {
                 var userRoleGrantedAt = DateTime.UtcNow;
 
@@ -284,7 +288,7 @@ public static class SeedDataService
                 }));
             }
 
-            if (!string.IsNullOrEmpty(adminUid) && rolesByKey.TryGetValue(RoleKeys.Admin, out var adminRole))
+            if (!string.IsNullOrEmpty(adminUid) && rolesByKey.TryGetValue(adminRoleKey, out var adminRole))
             {
                 requestedAssignments.Add(new UserRoleAssignment
                 {
@@ -336,7 +340,7 @@ public static class SeedDataService
                 new SubscriptionPlan
                 {
                     Id = 1,
-                    Key = "free",
+                    Key = SubscriptionPlanKey.Free.GetEnumMemberValue(),
                     DisplayName = "Free",
                     Description = "基础免费计划",
                     SortOrder = 0
@@ -344,7 +348,7 @@ public static class SeedDataService
                 new SubscriptionPlan
                 {
                     Id = 2,
-                    Key = "tier1",
+                    Key = SubscriptionPlanKey.Tier1.GetEnumMemberValue(),
                     DisplayName = "Tier 1",
                     Description = "基础付费计划",
                     SortOrder = 1
@@ -352,7 +356,7 @@ public static class SeedDataService
                 new SubscriptionPlan
                 {
                     Id = 3,
-                    Key = "tier2",
+                    Key = SubscriptionPlanKey.Tier2.GetEnumMemberValue(),
                     DisplayName = "Tier 2",
                     Description = "进阶计划，更多额度",
                     SortOrder = 2
@@ -360,7 +364,7 @@ public static class SeedDataService
                 new SubscriptionPlan
                 {
                     Id = 4,
-                    Key = "tier3",
+                    Key = SubscriptionPlanKey.Tier3.GetEnumMemberValue(),
                     DisplayName = "Tier 3",
                     Description = "高级计划，解锁全部功能",
                     SortOrder = 3
@@ -443,8 +447,8 @@ public static class SeedDataService
             Bio = string.Empty,
             AvatarUrl = AvatarDefaults.FallbackUrl,
             CoverImageUrl = string.Empty,
-            Status = UserStatuses.Active,
-            IdentityLabel = UserIdentityLabels.Visitor,
+            Status = UserStatus.Active,
+            IdentityLabel = UserIdentityLabel.Visitor,
             CreatedAt = DateTime.UtcNow
         };
     }

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Runtime.Serialization;
 using Crew.Api.Entities;
 
 namespace Crew.Api.Models;
@@ -31,10 +32,10 @@ public class UserAccount
     public string CoverImageUrl { get; set; } = string.Empty;
 
     [MaxLength(32)]
-    public string Status { get; set; } = UserStatuses.Active;
+    public UserStatus Status { get; set; } = UserStatus.Active;
 
     [MaxLength(32)]
-    public string IdentityLabel { get; set; } = UserIdentityLabels.Visitor;
+    public UserIdentityLabel IdentityLabel { get; set; } = UserIdentityLabel.Visitor;
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
@@ -61,22 +62,44 @@ public class UserAccount
     public ICollection<TripImage> TripImages { get; set; } = new List<TripImage>();
 }
 
-public static class UserStatuses
+/// <summary>
+/// Represents the moderation status of a user account.
+/// </summary>
+public enum UserStatus
 {
-    public const string Active = "active";
-    public const string Suspended = "suspended";
+    /// <summary>
+    /// The account is active and can access all permitted features.
+    /// </summary>
+    [EnumMember(Value = "active")]
+    Active,
+
+    /// <summary>
+    /// The account is suspended and restricted from using the service.
+    /// </summary>
+    [EnumMember(Value = "suspended")]
+    Suspended,
 }
 
-public static class UserIdentityLabels
+/// <summary>
+/// Identifies a user's relationship to the platform's travel experiences.
+/// </summary>
+public enum UserIdentityLabel
 {
-    public const string Visitor = "游客";
-    public const string Participant = "参与者";
-    public const string Organizer = "组织者";
+    /// <summary>
+    /// The user is browsing as a visitor.
+    /// </summary>
+    [EnumMember(Value = "游客")]
+    Visitor,
 
-    public static readonly IReadOnlySet<string> All = new HashSet<string>(StringComparer.Ordinal)
-    {
-        Visitor,
-        Participant,
-        Organizer,
-    };
+    /// <summary>
+    /// The user regularly participates in events or trips.
+    /// </summary>
+    [EnumMember(Value = "参与者")]
+    Participant,
+
+    /// <summary>
+    /// The user organizes events or trips for others.
+    /// </summary>
+    [EnumMember(Value = "组织者")]
+    Organizer,
 }

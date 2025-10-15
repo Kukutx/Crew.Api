@@ -1,5 +1,6 @@
 using Crew.Api.Data;
 using Crew.Api.Data.DbContexts;
+using Crew.Api.Extensions;
 using Crew.Api.Models;
 using Crew.Api.Security;
 using Crew.Api.Services;
@@ -47,7 +48,7 @@ public class AdminUsersController : ControllerBase
             return NotFound();
         }
 
-        var adminRole = await _context.Roles.FirstOrDefaultAsync(r => r.Key == RoleKeys.Admin, cancellationToken);
+        var adminRole = await _context.Roles.FirstOrDefaultAsync(r => r.Key == RoleKey.Admin.GetEnumMemberValue(), cancellationToken);
         if (adminRole is null)
         {
             return StatusCode(StatusCodes.Status500InternalServerError, "admin role is not configured");

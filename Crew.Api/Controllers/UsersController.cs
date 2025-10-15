@@ -1,5 +1,6 @@
 using Crew.Api.Data;
 using Crew.Api.Data.DbContexts;
+using Crew.Api.Extensions;
 using Crew.Api.Models;
 using Crew.Api.Security;
 using System.Collections.Generic;
@@ -101,8 +102,8 @@ public class UsersController : ControllerBase
                 DisplayName = displayName,
                 AvatarUrl = AvatarDefaults.Normalize(request.AvatarUrl),
                 CreatedAt = DateTime.UtcNow,
-                Status = UserStatuses.Active,
-                IdentityLabel = normalizedIdentityLabel ?? UserIdentityLabels.Visitor,
+                Status = UserStatus.Active,
+                IdentityLabel = normalizedIdentityLabel ?? UserIdentityLabel.Visitor,
             };
 
             await ApplyDefaultRoleAsync(user, cancellationToken);
@@ -134,9 +135,9 @@ public class UsersController : ControllerBase
                 ? user.AvatarUrl
                 : request.AvatarUrl);
 
-            if (!string.IsNullOrWhiteSpace(request.IdentityLabel) && normalizedIdentityLabel is not null)
+            if (!string.IsNullOrWhiteSpace(request.IdentityLabel) && normalizedIdentityLabel is UserIdentityLabel parsedLabel)
             {
-                user.IdentityLabel = normalizedIdentityLabel;
+                user.IdentityLabel = parsedLabel;
             }
             user.UpdatedAt = DateTime.UtcNow;
         }
@@ -188,7 +189,7 @@ public class UsersController : ControllerBase
 
     private async Task ApplyDefaultRoleAsync(UserAccount user, CancellationToken cancellationToken)
     {
-        var role = await _context.Roles.FirstOrDefaultAsync(r => r.Key == RoleKeys.User, cancellationToken);
+        var role = await _context.Roles.FirstOrDefaultAsync(r => r.Key == RoleKey.User.GetEnumMemberValue(), cancellationToken);
         if (role == null)
         {
             throw new InvalidOperationException("Default user role is missing.");
@@ -204,7 +205,7 @@ public class UsersController : ControllerBase
 
     private async Task ApplyDefaultPlanAsync(UserAccount user, CancellationToken cancellationToken)
     {
-        var plan = await _context.SubscriptionPlans.FirstOrDefaultAsync(p => p.Key == SubscriptionPlanKeys.Free, cancellationToken);
+        var plan = await _context.SubscriptionPlans.FirstOrDefaultAsync(p => p.Key == SubscriptionPlanKey.Free.GetEnumMemberValue(), cancellationToken);
         if (plan == null)
         {
             return;
@@ -317,8 +318,8 @@ public class UsersController : ControllerBase
         string DisplayName,
         string AvatarUrl,
         string CoverImageUrl,
-        string Status,
-        string IdentityLabel,
+        UserStatus Status,
+        UserIdentityLabel IdentityLabel,
         DateTime CreatedAt,
         DateTime? UpdatedAt,
         int FollowerCount,
@@ -330,7 +331,7 @@ public class UsersController : ControllerBase
 
     public record SubscriptionResponse(string PlanKey, string PlanName, DateTime AssignedAt, DateTime? ExpiresAt);
 
-    private static bool TryNormalizeIdentityLabel(string? identityLabel, out string? normalized, out string? errorMessage)
+    private static bool TryNormalizeIdentityLabel(string? identityLabel, out UserIdentityLabel? normalized, out string? errorMessage)
     {
         if (string.IsNullOrWhiteSpace(identityLabel))
         {
@@ -340,14 +341,14 @@ public class UsersController : ControllerBase
         }
 
         var trimmed = identityLabel.Trim();
-        if (!UserIdentityLabels.All.Contains(trimmed))
+        if (!EnumExtensions.TryParseEnumMemberValue(trimmed, out UserIdentityLabel parsed))
         {
             normalized = null;
-            errorMessage = $"identity label must be one of: {string.Join(" / ", UserIdentityLabels.All)}.";
+            errorMessage = $"identity label must be one of: {string.Join(" / ", EnumExtensions.GetEnumMemberValues<UserIdentityLabel>())}.";
             return false;
         }
 
-        normalized = trimmed;
+        normalized = parsed;
         errorMessage = null;
         return true;
     }
