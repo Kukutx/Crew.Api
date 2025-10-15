@@ -187,11 +187,13 @@ public class AppDbContext : DbContext
             entity.HasIndex(tp => new { tp.TripId, tp.UserUid }).IsUnique();
 
             entity.Property(tp => tp.Role)
+                .HasConversion<string>()
                 .HasMaxLength(32)
-                .HasDefaultValue(TripParticipantRoles.Passenger);
+                .HasDefaultValue(TripParticipantRole.Passenger.ToString());
             entity.Property(tp => tp.Status)
+                .HasConversion<string>()
                 .HasMaxLength(32)
-                .HasDefaultValue(TripParticipantStatuses.Pending);
+                .HasDefaultValue(TripParticipantStatus.Pending.ToString());
             entity.Property(tp => tp.JoinTime)
                 .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
