@@ -127,7 +127,7 @@ public class AppDbContext : DbContext
             v => JsonSerializer.Serialize(v ?? new List<string>(), (JsonSerializerOptions?)null),
             v => string.IsNullOrWhiteSpace(v)
                 ? new List<string>()
-                : JsonSerializer.Deserialize<List<string>>(v) ?? new List<string>());
+                : JsonSerializer.Deserialize<List<string>>(v, new JsonSerializerOptions()) ?? new List<string>());
 
         var stringListComparer = new ValueComparer<List<string>>(
             (left, right) => ReferenceEquals(left, right) ||
