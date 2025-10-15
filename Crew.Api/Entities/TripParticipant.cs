@@ -1,3 +1,4 @@
+using Crew.Api.Models;
 using System;
 
 namespace Crew.Api.Entities;
