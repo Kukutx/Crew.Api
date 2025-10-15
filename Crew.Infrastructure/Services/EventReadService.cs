@@ -2,6 +2,7 @@ using Crew.Application.Events;
 using System.Linq;
 using Crew.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using NetTopologySuite;
 using NetTopologySuite.Geometries;
 
 namespace Crew.Infrastructure.Services;

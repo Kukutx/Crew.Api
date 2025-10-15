@@ -1,4 +1,3 @@
-using System.Net.Http.Headers;
 using Crew.Application.Abstractions;
 using Crew.Application.Auth;
 using Crew.Application.Events;
@@ -12,8 +11,9 @@ using Crew.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Http.Resilience;
 using Polly;
-using Polly.Extensions.Http;
+using System.Net.Http.Headers;
 
 namespace Crew.Infrastructure.Extensions;
 
@@ -54,14 +54,22 @@ public sealed class InfrastructureModule : IModuleInstaller
                 client.Timeout = TimeSpan.FromSeconds(10);
                 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             })
-            .AddPolicyHandler(GetRetryPolicy());
-    }
-
-    private static IAsyncPolicy<HttpResponseMessage> GetRetryPolicy()
-    {
-        return HttpPolicyExtensions
-            .HandleTransientHttpError()
-            .OrResult(response => (int)response.StatusCode == 429)
-            .WaitAndRetryAsync(3, attempt => TimeSpan.FromSeconds(Math.Pow(2, attempt)));
+            .AddResilienceHandler("places-client", builder =>
+            {
+                builder.AddRetry(new HttpRetryStrategyOptions
+                {
+                    MaxRetryAttempts = 3,
+                    Delay = TimeSpan.FromSeconds(2),
+                    UseJitter = true, // 随机抖动，避免雪崩
+                    ShouldHandle = args =>
+                        ValueTask.FromResult(args.Outcome switch
+                        {
+                            { Exception: HttpRequestException } => true,
+                            { Result.StatusCode: var code } when (int)code == 429 => true, // Too Many Requests
+                            { Result.StatusCode: var code } when (int)code >= 500 => true, // 服务器错误
+                            _ => false
+                        })
+                });
+            });
     }
 }

@@ -1,5 +1,4 @@
 using System.Reflection;
-using System.Linq;
 using Crew.Api.Hubs;
 using Crew.Api.Messaging;
 using Crew.Api.Middleware;
