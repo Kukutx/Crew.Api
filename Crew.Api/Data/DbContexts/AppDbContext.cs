@@ -63,12 +63,11 @@ public class AppDbContext : DbContext
                     value => UserStatusExtensions.FromStorageValue(value))
                 .HasDefaultValue(UserStatus.Active.ToStorageValue());
             entity.Property(u => u.IdentityLabel)
-                .HasConversion(new EnumMemberValueConverter<UserIdentityLabel>())
                 .HasMaxLength(32)
                 .HasConversion(
-                    label => label.ToLocalizedString(),
-                    value => UserIdentityLabelExtensions.FromLocalizedString(value))
-                .HasDefaultValue(UserIdentityLabel.Visitor.ToLocalizedString());
+                    label => label.ToStorageValue(),
+                    value => UserIdentityLabelExtensions.FromStorageValue(value))
+                .HasDefaultValue(UserIdentityLabel.Visitor.ToStorageValue());
         });
 
         modelBuilder.Entity<Role>(entity =>

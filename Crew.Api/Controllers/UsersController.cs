@@ -286,8 +286,8 @@ public class UsersController : ControllerBase
             user.DisplayName,
             user.AvatarUrl,
             user.CoverImageUrl,
-            user.Status.ToStorageValue(),
-            user.IdentityLabel.ToLocalizedString(),
+            user.Status,
+            user.IdentityLabel,
             user.CreatedAt,
             user.UpdatedAt,
             followerCount,
@@ -341,12 +341,10 @@ public class UsersController : ControllerBase
         }
 
         var trimmed = identityLabel.Trim();
-        if (!EnumExtensions.TryParseEnumMemberValue(trimmed, out UserIdentityLabel parsed))
-        if (!UserIdentityLabelExtensions.TryFromLocalizedString(trimmed, out var parsed))
+        if (!UserIdentityLabelExtensions.TryFromStorageValue(trimmed, out var parsed))
         {
             normalized = null;
-            errorMessage = $"identity label must be one of: {string.Join(" / ", EnumExtensions.GetEnumMemberValues<UserIdentityLabel>())}.";
-            errorMessage = $"identity label must be one of: {string.Join(" / ", UserIdentityLabelExtensions.AllLocalizedStrings)}.";
+            errorMessage = $"identity label must be one of: {string.Join(" / ", UserIdentityLabelExtensions.AllStorageValues)}.";
             return false;
         }
 

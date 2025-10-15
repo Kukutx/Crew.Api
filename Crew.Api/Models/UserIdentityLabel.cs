@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Crew.Api.Extensions;
 
 namespace Crew.Api.Models;
 
@@ -12,36 +13,12 @@ public enum UserIdentityLabel
 
 public static class UserIdentityLabelExtensions
 {
-    private static readonly IReadOnlyDictionary<string, UserIdentityLabel> LocalizedToEnum =
-        new Dictionary<string, UserIdentityLabel>(StringComparer.Ordinal)
-        {
-            ["游客"] = UserIdentityLabel.Visitor,
-            ["参与者"] = UserIdentityLabel.Participant,
-            ["组织者"] = UserIdentityLabel.Organizer,
-        };
+    public static string ToStorageValue(this UserIdentityLabel label)
+        => label.GetEnumMemberValue();
 
-    private static readonly IReadOnlyDictionary<UserIdentityLabel, string> EnumToLocalized =
-        new Dictionary<UserIdentityLabel, string>
-        {
-            [UserIdentityLabel.Visitor] = "游客",
-            [UserIdentityLabel.Participant] = "参与者",
-            [UserIdentityLabel.Organizer] = "组织者",
-        };
-
-    public static string ToLocalizedString(this UserIdentityLabel label)
-        => EnumToLocalized.TryGetValue(label, out var value)
-            ? value
-            : throw new ArgumentOutOfRangeException(nameof(label), label, "Unknown identity label value.");
-
-    public static UserIdentityLabel FromLocalizedString(string? value)
+    public static UserIdentityLabel FromStorageValue(string? value)
     {
-        if (string.IsNullOrWhiteSpace(value))
-        {
-            return UserIdentityLabel.Visitor;
-        }
-
-        var trimmed = value.Trim();
-        if (LocalizedToEnum.TryGetValue(trimmed, out var label))
+        if (TryFromStorageValue(value, out var label))
         {
             return label;
         }
@@ -49,7 +26,7 @@ public static class UserIdentityLabelExtensions
         throw new InvalidOperationException($"Unsupported identity label value '{value}'.");
     }
 
-    public static bool TryFromLocalizedString(string? value, out UserIdentityLabel label)
+    public static bool TryFromStorageValue(string? value, out UserIdentityLabel label)
     {
         if (string.IsNullOrWhiteSpace(value))
         {
@@ -57,14 +34,16 @@ public static class UserIdentityLabelExtensions
             return true;
         }
 
-        return LocalizedToEnum.TryGetValue(value.Trim(), out label);
+        if (EnumExtensions.TryParseEnumMemberValue(value.Trim(), out UserIdentityLabel parsed))
+        {
+            label = parsed;
+            return true;
+        }
+
+        label = UserIdentityLabel.Visitor;
+        return false;
     }
 
-    public static IReadOnlyCollection<string> AllLocalizedStrings { get; } =
-        Array.AsReadOnly(new[]
-        {
-            EnumToLocalized[UserIdentityLabel.Visitor],
-            EnumToLocalized[UserIdentityLabel.Participant],
-            EnumToLocalized[UserIdentityLabel.Organizer],
-        });
+    public static IReadOnlyCollection<string> AllStorageValues { get; } =
+        EnumExtensions.GetEnumMemberValues<UserIdentityLabel>();
 }
