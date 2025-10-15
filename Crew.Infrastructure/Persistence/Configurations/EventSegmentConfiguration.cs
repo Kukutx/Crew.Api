@@ -12,7 +12,6 @@ public class EventSegmentConfiguration : IEntityTypeConfiguration<EventSegment>
         builder.Property(x => x.Seq).IsRequired();
         builder.Property(x => x.Waypoint)
             .HasColumnType("geometry (Point, 4326)")
-            .HasSrid(4326)
             .IsRequired();
     }
 }

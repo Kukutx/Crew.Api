@@ -106,8 +106,7 @@ namespace Crew.Infrastructure.Migrations
                     .HasColumnType("integer");
 
                 b.Property<Point>("Waypoint")
-                    .HasColumnType("geometry (Point, 4326)")
-                    .HasSrid(4326);
+                    .HasColumnType("geometry (Point, 4326)");
 
                 b.HasKey("Id");
 
@@ -226,8 +225,7 @@ namespace Crew.Infrastructure.Migrations
                     .HasColumnType("text");
 
                 b.Property<Point>("EndPoint")
-                    .HasColumnType("geometry (Point, 4326)")
-                    .HasSrid(4326);
+                    .HasColumnType("geometry (Point, 4326)");
 
                 b.Property<DateTimeOffset?>("EndTime")
                     .HasColumnType("timestamp with time zone");
@@ -243,8 +241,7 @@ namespace Crew.Infrastructure.Migrations
                     .HasColumnType("character varying(4096)");
 
                 b.Property<Point>("StartPoint")
-                    .HasColumnType("geometry (Point, 4326)")
-                    .HasSrid(4326);
+                    .HasColumnType("geometry (Point, 4326)");
 
                 b.Property<DateTimeOffset>("StartTime")
                     .HasColumnType("timestamp with time zone");

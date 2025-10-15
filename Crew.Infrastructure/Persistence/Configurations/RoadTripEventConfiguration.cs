@@ -12,11 +12,9 @@ public class RoadTripEventConfiguration : IEntityTypeConfiguration<RoadTripEvent
         builder.Property(x => x.Title).IsRequired().HasMaxLength(256);
         builder.Property(x => x.StartPoint)
             .HasColumnType("geometry (Point, 4326)")
-            .HasSrid(4326)
             .IsRequired();
         builder.Property(x => x.EndPoint)
-            .HasColumnType("geometry (Point, 4326)")
-            .HasSrid(4326);
+            .HasColumnType("geometry (Point, 4326)");
         builder.Property(x => x.RoutePolyline).HasMaxLength(4096);
         builder.HasMany(x => x.Segments)
             .WithOne(x => x.Event!)
