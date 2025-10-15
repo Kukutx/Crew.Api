@@ -27,7 +27,7 @@ public sealed class InfrastructureModule : IModuleInstaller
                 ?? configuration["Database:ConnectionString"]
                 ?? throw new InvalidOperationException("Database connection string is not configured.");
 
-            options.UseSqlite(connectionString, o => o.UseNetTopologySuite());
+            options.UseNpgsql(connectionString, o => o.UseNetTopologySuite());
             options.UseSnakeCaseNamingConvention();
         });
 

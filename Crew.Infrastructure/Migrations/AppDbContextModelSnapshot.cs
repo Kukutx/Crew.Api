@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using NetTopologySuite.Geometries;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
@@ -17,21 +18,24 @@ namespace Crew.Infrastructure.Migrations
 #pragma warning disable 612, 618
             modelBuilder
                 .HasAnnotation("ProductVersion", "9.0.9")
-                .HasAnnotation("Relational:MaxIdentifierLength", 128);
+                .HasAnnotation("Relational:MaxIdentifierLength", 63);
+
+            NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
+            NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "postgis");
 
             modelBuilder.Entity("Crew.Domain.Entities.ChatGroup", b =>
             {
                 b.Property<Guid>("Id")
-                    .HasColumnType("TEXT");
+                    .HasColumnType("uuid");
 
                 b.Property<DateTimeOffset>("CreatedAt")
-                    .HasColumnType("TEXT");
+                    .HasColumnType("timestamp with time zone");
 
                 b.Property<Guid?>("EventId")
-                    .HasColumnType("TEXT");
+                    .HasColumnType("uuid");
 
                 b.Property<int>("Scope")
-                    .HasColumnType("INTEGER");
+                    .HasColumnType("integer");
 
                 b.HasKey("Id");
 
@@ -41,17 +45,17 @@ namespace Crew.Infrastructure.Migrations
             modelBuilder.Entity("Crew.Domain.Entities.ChatMembership", b =>
             {
                 b.Property<Guid>("GroupId")
-                    .HasColumnType("TEXT");
+                    .HasColumnType("uuid");
 
                 b.Property<Guid>("UserId")
-                    .HasColumnType("TEXT");
+                    .HasColumnType("uuid");
 
                 b.Property<DateTimeOffset>("JoinedAt")
-                    .HasColumnType("TEXT");
+                    .HasColumnType("timestamp with time zone");
 
                 b.Property<string>("Role")
                     .HasMaxLength(32)
-                    .HasColumnType("TEXT");
+                    .HasColumnType("character varying(32)");
 
                 b.HasKey("GroupId", "UserId");
 
@@ -63,22 +67,22 @@ namespace Crew.Infrastructure.Migrations
             modelBuilder.Entity("Crew.Domain.Entities.ChatMessage", b =>
             {
                 b.Property<Guid>("Id")
-                    .HasColumnType("TEXT");
+                    .HasColumnType("uuid");
 
                 b.Property<string>("AttachmentsJson")
-                    .HasColumnType("TEXT");
+                    .HasColumnType("text");
 
                 b.Property<string>("Content")
-                    .HasColumnType("TEXT");
+                    .HasColumnType("text");
 
                 b.Property<Guid>("GroupId")
-                    .HasColumnType("TEXT");
+                    .HasColumnType("uuid");
 
                 b.Property<Guid>("SenderId")
-                    .HasColumnType("TEXT");
+                    .HasColumnType("uuid");
 
                 b.Property<DateTimeOffset>("SentAt")
-                    .HasColumnType("TEXT");
+                    .HasColumnType("timestamp with time zone");
 
                 b.HasKey("Id");
 
@@ -90,19 +94,20 @@ namespace Crew.Infrastructure.Migrations
             modelBuilder.Entity("Crew.Domain.Entities.EventSegment", b =>
             {
                 b.Property<Guid>("Id")
-                    .HasColumnType("TEXT");
+                    .HasColumnType("uuid");
 
                 b.Property<Guid>("EventId")
-                    .HasColumnType("TEXT");
+                    .HasColumnType("uuid");
 
                 b.Property<string>("Note")
-                    .HasColumnType("TEXT");
+                    .HasColumnType("text");
 
                 b.Property<int>("Seq")
-                    .HasColumnType("INTEGER");
+                    .HasColumnType("integer");
 
                 b.Property<Point>("Waypoint")
-                    .HasColumnType("BLOB");
+                    .HasColumnType("geometry (Point, 4326)")
+                    .HasSrid(4326);
 
                 b.HasKey("Id");
 
@@ -114,23 +119,23 @@ namespace Crew.Infrastructure.Migrations
             modelBuilder.Entity("Crew.Domain.Entities.OutboxMessage", b =>
             {
                 b.Property<Guid>("Id")
-                    .HasColumnType("TEXT");
+                    .HasColumnType("uuid");
 
                 b.Property<string>("Error")
-                    .HasColumnType("TEXT");
+                    .HasColumnType("text");
 
                 b.Property<DateTimeOffset>("OccurredAt")
-                    .HasColumnType("TEXT");
+                    .HasColumnType("timestamp with time zone");
 
                 b.Property<string>("Payload")
-                    .HasColumnType("TEXT");
+                    .HasColumnType("text");
 
                 b.Property<DateTimeOffset?>("ProcessedAt")
-                    .HasColumnType("TEXT");
+                    .HasColumnType("timestamp with time zone");
 
                 b.Property<string>("Type")
                     .HasMaxLength(256)
-                    .HasColumnType("TEXT");
+                    .HasColumnType("character varying(256)");
 
                 b.HasKey("Id");
 
@@ -140,16 +145,16 @@ namespace Crew.Infrastructure.Migrations
             modelBuilder.Entity("Crew.Domain.Entities.PrivateDialog", b =>
             {
                 b.Property<Guid>("Id")
-                    .HasColumnType("TEXT");
+                    .HasColumnType("uuid");
 
                 b.Property<DateTimeOffset>("CreatedAt")
-                    .HasColumnType("TEXT");
+                    .HasColumnType("timestamp with time zone");
 
                 b.Property<Guid>("UserA")
-                    .HasColumnType("TEXT");
+                    .HasColumnType("uuid");
 
                 b.Property<Guid>("UserB")
-                    .HasColumnType("TEXT");
+                    .HasColumnType("uuid");
 
                 b.HasKey("Id");
 
@@ -162,19 +167,19 @@ namespace Crew.Infrastructure.Migrations
             modelBuilder.Entity("Crew.Domain.Entities.PrivateMessage", b =>
             {
                 b.Property<Guid>("Id")
-                    .HasColumnType("TEXT");
+                    .HasColumnType("uuid");
 
                 b.Property<string>("Content")
-                    .HasColumnType("TEXT");
+                    .HasColumnType("text");
 
                 b.Property<Guid>("DialogId")
-                    .HasColumnType("TEXT");
+                    .HasColumnType("uuid");
 
                 b.Property<Guid>("SenderId")
-                    .HasColumnType("TEXT");
+                    .HasColumnType("uuid");
 
                 b.Property<DateTimeOffset>("SentAt")
-                    .HasColumnType("TEXT");
+                    .HasColumnType("timestamp with time zone");
 
                 b.HasKey("Id");
 
@@ -186,19 +191,19 @@ namespace Crew.Infrastructure.Migrations
             modelBuilder.Entity("Crew.Domain.Entities.Registration", b =>
             {
                 b.Property<Guid>("Id")
-                    .HasColumnType("TEXT");
+                    .HasColumnType("uuid");
 
                 b.Property<DateTimeOffset>("CreatedAt")
-                    .HasColumnType("TEXT");
+                    .HasColumnType("timestamp with time zone");
 
                 b.Property<Guid>("EventId")
-                    .HasColumnType("TEXT");
+                    .HasColumnType("uuid");
 
                 b.Property<int>("Status")
-                    .HasColumnType("INTEGER");
+                    .HasColumnType("integer");
 
                 b.Property<Guid>("UserId")
-                    .HasColumnType("TEXT");
+                    .HasColumnType("uuid");
 
                 b.HasKey("Id");
 
@@ -215,43 +220,43 @@ namespace Crew.Infrastructure.Migrations
             modelBuilder.Entity("Crew.Domain.Entities.RoadTripEvent", b =>
             {
                 b.Property<Guid>("Id")
-                    .HasColumnType("TEXT");
-
-                b.Property<Guid>("OwnerId")
-                    .HasColumnType("TEXT");
+                    .HasColumnType("uuid");
 
                 b.Property<string>("Description")
-                    .HasColumnType("TEXT");
+                    .HasColumnType("text");
 
                 b.Property<Point>("EndPoint")
-                    .HasColumnType("BLOB");
+                    .HasColumnType("geometry (Point, 4326)")
+                    .HasSrid(4326);
 
                 b.Property<DateTimeOffset?>("EndTime")
-                    .HasColumnType("TEXT");
+                    .HasColumnType("timestamp with time zone");
 
                 b.Property<int?>("MaxParticipants")
-                    .HasColumnType("INTEGER");
+                    .HasColumnType("integer");
+
+                b.Property<Guid>("OwnerId")
+                    .HasColumnType("uuid");
 
                 b.Property<string>("RoutePolyline")
                     .HasMaxLength(4096)
-                    .HasColumnType("TEXT");
+                    .HasColumnType("character varying(4096)");
 
                 b.Property<Point>("StartPoint")
-                    .HasColumnType("BLOB");
+                    .HasColumnType("geometry (Point, 4326)")
+                    .HasSrid(4326);
 
                 b.Property<DateTimeOffset>("StartTime")
-                    .HasColumnType("TEXT");
+                    .HasColumnType("timestamp with time zone");
 
                 b.Property<string>("Title")
                     .HasMaxLength(256)
-                    .HasColumnType("TEXT");
+                    .HasColumnType("character varying(256)");
 
                 b.Property<int>("Visibility")
-                    .HasColumnType("INTEGER");
+                    .HasColumnType("integer");
 
                 b.HasKey("Id");
-
-
 
                 b.ToTable("road_trip_events");
             });
@@ -259,21 +264,21 @@ namespace Crew.Infrastructure.Migrations
             modelBuilder.Entity("Crew.Domain.Entities.User", b =>
             {
                 b.Property<Guid>("Id")
-                    .HasColumnType("TEXT");
+                    .HasColumnType("uuid");
 
                 b.Property<DateTimeOffset>("CreatedAt")
-                    .HasColumnType("TEXT");
+                    .HasColumnType("timestamp with time zone");
 
                 b.Property<string>("DisplayName")
                     .HasMaxLength(256)
-                    .HasColumnType("TEXT");
+                    .HasColumnType("character varying(256)");
 
                 b.Property<string>("FirebaseUid")
                     .HasMaxLength(128)
-                    .HasColumnType("TEXT");
+                    .HasColumnType("character varying(128)");
 
                 b.Property<DateTimeOffset?>("UpdatedAt")
-                    .HasColumnType("TEXT");
+                    .HasColumnType("timestamp with time zone");
 
                 b.HasKey("Id");
 
