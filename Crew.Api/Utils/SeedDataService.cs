@@ -241,7 +241,7 @@ public static class SeedDataService
                 {
                     foreach (var organizer in organizers)
                     {
-                        organizer.IdentityLabel = UserIdentityLabels.Organizer;
+                        organizer.IdentityLabel = UserIdentityLabel.Organizer;
                     }
 
                     context.SaveChanges();
@@ -444,7 +444,7 @@ public static class SeedDataService
             AvatarUrl = AvatarDefaults.FallbackUrl,
             CoverImageUrl = string.Empty,
             Status = UserStatus.Active,
-            IdentityLabel = UserIdentityLabels.Visitor,
+            IdentityLabel = UserIdentityLabel.Visitor,
             CreatedAt = DateTime.UtcNow
         };
     }

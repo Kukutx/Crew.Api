@@ -57,12 +57,15 @@ public class AppDbContext : DbContext
             entity.Property(u => u.Status)
                 .HasMaxLength(32)
                 .HasConversion(
-                    status => status.Value,
-                    value => value is null ? UserStatus.Active : UserStatus.From(value))
-                .HasDefaultValue(UserStatus.Active.Value);
+                    status => status.ToStorageValue(),
+                    value => UserStatusExtensions.FromStorageValue(value))
+                .HasDefaultValue(UserStatus.Active.ToStorageValue());
             entity.Property(u => u.IdentityLabel)
                 .HasMaxLength(32)
-                .HasDefaultValue(UserIdentityLabels.Visitor);
+                .HasConversion(
+                    label => label.ToLocalizedString(),
+                    value => UserIdentityLabelExtensions.FromLocalizedString(value))
+                .HasDefaultValue(UserIdentityLabel.Visitor.ToLocalizedString());
         });
 
         modelBuilder.Entity<Role>(entity =>

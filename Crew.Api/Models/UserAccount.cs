@@ -34,7 +34,7 @@ public class UserAccount
     public UserStatus Status { get; set; } = UserStatus.Active;
 
     [MaxLength(32)]
-    public string IdentityLabel { get; set; } = UserIdentityLabels.Visitor;
+    public UserIdentityLabel IdentityLabel { get; set; } = UserIdentityLabel.Visitor;
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
@@ -59,18 +59,4 @@ public class UserAccount
     public ICollection<TripFavorite> TripFavorites { get; set; } = new List<TripFavorite>();
     public ICollection<TripComment> TripComments { get; set; } = new List<TripComment>();
     public ICollection<TripImage> TripImages { get; set; } = new List<TripImage>();
-}
-
-public static class UserIdentityLabels
-{
-    public const string Visitor = "游客";
-    public const string Participant = "参与者";
-    public const string Organizer = "组织者";
-
-    public static readonly IReadOnlySet<string> All = new HashSet<string>(StringComparer.Ordinal)
-    {
-        Visitor,
-        Participant,
-        Organizer,
-    };
 }

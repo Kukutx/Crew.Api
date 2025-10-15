@@ -63,9 +63,9 @@ public class EventsController : ControllerBase
         entity.UserUid = currentUid;
 
         var creator = await _context.Users.FindAsync(new object?[] { currentUid }, cancellationToken);
-        if (creator is not null && !string.Equals(creator.IdentityLabel, UserIdentityLabels.Organizer, StringComparison.Ordinal))
+        if (creator is not null && creator.IdentityLabel != UserIdentityLabel.Organizer)
         {
-            creator.IdentityLabel = UserIdentityLabels.Organizer;
+            creator.IdentityLabel = UserIdentityLabel.Organizer;
         }
 
         if (entity.StartTime == default)
@@ -167,9 +167,9 @@ public class EventsController : ControllerBase
         }
 
         var user = await _context.Users.FindAsync(new object?[] { currentUid }, cancellationToken);
-        if (user is not null && !string.Equals(user.IdentityLabel, UserIdentityLabels.Organizer, StringComparison.Ordinal))
+        if (user is not null && user.IdentityLabel != UserIdentityLabel.Organizer)
         {
-            user.IdentityLabel = UserIdentityLabels.Participant;
+            user.IdentityLabel = UserIdentityLabel.Participant;
         }
 
         await _context.SaveChangesAsync(cancellationToken);

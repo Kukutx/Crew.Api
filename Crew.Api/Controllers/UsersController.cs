@@ -102,7 +102,7 @@ public class UsersController : ControllerBase
                 AvatarUrl = AvatarDefaults.Normalize(request.AvatarUrl),
                 CreatedAt = DateTime.UtcNow,
                 Status = UserStatus.Active,
-                IdentityLabel = normalizedIdentityLabel ?? UserIdentityLabels.Visitor,
+                IdentityLabel = normalizedIdentityLabel ?? UserIdentityLabel.Visitor,
             };
 
             await ApplyDefaultRoleAsync(user, cancellationToken);
@@ -136,7 +136,7 @@ public class UsersController : ControllerBase
 
             if (!string.IsNullOrWhiteSpace(request.IdentityLabel) && normalizedIdentityLabel is not null)
             {
-                user.IdentityLabel = normalizedIdentityLabel;
+                user.IdentityLabel = normalizedIdentityLabel.Value;
             }
             user.UpdatedAt = DateTime.UtcNow;
         }
@@ -285,8 +285,8 @@ public class UsersController : ControllerBase
             user.DisplayName,
             user.AvatarUrl,
             user.CoverImageUrl,
-            user.Status,
-            user.IdentityLabel,
+            user.Status.ToStorageValue(),
+            user.IdentityLabel.ToLocalizedString(),
             user.CreatedAt,
             user.UpdatedAt,
             followerCount,
@@ -330,7 +330,7 @@ public class UsersController : ControllerBase
 
     public record SubscriptionResponse(string PlanKey, string PlanName, DateTime AssignedAt, DateTime? ExpiresAt);
 
-    private static bool TryNormalizeIdentityLabel(string? identityLabel, out string? normalized, out string? errorMessage)
+    private static bool TryNormalizeIdentityLabel(string? identityLabel, out UserIdentityLabel? normalized, out string? errorMessage)
     {
         if (string.IsNullOrWhiteSpace(identityLabel))
         {
@@ -340,14 +340,14 @@ public class UsersController : ControllerBase
         }
 
         var trimmed = identityLabel.Trim();
-        if (!UserIdentityLabels.All.Contains(trimmed))
+        if (!UserIdentityLabelExtensions.TryFromLocalizedString(trimmed, out var parsed))
         {
             normalized = null;
-            errorMessage = $"identity label must be one of: {string.Join(" / ", UserIdentityLabels.All)}.";
+            errorMessage = $"identity label must be one of: {string.Join(" / ", UserIdentityLabelExtensions.AllLocalizedStrings)}.";
             return false;
         }
 
-        normalized = trimmed;
+        normalized = parsed;
         errorMessage = null;
         return true;
     }
