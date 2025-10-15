@@ -4,6 +4,7 @@ using Crew.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using NetTopologySuite;
 using NetTopologySuite.Geometries;
+using Npgsql.EntityFrameworkCore.PostgreSQL.NetTopologySuite;
 
 namespace Crew.Infrastructure.Services;
 
