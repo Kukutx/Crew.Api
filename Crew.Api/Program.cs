@@ -1,4 +1,3 @@
-using System.Reflection;
 using Crew.Api.Hubs;
 using Crew.Api.Messaging;
 using Crew.Api.Middleware;
@@ -6,7 +5,10 @@ using Crew.Application.Abstractions;
 using Crew.Application.Auth;
 using Crew.Application.Chat;
 using Crew.Application.Events;
+using Crew.Infrastructure.Extensions;
+using Crew.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,7 +16,7 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddSignalR();
- builder.Services.AddAuthorization();
+builder.Services.AddAuthorization();
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
@@ -28,19 +30,8 @@ builder.Services.AddScoped<RegisterForEventCommand>();
 builder.Services.AddScoped<ChatService>();
 builder.Services.AddSingleton<IOutboxEventHandler, UserJoinedGroupHandler>();
 
-var infrastructureAssembly = Assembly.Load("Crew.Infrastructure");
-var installerType = infrastructureAssembly
-    .GetTypes()
-    .FirstOrDefault(t => typeof(IModuleInstaller).IsAssignableFrom(t) && !t.IsInterface && !t.IsAbstract);
-
-if (installerType is not null && Activator.CreateInstance(installerType) is IModuleInstaller installer)
-{
-    installer.Install(builder.Services, builder.Configuration);
-}
-else
-{
-    throw new InvalidOperationException("Infrastructure module could not be loaded.");
-}
+var infrastructureModule = new InfrastructureModule();
+infrastructureModule.Install(builder.Services, builder.Configuration);
 
 var app = builder.Build();
 
@@ -52,14 +43,8 @@ if (app.Environment.IsDevelopment())
 
 using (var scope = app.Services.CreateScope())
 {
-    var dbContextType = infrastructureAssembly.GetType("Crew.Infrastructure.Persistence.AppDbContext");
-    if (dbContextType is not null)
-    {
-        if (scope.ServiceProvider.GetService(dbContextType) is DbContext dbContext)
-        {
-            dbContext.Database.Migrate();
-        }
-    }
+    var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    dbContext.Database.Migrate();
 }
 
 app.UseRouting();
