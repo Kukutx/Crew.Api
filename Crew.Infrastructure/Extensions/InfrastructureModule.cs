@@ -1,6 +1,7 @@
 using System.Net.Http.Headers;
 using Crew.Application.Abstractions;
 using Crew.Application.Auth;
+using Crew.Application.Events;
 using Crew.Application.Places;
 using Crew.Infrastructure.Auth;
 using Crew.Infrastructure.Messaging;
