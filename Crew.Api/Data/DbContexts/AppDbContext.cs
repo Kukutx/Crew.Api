@@ -57,17 +57,17 @@ public class AppDbContext : DbContext
                 .HasForeignKey(f => f.FollowerUid)
                 .OnDelete(DeleteBehavior.Cascade);
             entity.Property(u => u.Status)
-                .HasMaxLength(32)
-                .HasConversion(
-                    status => status.ToStorageValue(),
-                    value => UserStatusExtensions.FromStorageValue(value))
-                .HasDefaultValue(UserStatus.Active.ToStorageValue());
+              .HasMaxLength(32)
+              .HasConversion(
+                  status => status.ToStorageValue(),
+                  value => UserStatusExtensions.FromStorageValue(value))
+              .HasDefaultValue(UserStatus.Active); // Use the enum, not the string
             entity.Property(u => u.IdentityLabel)
                 .HasMaxLength(32)
                 .HasConversion(
                     label => label.ToStorageValue(),
                     value => UserIdentityLabelExtensions.FromStorageValue(value))
-                .HasDefaultValue(UserIdentityLabel.Visitor.ToStorageValue());
+                .HasDefaultValue(UserIdentityLabel.Visitor);
         });
 
         modelBuilder.Entity<Role>(entity =>
@@ -200,11 +200,11 @@ public class AppDbContext : DbContext
             entity.Property(tp => tp.Role)
                 .HasConversion(new EnumMemberValueConverter<TripParticipantRole>())
                 .HasMaxLength(32)
-                .HasDefaultValue(TripParticipantRole.Passenger.GetEnumMemberValue());
+.HasDefaultValue(TripParticipantRole.Passenger);
             entity.Property(tp => tp.Status)
                 .HasConversion(new EnumMemberValueConverter<TripParticipantStatus>())
                 .HasMaxLength(32)
-                .HasDefaultValue(TripParticipantStatus.Pending.GetEnumMemberValue());
+                .HasDefaultValue(TripParticipantStatus.Pending);
             entity.Property(tp => tp.JoinTime)
                 .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
@@ -284,7 +284,7 @@ public class AppDbContext : DbContext
             entity.Property(r => r.Status)
                 .HasConversion(new EnumMemberValueConverter<EventRegistrationStatus>())
                 .HasMaxLength(32)
-                .HasDefaultValue(EventRegistrationStatus.Pending.GetEnumMemberValue());
+                .HasDefaultValue(EventRegistrationStatus.Pending);
             entity.Property(r => r.StatusUpdatedAt)
                 .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
