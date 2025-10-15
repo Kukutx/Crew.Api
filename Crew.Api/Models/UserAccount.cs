@@ -31,7 +31,7 @@ public class UserAccount
     public string CoverImageUrl { get; set; } = string.Empty;
 
     [MaxLength(32)]
-    public string Status { get; set; } = UserStatuses.Active;
+    public UserStatus Status { get; set; } = UserStatus.Active;
 
     [MaxLength(32)]
     public string IdentityLabel { get; set; } = UserIdentityLabels.Visitor;
@@ -59,12 +59,6 @@ public class UserAccount
     public ICollection<TripFavorite> TripFavorites { get; set; } = new List<TripFavorite>();
     public ICollection<TripComment> TripComments { get; set; } = new List<TripComment>();
     public ICollection<TripImage> TripImages { get; set; } = new List<TripImage>();
-}
-
-public static class UserStatuses
-{
-    public const string Active = "active";
-    public const string Suspended = "suspended";
 }
 
 public static class UserIdentityLabels

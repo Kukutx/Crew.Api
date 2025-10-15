@@ -54,6 +54,12 @@ public class AppDbContext : DbContext
                 .WithOne(f => f.Follower)
                 .HasForeignKey(f => f.FollowerUid)
                 .OnDelete(DeleteBehavior.Cascade);
+            entity.Property(u => u.Status)
+                .HasMaxLength(32)
+                .HasConversion(
+                    status => status.Value,
+                    value => value is null ? UserStatus.Active : UserStatus.From(value))
+                .HasDefaultValue(UserStatus.Active.Value);
             entity.Property(u => u.IdentityLabel)
                 .HasMaxLength(32)
                 .HasDefaultValue(UserIdentityLabels.Visitor);

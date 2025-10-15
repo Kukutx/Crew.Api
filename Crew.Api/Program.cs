@@ -86,7 +86,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                             DisplayName = firebaseToken?.Claims.FirstOrDefault(c => c.Type == "name")?.Value ?? string.Empty,
                             AvatarUrl = AvatarDefaults.Normalize(firebaseToken?.Claims.FirstOrDefault(c => c.Type == "picture")?.Value),
                             CreatedAt = DateTime.UtcNow,
-                            Status = UserStatuses.Active,
+                            Status = UserStatus.Active,
                         };
 
                         var defaultRole = await dbContext.Roles.FirstOrDefaultAsync(r => r.Key == RoleKeys.User, context.HttpContext.RequestAborted);

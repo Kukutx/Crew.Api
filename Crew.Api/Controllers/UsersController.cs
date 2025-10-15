@@ -101,7 +101,7 @@ public class UsersController : ControllerBase
                 DisplayName = displayName,
                 AvatarUrl = AvatarDefaults.Normalize(request.AvatarUrl),
                 CreatedAt = DateTime.UtcNow,
-                Status = UserStatuses.Active,
+                Status = UserStatus.Active,
                 IdentityLabel = normalizedIdentityLabel ?? UserIdentityLabels.Visitor,
             };
 

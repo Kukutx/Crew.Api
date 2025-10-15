@@ -443,7 +443,7 @@ public static class SeedDataService
             Bio = string.Empty,
             AvatarUrl = AvatarDefaults.FallbackUrl,
             CoverImageUrl = string.Empty,
-            Status = UserStatuses.Active,
+            Status = UserStatus.Active,
             IdentityLabel = UserIdentityLabels.Visitor,
             CreatedAt = DateTime.UtcNow
         };
