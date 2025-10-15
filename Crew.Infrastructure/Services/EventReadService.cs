@@ -40,7 +40,9 @@ internal sealed class EventReadService : IEventReadService
         if (!string.IsNullOrWhiteSpace(request.Query))
         {
             var pattern = $"%{request.Query.Trim()}%";
-            query = query.Where(e => EF.Functions.ILike(e.Title, pattern) || (e.Description != null && EF.Functions.ILike(e.Description, pattern)));
+            query = query.Where(e =>
+                EF.Functions.Like(EF.Functions.Collate(e.Title, "NOCASE"), pattern) ||
+                (e.Description != null && EF.Functions.Like(EF.Functions.Collate(e.Description, "NOCASE"), pattern)));
         }
 
         query = query.Include(e => e.Registrations);

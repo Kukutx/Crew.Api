@@ -14,11 +14,11 @@ namespace Crew.Infrastructure.Migrations
                 name: "users",
                 columns: table => new
                 {
-                    id = table.Column<Guid>(type: "uuid", nullable: false),
-                    firebase_uid = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: false),
-                    display_name = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
-                    created_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    updated_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true)
+                    id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    firebase_uid = table.Column<string>(type: "TEXT", maxLength: 128, nullable: false),
+                    display_name = table.Column<string>(type: "TEXT", maxLength: 256, nullable: true),
+                    created_at = table.Column<DateTimeOffset>(type: "TEXT", nullable: false),
+                    updated_at = table.Column<DateTimeOffset>(type: "TEXT", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -29,10 +29,10 @@ namespace Crew.Infrastructure.Migrations
                 name: "chat_groups",
                 columns: table => new
                 {
-                    id = table.Column<Guid>(type: "uuid", nullable: false),
-                    scope = table.Column<int>(type: "integer", nullable: false),
-                    event_id = table.Column<Guid>(type: "uuid", nullable: true),
-                    created_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
+                    id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    scope = table.Column<int>(type: "INTEGER", nullable: false),
+                    event_id = table.Column<Guid>(type: "TEXT", nullable: true),
+                    created_at = table.Column<DateTimeOffset>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -43,12 +43,12 @@ namespace Crew.Infrastructure.Migrations
                 name: "outbox_messages",
                 columns: table => new
                 {
-                    id = table.Column<Guid>(type: "uuid", nullable: false),
-                    type = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
-                    payload = table.Column<string>(type: "text", nullable: false),
-                    occurred_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    processed_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
-                    error = table.Column<string>(type: "text", nullable: true)
+                    id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    type = table.Column<string>(type: "TEXT", maxLength: 256, nullable: false),
+                    payload = table.Column<string>(type: "TEXT", nullable: false),
+                    occurred_at = table.Column<DateTimeOffset>(type: "TEXT", nullable: false),
+                    processed_at = table.Column<DateTimeOffset>(type: "TEXT", nullable: true),
+                    error = table.Column<string>(type: "TEXT", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -59,10 +59,10 @@ namespace Crew.Infrastructure.Migrations
                 name: "private_dialogs",
                 columns: table => new
                 {
-                    id = table.Column<Guid>(type: "uuid", nullable: false),
-                    user_a = table.Column<Guid>(type: "uuid", nullable: false),
-                    user_b = table.Column<Guid>(type: "uuid", nullable: false),
-                    created_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
+                    id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    user_a = table.Column<Guid>(type: "TEXT", nullable: false),
+                    user_b = table.Column<Guid>(type: "TEXT", nullable: false),
+                    created_at = table.Column<DateTimeOffset>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -73,17 +73,17 @@ namespace Crew.Infrastructure.Migrations
                 name: "road_trip_events",
                 columns: table => new
                 {
-                    id = table.Column<Guid>(type: "uuid", nullable: false),
-                    owner_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    title = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
-                    description = table.Column<string>(type: "text", nullable: true),
-                    start_time = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    end_time = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
-                    start_point = table.Column<Point>(type: "geography(Point,4326)", nullable: false),
-                    end_point = table.Column<Point>(type: "geography(Point,4326)", nullable: true),
-                    route_polyline = table.Column<string>(type: "character varying(4096)", maxLength: 4096, nullable: true),
-                    max_participants = table.Column<int>(type: "integer", nullable: true),
-                    visibility = table.Column<int>(type: "integer", nullable: false)
+                    id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    owner_id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    title = table.Column<string>(type: "TEXT", maxLength: 256, nullable: false),
+                    description = table.Column<string>(type: "TEXT", nullable: true),
+                    start_time = table.Column<DateTimeOffset>(type: "TEXT", nullable: false),
+                    end_time = table.Column<DateTimeOffset>(type: "TEXT", nullable: true),
+                    start_point = table.Column<Point>(type: "BLOB", nullable: false),
+                    end_point = table.Column<Point>(type: "BLOB", nullable: true),
+                    route_polyline = table.Column<string>(type: "TEXT", maxLength: 4096, nullable: true),
+                    max_participants = table.Column<int>(type: "INTEGER", nullable: true),
+                    visibility = table.Column<int>(type: "INTEGER", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -94,10 +94,10 @@ namespace Crew.Infrastructure.Migrations
                 name: "chat_memberships",
                 columns: table => new
                 {
-                    group_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    user_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    role = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
-                    joined_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
+                    group_id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    user_id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    role = table.Column<string>(type: "TEXT", maxLength: 32, nullable: false),
+                    joined_at = table.Column<DateTimeOffset>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -120,12 +120,12 @@ namespace Crew.Infrastructure.Migrations
                 name: "chat_messages",
                 columns: table => new
                 {
-                    id = table.Column<Guid>(type: "uuid", nullable: false),
-                    group_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    sender_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    content = table.Column<string>(type: "text", nullable: false),
-                    attachments_json = table.Column<string>(type: "text", nullable: true),
-                    sent_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
+                    id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    group_id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    sender_id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    content = table.Column<string>(type: "TEXT", nullable: false),
+                    attachments_json = table.Column<string>(type: "TEXT", nullable: true),
+                    sent_at = table.Column<DateTimeOffset>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -142,11 +142,11 @@ namespace Crew.Infrastructure.Migrations
                 name: "event_segments",
                 columns: table => new
                 {
-                    id = table.Column<Guid>(type: "uuid", nullable: false),
-                    event_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    seq = table.Column<int>(type: "integer", nullable: false),
-                    waypoint = table.Column<Point>(type: "geography(Point,4326)", nullable: false),
-                    note = table.Column<string>(type: "text", nullable: true)
+                    id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    event_id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    seq = table.Column<int>(type: "INTEGER", nullable: false),
+                    waypoint = table.Column<Point>(type: "BLOB", nullable: false),
+                    note = table.Column<string>(type: "TEXT", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -163,11 +163,11 @@ namespace Crew.Infrastructure.Migrations
                 name: "private_messages",
                 columns: table => new
                 {
-                    id = table.Column<Guid>(type: "uuid", nullable: false),
-                    dialog_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    sender_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    content = table.Column<string>(type: "text", nullable: false),
-                    sent_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
+                    id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    dialog_id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    sender_id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    content = table.Column<string>(type: "TEXT", nullable: false),
+                    sent_at = table.Column<DateTimeOffset>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -184,11 +184,11 @@ namespace Crew.Infrastructure.Migrations
                 name: "registrations",
                 columns: table => new
                 {
-                    id = table.Column<Guid>(type: "uuid", nullable: false),
-                    event_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    user_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    status = table.Column<int>(type: "integer", nullable: false),
-                    created_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
+                    id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    event_id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    user_id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    status = table.Column<int>(type: "INTEGER", nullable: false),
+                    created_at = table.Column<DateTimeOffset>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -249,17 +249,7 @@ namespace Crew.Infrastructure.Migrations
                 columns: new[] { "event_id", "user_id" },
                 unique: true);
 
-            migrationBuilder.CreateIndex(
-                name: "ix_road_trip_events_end_point",
-                table: "road_trip_events",
-                column: "end_point")
-                .Annotation("Npgsql:IndexMethod", "GIST");
 
-            migrationBuilder.CreateIndex(
-                name: "ix_road_trip_events_start_point",
-                table: "road_trip_events",
-                column: "start_point")
-                .Annotation("Npgsql:IndexMethod", "GIST");
 
             migrationBuilder.CreateIndex(
                 name: "ix_users_firebase_uid",

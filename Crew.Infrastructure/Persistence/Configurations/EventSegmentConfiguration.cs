@@ -11,7 +11,6 @@ public class EventSegmentConfiguration : IEntityTypeConfiguration<EventSegment>
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Seq).IsRequired();
         builder.Property(x => x.Waypoint)
-            .HasColumnType("geography(Point,4326)")
             .IsRequired();
     }
 }
