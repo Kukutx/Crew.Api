@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
@@ -7,41 +7,15 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="Data\Configurations\**" />
-    <Compile Remove="Data\Entities\**" />
-    <Compile Remove="Data\Enum\**" />
-    <Content Remove="Data\Configurations\**" />
-    <Content Remove="Data\Entities\**" />
-    <Content Remove="Data\Enum\**" />
-    <EmbeddedResource Remove="Data\Configurations\**" />
-    <EmbeddedResource Remove="Data\Entities\**" />
-    <EmbeddedResource Remove="Data\Enum\**" />
-    <None Remove="Data\Configurations\**" />
-    <None Remove="Data\Entities\**" />
-    <None Remove="Data\Enum\**" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="FirebaseAdmin" Version="3.4.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.9" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.9" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.9">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.9" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.9">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
     <PackageReference Include="Swashbuckle.AspNetCore" Version="9.0.4" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.9" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="9.0.9" />
-    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.14.0" />
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Migrations\" />
+    <ProjectReference Include="..\Crew.Application\Crew.Application.csproj" />
+    <ProjectReference Include="..\Crew.Contracts\Crew.Contracts.csproj" />
   </ItemGroup>
 
 </Project>
