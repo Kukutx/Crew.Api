@@ -57,13 +57,18 @@ public class AppDbContext : DbContext
                 .HasForeignKey(f => f.FollowerUid)
                 .OnDelete(DeleteBehavior.Cascade);
             entity.Property(u => u.Status)
-                .HasConversion(new EnumMemberValueConverter<UserStatus>())
                 .HasMaxLength(32)
-                .HasDefaultValue(UserStatus.Active.GetEnumMemberValue());
+                .HasConversion(
+                    status => status.ToStorageValue(),
+                    value => UserStatusExtensions.FromStorageValue(value))
+                .HasDefaultValue(UserStatus.Active.ToStorageValue());
             entity.Property(u => u.IdentityLabel)
                 .HasConversion(new EnumMemberValueConverter<UserIdentityLabel>())
                 .HasMaxLength(32)
-                .HasDefaultValue(UserIdentityLabel.Visitor.GetEnumMemberValue());
+                .HasConversion(
+                    label => label.ToLocalizedString(),
+                    value => UserIdentityLabelExtensions.FromLocalizedString(value))
+                .HasDefaultValue(UserIdentityLabel.Visitor.ToLocalizedString());
         });
 
         modelBuilder.Entity<Role>(entity =>
