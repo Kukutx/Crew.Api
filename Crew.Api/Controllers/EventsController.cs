@@ -149,7 +149,7 @@ public class EventsController : ControllerBase
         var existing = await _context.EventRegistrations.FindAsync(new object?[] { id, currentUid }, cancellationToken);
         if (existing is null)
         {
-            if (@event.Participants >= MaxParticipants)
+            if (@event.ParticipantCount >= MaxParticipants)
             {
                 return BadRequest($"Event is full. Maximum participants: {MaxParticipants}.");
             }
@@ -164,7 +164,7 @@ public class EventsController : ControllerBase
                 StatusUpdatedAt = now,
             };
             _context.EventRegistrations.Add(existing);
-            @event.Participants = Math.Min(MaxParticipants, @event.Participants + 1);
+            @event.ParticipantCount = Math.Min(MaxParticipants, @event.ParticipantCount + 1);
         }
 
         var user = await _context.Users.FindAsync(new object?[] { currentUid }, cancellationToken);
@@ -278,9 +278,9 @@ public class EventsController : ControllerBase
         }
 
         _context.EventRegistrations.Remove(registration);
-        if (@event.Participants > 0)
+        if (@event.ParticipantCount > 0)
         {
-            @event.Participants -= 1;
+            @event.ParticipantCount -= 1;
         }
         await _context.SaveChangesAsync(cancellationToken);
         return NoContent();
@@ -506,7 +506,7 @@ public class EventsController : ControllerBase
                 Status = e.Status,
                 Location = e.Location,
                 Description = e.Description,
-                Participants = e.Participants,
+                Participants = e.ParticipantCount,
                 UserUid = e.UserUid,
                 StartTime = e.StartTime,
                 EndTime = e.EndTime,
@@ -542,7 +542,7 @@ public class EventsController : ControllerBase
         target.Description = source.Description;
         if (!isUpdate)
         {
-            target.Participants = Math.Max(0, Math.Min(MaxParticipants, source.Participants));
+            target.ParticipantCount = Math.Max(0, Math.Min(MaxParticipants, source.Participants));
         }
 
         if (isUpdate)
@@ -587,7 +587,7 @@ public class EventsController : ControllerBase
             Status = entity.Status,
             Location = entity.Location,
             Description = entity.Description,
-            Participants = entity.Participants,
+            Participants = entity.ParticipantCount,
             UserUid = entity.UserUid,
             StartTime = entity.StartTime,
             EndTime = entity.EndTime,

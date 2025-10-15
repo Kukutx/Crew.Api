@@ -1,8 +1,14 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text.Json;
 using Crew.Api.Data.Converters;
 using Crew.Api.Entities;
 using Crew.Api.Extensions;
 using Crew.Api.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Crew.Api.Data.DbContexts;
 
@@ -117,6 +123,18 @@ public class AppDbContext : DbContext
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
+        var stringListConverter = new ValueConverter<List<string>, string>(
+            v => JsonSerializer.Serialize(v ?? new List<string>(), (JsonSerializerOptions?)null),
+            v => string.IsNullOrWhiteSpace(v)
+                ? new List<string>()
+                : JsonSerializer.Deserialize<List<string>>(v) ?? new List<string>());
+
+        var stringListComparer = new ValueComparer<List<string>>(
+            (left, right) => ReferenceEquals(left, right) ||
+                (left != null && right != null && left.SequenceEqual(right)),
+            v => v != null ? v.Aggregate(0, (hash, item) => HashCode.Combine(hash, item != null ? item.GetHashCode() : 0)) : 0,
+            v => v != null ? v.ToList() : new List<string>());
+
         modelBuilder.Entity<Event>(entity =>
         {
             entity.ToTable("Events");
@@ -125,6 +143,10 @@ public class AppDbContext : DbContext
                 .WithMany(u => u.Events)
                 .HasForeignKey(e => e.UserUid)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            entity.Property(e => e.ImageUrls)
+                .HasConversion(stringListConverter)
+                .Metadata.SetValueComparer(stringListComparer);
         });
 
         modelBuilder.Entity<Trip>(entity =>
