@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using Crew.Application.Auth;
+using Serilog.Context;
 
 namespace Crew.Api.Middleware;
 
@@ -14,6 +15,8 @@ public sealed class FirebaseAuthenticationMiddleware
 
     public async Task InvokeAsync(HttpContext context, IFirebaseTokenVerifier tokenVerifier, UserProvisioningService userProvisioningService)
     {
+        Guid? userId = null;
+
         var authorization = context.Request.Headers["Authorization"].ToString();
         if (!string.IsNullOrEmpty(authorization) && authorization.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
         {
@@ -22,6 +25,8 @@ public sealed class FirebaseAuthenticationMiddleware
             if (result is not null)
             {
                 var user = await userProvisioningService.EnsureUserAsync(result.FirebaseUid, result.DisplayName, context.RequestAborted);
+                userId = user.Id;
+
                 var claims = new List<Claim>
                 {
                     new(ClaimTypes.NameIdentifier, user.Id.ToString()),
@@ -43,6 +48,9 @@ public sealed class FirebaseAuthenticationMiddleware
             }
         }
 
-        await _next(context);
+        using (LogContext.PushProperty("user_id", userId))
+        {
+            await _next(context);
+        }
     }
 }

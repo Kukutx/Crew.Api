@@ -6,7 +6,8 @@ using Microsoft.AspNetCore.Mvc;
 namespace Crew.Api.Controllers;
 
 [ApiController]
-[Route("places")]
+[ApiVersion("1.0")]
+[Route("api/v{version:apiVersion}/places")]
 public sealed class PlacesController : ControllerBase
 {
     private readonly IGooglePlacesClient _placesClient;

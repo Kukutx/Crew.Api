@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+    branches: ["*"]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: Restore
+        run: dotnet restore Crew.Api.sln
+
+      - name: Build
+        run: dotnet build Crew.Api.sln --no-restore --configuration Release
+
+      - name: Test
+        run: dotnet test Crew.Api.sln --no-build --configuration Release
+
+      - name: Generate OpenAPI specification
+        if: github.ref == 'refs/heads/dev-1'
+        run: |
+          dotnet tool install -g Swashbuckle.AspNetCore.Cli
+          echo "$HOME/.dotnet/tools" >> $GITHUB_PATH
+          dotnet swagger tofile --output openapi.json Crew.Api/bin/Release/net9.0/Crew.Api.dll v1
+
+      - name: Upload OpenAPI artifact
+        if: github.ref == 'refs/heads/dev-1'
+        uses: actions/upload-artifact@v4
+        with:
+          name: openapi
+          path: openapi.json

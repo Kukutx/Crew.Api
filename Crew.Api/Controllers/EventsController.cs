@@ -8,7 +8,8 @@ using Microsoft.AspNetCore.Mvc;
 namespace Crew.Api.Controllers;
 
 [ApiController]
-[Route("events")]
+[ApiVersion("1.0")]
+[Route("api/v{version:apiVersion}/events")]
 public class EventsController : ControllerBase
 {
     private readonly IEventReadService _eventReadService;
