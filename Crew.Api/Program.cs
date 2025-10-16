@@ -10,12 +10,10 @@ using Crew.Application.Auth;
 using Crew.Application.Chat;
 using Crew.Application.Events;
 using Crew.Infrastructure.Extensions;
-using Crew.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.AspNetCore.Mvc.Versioning;
-using Microsoft.EntityFrameworkCore;
 using Serilog;
 using Serilog.Formatting.Json;
 
@@ -152,11 +150,7 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-using (var scope = app.Services.CreateScope())
-{
-    var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    dbContext.Database.Migrate();
-}
+await app.ApplyMigrationsAsync();
 app.UseSerilogRequestLogging(options =>
 {
     options.EnrichDiagnosticContext = (diagnosticContext, httpContext) =>
