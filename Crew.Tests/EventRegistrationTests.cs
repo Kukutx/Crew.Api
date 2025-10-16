@@ -1,0 +1,70 @@
+using Crew.Domain.Entities;
+using Crew.Domain.Enums;
+using Crew.Domain.Events;
+using Crew.Tests.Support;
+using NetTopologySuite;
+using NetTopologySuite.Geometries;
+
+namespace Crew.Tests;
+
+public class EventRegistrationTests : IClassFixture<CrewApiFactory>
+{
+    private readonly CrewApiFactory _factory;
+
+    public EventRegistrationTests(CrewApiFactory factory)
+    {
+        _factory = factory;
+    }
+
+    [Fact]
+    public async Task RegisterForEvent_CreatesRegistrationAndChatMembership()
+    {
+        await _factory.ResetDatabaseAsync();
+
+        var eventId = Guid.NewGuid();
+        var geometryFactory = NtsGeometryServices.Instance.CreateGeometryFactory(srid: 4326);
+        var start = geometryFactory.CreatePoint(new Coordinate(30.0, 50.0));
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            dbContext.RoadTripEvents.Add(new RoadTripEvent
+            {
+                Id = eventId,
+                OwnerId = Guid.NewGuid(),
+                Title = "Integration Ride",
+                Description = "Testing registration",
+                StartTime = DateTimeOffset.UtcNow,
+                EndTime = DateTimeOffset.UtcNow.AddHours(2),
+                StartPoint = start,
+                Visibility = EventVisibility.Public
+            });
+
+            await dbContext.SaveChangesAsync();
+        }
+
+        var response = await _factory.CreateAuthenticatedClient()
+            .SendAsync(new HttpRequestMessage(HttpMethod.Post, $"/api/v1/events/{eventId}/registrations"));
+
+        response.StatusCode.Should().Be(HttpStatusCode.NoContent);
+
+        using var assertionScope = _factory.Services.CreateScope();
+        var assertDbContext = assertionScope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+        var user = await assertDbContext.Users.SingleAsync(u => u.FirebaseUid == CrewApiFactory.TestFirebaseUid);
+        var registration = await assertDbContext.Registrations.SingleAsync();
+        registration.EventId.Should().Be(eventId);
+        registration.UserId.Should().Be(user.Id);
+        registration.Status.Should().Be(RegistrationStatus.Confirmed);
+
+        var group = await assertDbContext.ChatGroups.SingleAsync();
+        group.EventId.Should().Be(eventId);
+
+        var membership = await assertDbContext.ChatMemberships.SingleAsync();
+        membership.GroupId.Should().Be(group.Id);
+        membership.UserId.Should().Be(user.Id);
+
+        var outboxMessage = await assertDbContext.OutboxMessages.SingleAsync();
+        outboxMessage.Type.Should().Be(nameof(UserJoinedGroupEvent));
+    }
+}

@@ -1,0 +1,12 @@
+global using System.Net;
+global using System.Net.Http.Headers;
+global using System.Text.Json;
+global using Crew.Infrastructure.Persistence;
+global using FluentAssertions;
+global using Microsoft.AspNetCore.Mvc.Testing;
+global using Microsoft.AspNetCore.SignalR.Client;
+global using Microsoft.Data.Sqlite;
+global using Microsoft.EntityFrameworkCore;
+global using Microsoft.Extensions.DependencyInjection;
+global using Respawn;
+global using Xunit;
