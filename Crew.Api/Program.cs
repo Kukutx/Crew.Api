@@ -1,3 +1,4 @@
+using Crew.Api.Extensions;
 using Crew.Api.Hubs;
 using Crew.Api.Messaging;
 using Crew.Api.Middleware;
@@ -9,6 +10,7 @@ using Crew.Infrastructure.Extensions;
 using Crew.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -43,8 +45,19 @@ if (app.Environment.IsDevelopment())
 
 using (var scope = app.Services.CreateScope())
 {
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
     var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    dbContext.Database.Migrate();
+
+    try
+    {
+        PostgresDatabaseInitializer.EnsureDatabase(dbContext, logger);
+        dbContext.Database.Migrate();
+    }
+    catch (Exception exception)
+    {
+        logger.LogCritical(exception, "An error occurred while initializing the database.");
+        throw;
+    }
 }
 
 app.UseRouting();
