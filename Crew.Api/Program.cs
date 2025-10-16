@@ -8,7 +8,6 @@ using Crew.Application.Events;
 using Crew.Infrastructure.Extensions;
 using Crew.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 
 var builder = WebApplication.CreateBuilder(args);
 

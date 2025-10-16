@@ -10,6 +10,5 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Crew.Contracts\Crew.Contracts.csproj" />
-    <ProjectReference Include="..\Crew.Domain\Crew.Domain.csproj" />
   </ItemGroup>
 </Project>

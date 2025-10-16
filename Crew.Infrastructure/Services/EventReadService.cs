@@ -1,9 +1,9 @@
 using Crew.Application.Events;
-using System.Linq;
 using Crew.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
-using NetTopologySuite;
-using NetTopologySuite.Geometries;
+using NetTopologySuite.Geometries;                    // EF.Functions
+using Npgsql.EntityFrameworkCore.PostgreSQL;            // ILike/空间扩展注册
+using Npgsql.EntityFrameworkCore.PostgreSQL.NetTopologySuite;
 
 namespace Crew.Infrastructure.Services;
 
@@ -25,7 +25,8 @@ internal sealed class EventReadService : IEventReadService
         {
             var envelope = new Envelope(request.MinLongitude.Value, request.MaxLongitude.Value, request.MinLatitude.Value, request.MaxLatitude.Value);
             var polygon = _geometryFactory.ToGeometry(envelope);
-            query = query.Where(e => EF.Functions.Contains(polygon, e.StartPoint) || (e.EndPoint != null && EF.Functions.Contains(polygon, e.EndPoint!)));
+            query = query.Where(e => polygon.Contains(e.StartPoint) ||
+                         (e.EndPoint != null && polygon.Contains(e.EndPoint!)));
         }
 
         if (request.From is not null)
@@ -36,14 +37,6 @@ internal sealed class EventReadService : IEventReadService
         if (request.To is not null)
         {
             query = query.Where(e => e.StartTime <= request.To.Value);
-        }
-
-        if (!string.IsNullOrWhiteSpace(request.Query))
-        {
-            var pattern = $"%{request.Query.Trim()}%";
-            query = query.Where(e =>
-                EF.Functions.Like(EF.Functions.Collate(e.Title, "NOCASE"), pattern) ||
-                (e.Description != null && EF.Functions.Like(EF.Functions.Collate(e.Description, "NOCASE"), pattern)));
         }
 
         query = query.Include(e => e.Registrations);
