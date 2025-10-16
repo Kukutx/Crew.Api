@@ -1,14 +1,19 @@
-﻿# ---- Build Stage ----
+# ---- Build Stage ----
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /app
 
 # 复制 csproj 并 restore
-COPY *.sln .
-COPY Crew.Api/*.csproj ./Crew.Api/
+COPY Crew.Api.sln ./
+COPY Crew.Api/Crew.Api.csproj ./Crew.Api/
+COPY Crew.Domain/Crew.Domain.csproj ./Crew.Domain/
+COPY Crew.Application/Crew.Application.csproj ./Crew.Application/
+COPY Crew.Infrastructure/Crew.Infrastructure.csproj ./Crew.Infrastructure/
+COPY Crew.Contracts/Crew.Contracts.csproj ./Crew.Contracts/
+COPY Crew.Tests/Crew.Tests.csproj ./Crew.Tests/
 RUN dotnet restore
 
 # 复制所有文件并发布
-COPY Crew.Api/. ./Crew.Api/
+COPY . ./
 WORKDIR /app/Crew.Api
 RUN dotnet publish -c Release -o /app/out
 
