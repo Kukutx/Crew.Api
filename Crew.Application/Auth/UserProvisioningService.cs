@@ -1,5 +1,6 @@
 using Crew.Application.Abstractions;
 using Crew.Domain.Entities;
+using Crew.Domain.Enums;
 
 namespace Crew.Application.Auth;
 
@@ -14,11 +15,42 @@ public sealed class UserProvisioningService
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<User> EnsureUserAsync(string firebaseUid, string? displayName, CancellationToken cancellationToken = default)
+    public async Task<User> EnsureUserAsync(
+        string firebaseUid,
+        string? displayName,
+        UserRole role = UserRole.User,
+        string? avatarUrl = null,
+        CancellationToken cancellationToken = default)
     {
         var existing = await _userRepository.FindByFirebaseUidAsync(firebaseUid, cancellationToken);
         if (existing is not null)
         {
+            var requiresUpdate = false;
+
+            if (!string.IsNullOrWhiteSpace(displayName) && !string.Equals(existing.DisplayName, displayName, StringComparison.Ordinal))
+            {
+                existing.DisplayName = displayName;
+                requiresUpdate = true;
+            }
+
+            if (!string.IsNullOrWhiteSpace(avatarUrl) && !string.Equals(existing.AvatarUrl, avatarUrl, StringComparison.Ordinal))
+            {
+                existing.AvatarUrl = avatarUrl;
+                requiresUpdate = true;
+            }
+
+            if (existing.Role != role)
+            {
+                existing.Role = role;
+                requiresUpdate = true;
+            }
+
+            if (requiresUpdate)
+            {
+                existing.UpdatedAt = DateTimeOffset.UtcNow;
+                await _unitOfWork.SaveChangesAsync(cancellationToken);
+            }
+
             return existing;
         }
 
@@ -27,6 +59,8 @@ public sealed class UserProvisioningService
             Id = Guid.NewGuid(),
             FirebaseUid = firebaseUid,
             DisplayName = displayName,
+            Role = role,
+            AvatarUrl = avatarUrl,
             CreatedAt = DateTimeOffset.UtcNow
         };
 

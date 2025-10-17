@@ -1,7 +1,9 @@
 using Crew.Application.Abstractions;
 using Crew.Application.Auth;
 using Crew.Application.Events;
+using Crew.Application.Moments;
 using Crew.Application.Places;
+using Crew.Application.Users;
 using Crew.Infrastructure.Auth;
 using Crew.Infrastructure.Messaging;
 using Crew.Infrastructure.Persistence;
@@ -36,8 +38,13 @@ public sealed class InfrastructureModule : IModuleInstaller
         services.AddScoped<IRegistrationRepository, RegistrationRepository>();
         services.AddScoped<IChatRepository, ChatRepository>();
         services.AddScoped<IOutboxRepository, OutboxRepository>();
+        services.AddScoped<IUserActivityHistoryRepository, UserActivityHistoryRepository>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<IEventReadService, EventReadService>();
+        services.AddScoped<IUserReadService, UserReadService>();
+        services.AddScoped<IUserRelationshipService, UserRelationshipService>();
+        services.AddScoped<IUserProfileCommandService, UserProfileCommandService>();
+        services.AddScoped<IMomentService, MomentService>();
         services.AddScoped<IFirebaseTokenVerifier, FirebaseTokenVerifier>();
 
         services.AddHostedService<OutboxProcessor>();

@@ -16,6 +16,10 @@ public class RoadTripEvent
     public string? RoutePolyline { get; set; }
     public int? MaxParticipants { get; set; }
     public EventVisibility Visibility { get; set; }
+
     public ICollection<EventSegment> Segments { get; set; } = new List<EventSegment>();
     public ICollection<Registration> Registrations { get; set; } = new List<Registration>();
+    public ICollection<EventTag> Tags { get; set; } = new List<EventTag>();
+    public ICollection<Moment> Moments { get; set; } = new List<Moment>();
+    public ICollection<UserActivityHistory> ActivityHistory { get; set; } = new List<UserActivityHistory>();
 }

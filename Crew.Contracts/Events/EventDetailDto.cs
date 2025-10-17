@@ -1,3 +1,4 @@
+using Crew.Contracts.Moments;
 using Crew.Domain.Enums;
 
 namespace Crew.Contracts.Events;
@@ -16,4 +17,6 @@ public sealed record EventDetailDto(
     EventVisibility Visibility,
     IReadOnlyList<EventSegmentDto> Segments,
     int MemberCount,
-    bool IsRegistered);
+    bool IsRegistered,
+    IReadOnlyList<string> Tags,
+    IReadOnlyList<MomentSummaryDto> Moments);

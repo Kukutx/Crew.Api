@@ -1,3 +1,4 @@
+using Crew.Application.Moments;
 using Crew.Domain.Enums;
 
 namespace Crew.Application.Events;
@@ -18,4 +19,6 @@ public sealed record EventDetail(
     EventVisibility Visibility,
     IReadOnlyList<EventSegmentModel> Segments,
     int MemberCount,
-    bool IsRegistered);
+    bool IsRegistered,
+    IReadOnlyList<string> Tags,
+    IReadOnlyList<MomentSummary>? Moments);
