@@ -15,12 +15,18 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Crew.Contracts", "Crew.Cont
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Crew.Tests", "Crew.Tests\Crew.Tests.csproj", "{D98D692F-CAE3-43E5-860D-D8F5F34DD033}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Crew.SeedDataImporter", "Crew.SeedDataImporter\\Crew.SeedDataImporter.csproj", "{1F2C93C1-6E78-4E59-8E68-0BD7F1D8E2BA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{1F2C93C1-6E78-4E59-8E68-0BD7F1D8E2BA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1F2C93C1-6E78-4E59-8E68-0BD7F1D8E2BA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1F2C93C1-6E78-4E59-8E68-0BD7F1D8E2BA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1F2C93C1-6E78-4E59-8E68-0BD7F1D8E2BA}.Release|Any CPU.Build.0 = Release|Any CPU
 		{DFF30B72-E101-47C6-8FF1-3201F842BFED}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{DFF30B72-E101-47C6-8FF1-3201F842BFED}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DFF30B72-E101-47C6-8FF1-3201F842BFED}.Release|Any CPU.ActiveCfg = Release|Any CPU
