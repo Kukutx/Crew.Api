@@ -1,6 +1,7 @@
 using System;
 using System.Security.Claims;
 using Crew.Api.Mapping;
+using Asp.Versioning;
 using Crew.Application.Auth;
 using Crew.Application.Users;
 using Crew.Contracts.Users;

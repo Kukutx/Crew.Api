@@ -1,3 +1,4 @@
+using Asp.Versioning;
 using Crew.Application.Places;
 using Crew.Contracts.Places;
 using Microsoft.AspNetCore.Authorization;
