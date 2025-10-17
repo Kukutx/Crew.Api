@@ -66,5 +66,10 @@ public class EventRegistrationTests : IClassFixture<CrewApiFactory>
 
         var outboxMessage = await assertDbContext.OutboxMessages.SingleAsync();
         outboxMessage.Type.Should().Be(nameof(UserJoinedGroupEvent));
+
+        var history = await assertDbContext.UserActivityHistories.SingleAsync();
+        history.UserId.Should().Be(user.Id);
+        history.EventId.Should().Be(eventId);
+        history.Role.Should().Be(ActivityRole.Participant);
     }
 }
