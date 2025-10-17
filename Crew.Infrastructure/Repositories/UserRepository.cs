@@ -21,7 +21,20 @@ internal sealed class UserRepository : IUserRepository
         => _dbContext.Users.FirstOrDefaultAsync(x => x.Id == userId, cancellationToken);
 
     public Task AddAsync(User user, CancellationToken cancellationToken = default)
+        => _dbContext.Users.AddAsync(user, cancellationToken).AsTask();
+
+    public Task<UserFollow?> GetFollowAsync(Guid followerId, Guid followingId, CancellationToken cancellationToken = default)
+        => _dbContext.UserFollows.FirstOrDefaultAsync(x => x.FollowerId == followerId && x.FollowingId == followingId, cancellationToken);
+
+    public Task AddFollowAsync(UserFollow follow, CancellationToken cancellationToken = default)
+        => _dbContext.UserFollows.AddAsync(follow, cancellationToken).AsTask();
+
+    public Task RemoveFollowAsync(UserFollow follow, CancellationToken cancellationToken = default)
     {
-        return _dbContext.Users.AddAsync(user, cancellationToken).AsTask();
+        _dbContext.UserFollows.Remove(follow);
+        return Task.CompletedTask;
     }
+
+    public Task AddGuestbookEntryAsync(UserGuestbookEntry entry, CancellationToken cancellationToken = default)
+        => _dbContext.UserGuestbookEntries.AddAsync(entry, cancellationToken).AsTask();
 }

@@ -1,12 +1,23 @@
 using Crew.Application.Events;
+using Crew.Application.Moments;
 using Crew.Contracts.Events;
+using System;
 
 namespace Crew.Api.Mapping;
 
 public static class EventMappings
 {
     public static EventSummaryDto ToDto(this EventSummary summary)
-        => new(summary.Id, summary.Title, summary.StartTime, new[] { summary.Longitude, summary.Latitude }, summary.MemberCount, summary.IsRegistered);
+        => new(
+            summary.Id,
+            summary.OwnerId,
+            summary.Title,
+            summary.StartTime,
+            new[] { summary.Longitude, summary.Latitude },
+            summary.MemberCount,
+            summary.MaxParticipants,
+            summary.IsRegistered,
+            summary.Tags);
 
     public static EventDetailDto ToDto(this EventDetail detail)
         => new(
@@ -23,5 +34,7 @@ public static class EventMappings
             detail.Visibility,
             detail.Segments.Select(s => new EventSegmentDto(s.Seq, new[] { s.Longitude, s.Latitude }, s.Note)).ToList(),
             detail.MemberCount,
-            detail.IsRegistered);
+            detail.IsRegistered,
+            detail.Tags,
+            (detail.Moments ?? Array.Empty<MomentSummary>()).Select(m => m.ToDto()).ToList());
 }

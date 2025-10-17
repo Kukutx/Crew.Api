@@ -20,6 +20,15 @@ public class AppDbContext : DbContext
     public DbSet<PrivateDialog> PrivateDialogs => Set<PrivateDialog>();
     public DbSet<PrivateMessage> PrivateMessages => Set<PrivateMessage>();
     public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
+    public DbSet<Tag> Tags => Set<Tag>();
+    public DbSet<UserTag> UserTags => Set<UserTag>();
+    public DbSet<EventTag> EventTags => Set<EventTag>();
+    public DbSet<UserFollow> UserFollows => Set<UserFollow>();
+    public DbSet<UserActivityHistory> UserActivityHistories => Set<UserActivityHistory>();
+    public DbSet<UserGuestbookEntry> UserGuestbookEntries => Set<UserGuestbookEntry>();
+    public DbSet<Moment> Moments => Set<Moment>();
+    public DbSet<MomentImage> MomentImages => Set<MomentImage>();
+    public DbSet<MomentComment> MomentComments => Set<MomentComment>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

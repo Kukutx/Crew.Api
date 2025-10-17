@@ -1,6 +1,8 @@
 using Crew.Application.Events;
+using Crew.Application.Moments;
 using Crew.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using System.Linq;
 using NetTopologySuite.Geometries;                    // EF.Functions
 using Npgsql.EntityFrameworkCore.PostgreSQL;            // ILike/空间扩展注册
 using Npgsql.EntityFrameworkCore.PostgreSQL.NetTopologySuite;
@@ -39,17 +41,26 @@ internal sealed class EventReadService : IEventReadService
             query = query.Where(e => e.StartTime <= request.To.Value);
         }
 
-        query = query.Include(e => e.Registrations);
+        query = query
+            .Include(e => e.Registrations)
+            .Include(e => e.Tags)
+                .ThenInclude(t => t.Tag);
 
         var summaries = await query
             .Select(e => new EventSummary(
                 e.Id,
+                e.OwnerId,
                 e.Title,
                 e.StartTime,
                 e.StartPoint.X,
                 e.StartPoint.Y,
                 e.Registrations.Count(r => r.Status == Crew.Domain.Enums.RegistrationStatus.Confirmed),
-                userId != null && e.Registrations.Any(r => r.UserId == userId)))
+                e.MaxParticipants,
+                userId != null && e.Registrations.Any(r => r.UserId == userId),
+                e.Tags
+                    .Where(t => t.Tag != null)
+                    .Select(t => t.Tag!.Name)
+                    .ToList()))
             .ToListAsync(cancellationToken);
 
         return summaries;
@@ -60,6 +71,10 @@ internal sealed class EventReadService : IEventReadService
         var @event = await _dbContext.RoadTripEvents
             .Include(e => e.Segments)
             .Include(e => e.Registrations)
+            .Include(e => e.Tags)
+                .ThenInclude(t => t.Tag)
+            .Include(e => e.Moments)
+                .ThenInclude(m => m.User)
             .FirstOrDefaultAsync(e => e.Id == eventId, cancellationToken);
 
         if (@event is null)
@@ -70,6 +85,26 @@ internal sealed class EventReadService : IEventReadService
         var segments = @event.Segments
             .OrderBy(s => s.Seq)
             .Select(s => new EventSegmentModel(s.Seq, s.Waypoint.X, s.Waypoint.Y, s.Note))
+            .ToList();
+
+        var tags = @event.Tags
+            .Where(t => t.Tag != null)
+            .Select(t => t.Tag!.Name)
+            .Distinct()
+            .OrderBy(x => x)
+            .ToList();
+
+        var moments = @event.Moments
+            .OrderByDescending(m => m.CreatedAt)
+            .Select(m => new MomentSummary(
+                m.Id,
+                m.UserId,
+                m.User?.DisplayName,
+                m.Title,
+                m.CoverImageUrl,
+                m.Country,
+                m.City,
+                m.CreatedAt))
             .ToList();
 
         var detail = new EventDetail(
@@ -88,7 +123,9 @@ internal sealed class EventReadService : IEventReadService
             @event.Visibility,
             segments,
             @event.Registrations.Count(r => r.Status == Crew.Domain.Enums.RegistrationStatus.Confirmed),
-            userId != null && @event.Registrations.Any(r => r.UserId == userId));
+            userId != null && @event.Registrations.Any(r => r.UserId == userId),
+            tags,
+            moments);
 
         return detail;
     }

@@ -16,11 +16,31 @@ public class RoadTripEventConfiguration : IEntityTypeConfiguration<RoadTripEvent
         builder.Property(x => x.EndPoint)
             .HasColumnType("geometry (Point, 4326)");
         builder.Property(x => x.RoutePolyline).HasMaxLength(4096);
+        builder.Property(x => x.MaxParticipants).HasDefaultValue(7);
+
         builder.HasMany(x => x.Segments)
             .WithOne(x => x.Event!)
-            .HasForeignKey(x => x.EventId);
+            .HasForeignKey(x => x.EventId)
+            .OnDelete(DeleteBehavior.Cascade);
+
         builder.HasMany(x => x.Registrations)
             .WithOne(x => x.Event!)
-            .HasForeignKey(x => x.EventId);
+            .HasForeignKey(x => x.EventId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasMany(x => x.Tags)
+            .WithOne(x => x.Event)
+            .HasForeignKey(x => x.EventId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasMany(x => x.Moments)
+            .WithOne(x => x.Event)
+            .HasForeignKey(x => x.EventId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder.HasMany(x => x.ActivityHistory)
+            .WithOne(x => x.Event)
+            .HasForeignKey(x => x.EventId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

@@ -26,7 +26,7 @@ public class ChatHubTests : IClassFixture<CrewApiFactory>
         {
             var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
             var userProvisioning = scope.ServiceProvider.GetRequiredService<UserProvisioningService>();
-            var user = await userProvisioning.EnsureUserAsync(CrewApiFactory.TestFirebaseUid, "Integration Tester", CancellationToken.None);
+            var user = await userProvisioning.EnsureUserAsync(CrewApiFactory.TestFirebaseUid, "Integration Tester", cancellationToken: CancellationToken.None);
 
             dbContext.ChatGroups.Add(new ChatGroup
             {

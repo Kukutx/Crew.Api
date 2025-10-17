@@ -12,6 +12,7 @@ public sealed class RegisterForEventCommand
     private readonly IRegistrationRepository _registrationRepository;
     private readonly IChatRepository _chatRepository;
     private readonly IOutboxRepository _outboxRepository;
+    private readonly IUserActivityHistoryRepository _activityHistoryRepository;
     private readonly IUnitOfWork _unitOfWork;
 
     public RegisterForEventCommand(
@@ -19,12 +20,14 @@ public sealed class RegisterForEventCommand
         IRegistrationRepository registrationRepository,
         IChatRepository chatRepository,
         IOutboxRepository outboxRepository,
+        IUserActivityHistoryRepository activityHistoryRepository,
         IUnitOfWork unitOfWork)
     {
         _eventRepository = eventRepository;
         _registrationRepository = registrationRepository;
         _chatRepository = chatRepository;
         _outboxRepository = outboxRepository;
+        _activityHistoryRepository = activityHistoryRepository;
         _unitOfWork = unitOfWork;
     }
 
@@ -38,11 +41,13 @@ public sealed class RegisterForEventCommand
         {
             if (existing.Status == RegistrationStatus.Confirmed)
             {
+                await EnsureActivityHistoryAsync(userId, eventId, cancellationToken);
                 return existing;
             }
 
             existing.Status = RegistrationStatus.Confirmed;
             existing.CreatedAt = DateTimeOffset.UtcNow;
+            await EnsureActivityHistoryAsync(userId, eventId, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
             return existing;
         }
@@ -57,6 +62,7 @@ public sealed class RegisterForEventCommand
         };
 
         await _registrationRepository.AddAsync(registration, cancellationToken);
+        await EnsureActivityHistoryAsync(userId, eventId, cancellationToken);
 
         var group = await _chatRepository.GetEventGroupAsync(eventId, cancellationToken);
         if (group is null)
@@ -103,6 +109,12 @@ public sealed class RegisterForEventCommand
 
         await _registrationRepository.RemoveAsync(registration);
 
+        var history = await _activityHistoryRepository.FindAsync(userId, eventId, ActivityRole.Participant, cancellationToken);
+        if (history is not null)
+        {
+            await _activityHistoryRepository.RemoveAsync(history, cancellationToken);
+        }
+
         var group = await _chatRepository.GetEventGroupAsync(eventId, cancellationToken);
         if (group is not null)
         {
@@ -114,5 +126,25 @@ public sealed class RegisterForEventCommand
         }
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
+    }
+
+    private async Task EnsureActivityHistoryAsync(Guid userId, Guid eventId, CancellationToken cancellationToken)
+    {
+        var history = await _activityHistoryRepository.FindAsync(userId, eventId, ActivityRole.Participant, cancellationToken);
+        if (history is not null)
+        {
+            return;
+        }
+
+        var entry = new UserActivityHistory
+        {
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            EventId = eventId,
+            Role = ActivityRole.Participant,
+            OccurredAt = DateTimeOffset.UtcNow
+        };
+
+        await _activityHistoryRepository.AddAsync(entry, cancellationToken);
     }
 }
