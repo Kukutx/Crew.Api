@@ -2,20 +2,18 @@
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /app
 
-# 复制 csproj 并 restore
-COPY Crew.Api.sln ./
+# 复制必要的 csproj 并 restore（不包含 SeedDataImporter 工具）
 COPY Crew.Api/Crew.Api.csproj ./Crew.Api/
 COPY Crew.Domain/Crew.Domain.csproj ./Crew.Domain/
 COPY Crew.Application/Crew.Application.csproj ./Crew.Application/
 COPY Crew.Infrastructure/Crew.Infrastructure.csproj ./Crew.Infrastructure/
 COPY Crew.Contracts/Crew.Contracts.csproj ./Crew.Contracts/
-COPY Crew.Tests/Crew.Tests.csproj ./Crew.Tests/
-RUN dotnet restore
+RUN dotnet restore ./Crew.Api/Crew.Api.csproj
 
 # 复制所有文件并发布
 COPY . ./
 WORKDIR /app/Crew.Api
-RUN dotnet publish -c Release -o /app/out
+RUN dotnet publish Crew.Api.csproj -c Release -o /app/out --no-restore
 
 # ---- Runtime Stage ----
 FROM mcr.microsoft.com/dotnet/aspnet:9.0
