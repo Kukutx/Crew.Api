@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Security.Claims;
 using Crew.Api.Mapping;
+using Asp.Versioning;
 using Crew.Application.Moments;
 using Crew.Contracts.Moments;
 using Microsoft.AspNetCore.Authorization;

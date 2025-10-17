@@ -5,6 +5,7 @@ using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
 using Crew.Api.Mapping;
+using Asp.Versioning;
 using Crew.Application.Chat;
 using Crew.Contracts.Chat;
 using Crew.Domain.Enums;

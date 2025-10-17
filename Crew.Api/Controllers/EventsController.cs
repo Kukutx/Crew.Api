@@ -4,6 +4,7 @@ using System.Linq;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
+using Asp.Versioning;
 using Crew.Application.Events;
 using Crew.Api.Mapping;
 using Crew.Contracts.Events;
