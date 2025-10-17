@@ -1,5 +1,7 @@
 using System.Diagnostics;
 using System.Security.Claims;
+using Asp.Versioning;
+using Asp.Versioning.ApiExplorer;
 using Crew.Api.Hubs;
 using Crew.Api.Messaging;
 using Crew.Api.Middleware;
@@ -12,8 +14,6 @@ using Crew.Infrastructure.Extensions;
 using FluentValidation;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.ApiExplorer;
-using Microsoft.AspNetCore.Mvc.Versioning;
 using Microsoft.AspNetCore.Authentication;
 using Crew.Api.Authentication;
 using OpenTelemetry.Metrics;
