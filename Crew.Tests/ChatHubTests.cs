@@ -55,7 +55,7 @@ public class ChatHubTests : IClassFixture<CrewApiFactory>
             .WithUrl(new Uri("http://localhost/hubs/chat"), options =>
             {
                 options.HttpMessageHandlerFactory = _ => _factory.Server.CreateHandler();
-                options.AccessTokenProvider = () => Task.FromResult<string?>(CrewApiFactory.TestToken);
+                options.AccessTokenProvider = () => Task.FromResult<string>(CrewApiFactory.TestToken);
             })
             .WithAutomaticReconnect()
             .Build();

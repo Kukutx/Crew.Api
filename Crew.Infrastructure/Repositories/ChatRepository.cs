@@ -58,7 +58,7 @@ internal sealed class ChatRepository : IChatRepository
                     };
 
         var data = await query.ToListAsync(cancellationToken);
-        return data.Select(x => (x.chat, x.membership, x.lastMessage, x.lastSeq)).ToList();
+        return [.. data.Select(x => (x.chat, x.membership, x.lastMessage, x.lastSeq))];
     }
 
     public Task AddChatAsync(Chat chat, CancellationToken cancellationToken = default)

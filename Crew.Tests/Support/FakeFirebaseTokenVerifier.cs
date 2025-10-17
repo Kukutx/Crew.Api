@@ -10,7 +10,7 @@ public sealed class FakeFirebaseTokenVerifier : IFirebaseTokenVerifier
 {
     private readonly Dictionary<string, FirebaseTokenResult> _tokens = new(StringComparer.Ordinal);
 
-    public Task<FirebaseTokenResult?> VerifyAsync(string token, CancellationToken cancellationToken = default)
+    public Task<FirebaseTokenResult> VerifyAsync(string token, CancellationToken cancellationToken = default)
     {
         return Task.FromResult(_tokens.TryGetValue(token, out var result) ? result : null);
     }

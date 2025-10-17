@@ -20,7 +20,7 @@ public sealed class CrewApiFactory : WebApplicationFactory<Program>, IAsyncLifet
     public const string TestFirebaseUid = "integration-user";
 
     private readonly SqliteConnection _connection;
-    private Respawner? _respawner;
+    private Respawner _respawner;
 
     public CrewApiFactory()
     {
