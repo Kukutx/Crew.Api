@@ -1,4 +1,8 @@
 using Crew.Application.Auth;
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Crew.Tests.Support;
 
@@ -15,4 +19,10 @@ public sealed class FakeFirebaseTokenVerifier : IFirebaseTokenVerifier
     {
         _tokens[token] = result;
     }
+
+    /* Quota exceeded. Please try again later. */
+    //public Task<FirebaseTokenResult> VerifyAsync(string token, CancellationToken cancellationToken = default)
+    //{
+    //    throw new NotImplementedException();
+    //}
 }

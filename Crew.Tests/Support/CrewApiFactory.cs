@@ -1,4 +1,7 @@
+using System;
 using System.Linq;
+using System.Net.Http;
+using System.Threading.Tasks;
 using Crew.Api;
 using Crew.Application.Auth;
 using Crew.Infrastructure.Persistence;
@@ -27,40 +30,40 @@ public sealed class CrewApiFactory : WebApplicationFactory<Program>, IAsyncLifet
 
     public FakeFirebaseTokenVerifier TokenVerifier => Services.GetRequiredService<FakeFirebaseTokenVerifier>();
 
-    protected override void ConfigureWebHost(IWebHostBuilder builder)
-    {
-        builder.ConfigureLogging(logging => logging.ClearProviders());
+    //protected override void ConfigureWebHost(IWebHostBuilder builder)
+    //{
+    //    builder.ConfigureLogging(logging => logging.ClearProviders());
 
-        builder.ConfigureServices(services =>
-        {
-            var descriptor = services.SingleOrDefault(d => d.ServiceType == typeof(DbContextOptions<AppDbContext>));
-            if (descriptor is not null)
-            {
-                services.Remove(descriptor);
-            }
+    //    builder.ConfigureServices(services =>
+    //    {
+    //        var descriptor = services.SingleOrDefault(d => d.ServiceType == typeof(DbContextOptions<AppDbContext>));
+    //        if (descriptor is not null)
+    //        {
+    //            services.Remove(descriptor);
+    //        }
 
-            services.AddDbContext<AppDbContext>(options =>
-            {
-                options.UseSqlite(_connection, sqlite => sqlite.UseNetTopologySuite());
-                options.UseSnakeCaseNamingConvention();
-            });
+    //        services.AddDbContext<AppDbContext>(options =>
+    //        {
+    //            options.UseSqlite(_connection, sqlite => sqlite.UseNetTopologySuite());
+    //            options.UseSnakeCaseNamingConvention();
+    //        });
 
-            var hostedServiceDescriptor = services.FirstOrDefault(d => d.ServiceType == typeof(IHostedService) && d.ImplementationType == typeof(Crew.Infrastructure.Messaging.OutboxProcessor));
-            if (hostedServiceDescriptor is not null)
-            {
-                services.Remove(hostedServiceDescriptor);
-            }
+    //        var hostedServiceDescriptor = services.FirstOrDefault(d => d.ServiceType == typeof(IHostedService) && d.ImplementationType == typeof(Crew.Infrastructure.Messaging.OutboxProcessor));
+    //        if (hostedServiceDescriptor is not null)
+    //        {
+    //            services.Remove(hostedServiceDescriptor);
+    //        }
 
-            var tokenVerifierDescriptor = services.SingleOrDefault(d => d.ServiceType == typeof(IFirebaseTokenVerifier));
-            if (tokenVerifierDescriptor is not null)
-            {
-                services.Remove(tokenVerifierDescriptor);
-            }
+    //        var tokenVerifierDescriptor = services.SingleOrDefault(d => d.ServiceType == typeof(IFirebaseTokenVerifier));
+    //        if (tokenVerifierDescriptor is not null)
+    //        {
+    //            services.Remove(tokenVerifierDescriptor);
+    //        }
 
-            services.AddSingleton<FakeFirebaseTokenVerifier>();
-            services.AddSingleton<IFirebaseTokenVerifier>(sp => sp.GetRequiredService<FakeFirebaseTokenVerifier>());
-        });
-    }
+    //        services.AddSingleton<FakeFirebaseTokenVerifier>();
+    //        services.AddSingleton<IFirebaseTokenVerifier>(sp => sp.GetRequiredService<FakeFirebaseTokenVerifier>());
+    //    });
+    //}
 
     public HttpClient CreateAuthenticatedClient(string token = TestToken)
     {
@@ -79,23 +82,33 @@ public sealed class CrewApiFactory : WebApplicationFactory<Program>, IAsyncLifet
         await _respawner.ResetAsync(_connection);
     }
 
-    public async Task InitializeAsync()
+    //public async Task InitializeAsync()
+    //{
+    //    using var scope = Services.CreateScope();
+    //    var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    //    await context.Database.EnsureCreatedAsync();
+
+    //    _respawner = await Respawner.CreateAsync(_connection, new RespawnerOptions
+    //    {
+    //        DbAdapter = DbAdapter.Sqlite,
+    //        SchemasToInclude = new[] { "main" }
+    //    });
+
+    //    TokenVerifier.SetToken(TestToken, new FirebaseTokenResult(TestFirebaseUid, "Integration Tester", "tester@example.com"));
+    //}
+
+    //public async Task DisposeAsync()
+    //{
+    //    await _connection.DisposeAsync();
+    //}
+
+    Task IAsyncLifetime.InitializeAsync()
     {
-        using var scope = Services.CreateScope();
-        var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        await context.Database.EnsureCreatedAsync();
-
-        _respawner = await Respawner.CreateAsync(_connection, new RespawnerOptions
-        {
-            DbAdapter = DbAdapter.Sqlite,
-            SchemasToInclude = new[] { "main" }
-        });
-
-        TokenVerifier.SetToken(TestToken, new FirebaseTokenResult(TestFirebaseUid, "Integration Tester", "tester@example.com"));
+        throw new System.NotImplementedException();
     }
 
-    public async Task DisposeAsync()
+    Task IAsyncLifetime.DisposeAsync()
     {
-        await _connection.DisposeAsync();
+        throw new System.NotImplementedException();
     }
 }

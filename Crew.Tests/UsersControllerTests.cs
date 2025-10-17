@@ -1,5 +1,9 @@
+using System;
 using System.Linq;
+using System.Net.Http;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 using Crew.Application.Auth;
 using Crew.Contracts.Users;
 using Crew.Domain.Enums;

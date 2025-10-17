@@ -2,6 +2,9 @@ using Crew.Application.Auth;
 using Crew.Domain.Entities;
 using Crew.Domain.Enums;
 using Crew.Tests.Support;
+using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Crew.Tests;
 

@@ -4,6 +4,9 @@ using Crew.Domain.Events;
 using Crew.Tests.Support;
 using NetTopologySuite;
 using NetTopologySuite.Geometries;
+using System;
+using System.Net.Http;
+using System.Threading.Tasks;
 
 namespace Crew.Tests;
 
