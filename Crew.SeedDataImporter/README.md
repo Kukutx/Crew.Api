@@ -21,7 +21,7 @@ Excel 文件可以包含以下工作表：
 ## 配置与运行
 
 1. 在 `Crew.SeedDataImporter/appsettings.json` 中填写数据库连接字符串，或者通过环境变量 `ConnectionStrings__Default` 覆盖。
-2. 将 Excel 文件放在项目根目录，或者在配置中设置 `Seed:ExcelPath`。
+2. 默认模板位于 `SeedData/seed-data.xlsx`，运行时会自动复制到输出目录；也可以通过配置覆盖 `Seed:ExcelPath`。
 3. 运行命令：
 
 ```bash

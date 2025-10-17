@@ -36,15 +36,21 @@ public sealed class SeedDataImporterService
             throw new InvalidOperationException("Seed:ExcelPath must be configured.");
         }
 
-        if (!File.Exists(options.ExcelPath))
+        var excelPath = ResolveExcelPath(options.ExcelPath);
+
+        if (!File.Exists(excelPath))
         {
-            throw new FileNotFoundException($"Excel file not found at '{options.ExcelPath}'.", options.ExcelPath);
+            throw new FileNotFoundException($"Excel file not found at '{excelPath}'.", excelPath);
         }
 
-        using var workbook = new XLWorkbook(options.ExcelPath);
+        using var workbook = new XLWorkbook(excelPath);
 
         var now = DateTimeOffset.UtcNow;
-        _logger.LogInformation("Starting seed import from {Path} (overwrite existing: {Overwrite}).", options.ExcelPath, options.OverwriteExisting);
+        _logger.LogInformation(
+           "Starting seed import from {Path} (overwrite existing: {Overwrite}, configured path: {Configured}).",
+           excelPath,
+           options.OverwriteExisting,
+           options.ExcelPath);
 
         var users = await ImportUsersAsync(workbook, now, options.OverwriteExisting, cancellationToken);
         await _dbContext.SaveChangesAsync(cancellationToken);
@@ -262,10 +268,10 @@ public sealed class SeedDataImporterService
             var description = row.Cell(3).GetString();
             var startTime = row.Cell(4).TryGetValue<DateTimeOffset>(out var start) ? start : now;
             var endTime = row.Cell(5).TryGetValue<DateTimeOffset?>(out var end) ? end : null;
-            var startLat = row.Cell(6).TryGetDouble(out var lat) ? lat : (double?)null;
-            var startLng = row.Cell(7).TryGetDouble(out var lng) ? lng : (double?)null;
-            var endLat = row.Cell(8).TryGetDouble(out var endLatValue) ? endLatValue : (double?)null;
-            var endLng = row.Cell(9).TryGetDouble(out var endLngValue) ? endLngValue : (double?)null;
+            var startLat = TryGetDouble(row.Cell(6));
+            var startLng = TryGetDouble(row.Cell(7));
+            var endLat = TryGetDouble(row.Cell(8));
+            var endLng = TryGetDouble(row.Cell(9));
             var maxParticipants = row.Cell(10).TryGetValue<int?>(out var max) ? max : null;
             var visibilityText = row.Cell(11).GetString();
             var polyline = row.Cell(12).GetString();
@@ -348,8 +354,8 @@ public sealed class SeedDataImporterService
             }
 
             var sequence = row.Cell(2).TryGetValue<int>(out var seq) ? seq : (int?)null;
-            var lat = row.Cell(3).TryGetDouble(out var latValue) ? latValue : (double?)null;
-            var lng = row.Cell(4).TryGetDouble(out var lngValue) ? lngValue : (double?)null;
+            var lat = TryGetDouble(row.Cell(3));
+            var lng = TryGetDouble(row.Cell(4));
             var note = row.Cell(5).GetString();
 
             if (sequence is null || lat is null || lng is null)
@@ -516,6 +522,28 @@ public sealed class SeedDataImporterService
         }
     }
 
+    private static string ResolveExcelPath(string configuredPath)
+    {
+        if (Path.IsPathRooted(configuredPath))
+        {
+            return configuredPath;
+        }
+
+        var baseDirectoryCandidate = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, configuredPath));
+        if (File.Exists(baseDirectoryCandidate))
+        {
+            return baseDirectoryCandidate;
+        }
+
+        var currentDirectoryCandidate = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), configuredPath));
+        if (File.Exists(currentDirectoryCandidate))
+        {
+            return currentDirectoryCandidate;
+        }
+
+        return baseDirectoryCandidate;
+    }
+
     private static TEnum ParseEnum<TEnum>(string value, TEnum defaultValue)
         where TEnum : struct, Enum
     {
@@ -532,4 +560,7 @@ public sealed class SeedDataImporterService
         return workbook.Worksheets
             .FirstOrDefault(x => string.Equals(x.Name, name, StringComparison.OrdinalIgnoreCase));
     }
+
+    private static double? TryGetDouble(IXLCell cell)
+    => cell.TryGetValue<double>(out var v) ? v : (double?)null;
 }
