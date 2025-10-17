@@ -562,6 +562,11 @@ namespace Crew.Infrastructure.Migrations
                         .HasColumnType("character varying(256)")
                         .HasColumnName("display_name");
 
+                    b.Property<string>("Email")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("email");
+
                     b.Property<string>("FirebaseUid")
                         .IsRequired()
                         .HasMaxLength(128)

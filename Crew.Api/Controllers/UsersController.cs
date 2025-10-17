@@ -48,7 +48,7 @@ public sealed class UsersController : ControllerBase
         }
 
         var role = ParseRole(request.Role ?? nameof(UserRole.User));
-        var user = await _userProvisioningService.EnsureUserAsync(request.FirebaseUid, request.DisplayName, role, request.AvatarUrl, cancellationToken);
+        var user = await _userProvisioningService.EnsureUserAsync(request.FirebaseUid, request.DisplayName, request.Email, role, request.AvatarUrl, cancellationToken);
         await _profileCommandService.UpdateProfileAsync(user.Id, request.Bio, request.AvatarUrl, request.Tags, cancellationToken);
 
         var profile = await _userReadService.GetProfileAsync(user.Id, cancellationToken)

@@ -31,6 +31,7 @@ public class UsersControllerTests : IClassFixture<CrewApiFactory>
         var request = new EnsureUserRequest(
             CrewApiFactory.TestFirebaseUid,
             "Integration Tester",
+            "tester@example.com",
             nameof(UserRole.User),
             "https://example.com/avatar.jpg",
             "Road trip lover",
@@ -48,6 +49,7 @@ public class UsersControllerTests : IClassFixture<CrewApiFactory>
         var profile = JsonSerializer.Deserialize<UserProfileDto>(payload, JsonOptions);
         profile.Should().NotBeNull();
         profile!.DisplayName.Should().Be("Integration Tester");
+        profile.Email.Should().Be("tester@example.com");
         profile.Role.Should().Be("user");
         profile.Tags.Should().BeEquivalentTo(new[] { "Camper", "Foodie" });
 
@@ -60,6 +62,7 @@ public class UsersControllerTests : IClassFixture<CrewApiFactory>
             .SingleAsync();
 
         user.DisplayName.Should().Be("Integration Tester");
+        user.Email.Should().Be("tester@example.com");
         user.AvatarUrl.Should().Be("https://example.com/avatar.jpg");
         user.Bio.Should().Be("Road trip lover");
         user.Tags.Select(t => t.Tag!.Name).Should().BeEquivalentTo(new[] { "Camper", "Foodie" });

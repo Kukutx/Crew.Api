@@ -12,6 +12,7 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(x => x.FirebaseUid).IsRequired().HasMaxLength(128);
         builder.HasIndex(x => x.FirebaseUid).IsUnique();
         builder.Property(x => x.DisplayName).HasMaxLength(256);
+        builder.Property(x => x.Email).HasMaxLength(256);
         builder.Property(x => x.Role).HasConversion<string>().HasMaxLength(32);
         builder.Property(x => x.Bio).HasMaxLength(1024);
         builder.Property(x => x.AvatarUrl).HasMaxLength(2048);

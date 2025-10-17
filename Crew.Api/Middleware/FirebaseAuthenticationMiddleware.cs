@@ -24,7 +24,7 @@ public sealed class FirebaseAuthenticationMiddleware
             var result = await tokenVerifier.VerifyAsync(token, context.RequestAborted);
             if (result is not null)
             {
-                var user = await userProvisioningService.EnsureUserAsync(result.FirebaseUid, result.DisplayName, cancellationToken: context.RequestAborted);
+                var user = await userProvisioningService.EnsureUserAsync(result.FirebaseUid, result.DisplayName, result.Email, cancellationToken: context.RequestAborted);
                 userId = user.Id;
 
                 var claims = new List<Claim>

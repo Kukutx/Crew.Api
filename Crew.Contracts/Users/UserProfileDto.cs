@@ -3,6 +3,7 @@ namespace Crew.Contracts.Users;
 public sealed record UserProfileDto(
     Guid Id,
     string? DisplayName,
+    string? Email,
     string Role,
     string? Bio,
     string? AvatarUrl,

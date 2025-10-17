@@ -91,10 +91,13 @@ public sealed class SeedDataImporterService
             }
 
             var displayName = row.Cell(2).GetString();
-            var roleText = row.Cell(3).GetString();
-            var bio = row.Cell(4).GetString();
-            var avatarUrl = row.Cell(5).GetString();
-            var createdAt = row.Cell(6).TryGetValue<DateTimeOffset>(out var created) ? created : now;
+            var email = row.Cell(3).GetString();
+            var roleText = row.Cell(4).GetString();
+            var bio = row.Cell(5).GetString();
+            var avatarUrl = row.Cell(6).GetString();
+            var createdAt = row.Cell(7).TryGetValue<DateTimeOffset>(out var created) ? created : now;
+
+            var normalizedEmail = string.IsNullOrWhiteSpace(email) ? null : email.Trim();
 
             if (!existing.TryGetValue(firebaseUid, out var user))
             {
@@ -103,6 +106,7 @@ public sealed class SeedDataImporterService
                     Id = Guid.NewGuid(),
                     FirebaseUid = firebaseUid,
                     DisplayName = string.IsNullOrWhiteSpace(displayName) ? firebaseUid : displayName,
+                    Email = normalizedEmail,
                     Role = ParseEnum(roleText, UserRole.User),
                     Bio = string.IsNullOrWhiteSpace(bio) ? null : bio,
                     AvatarUrl = string.IsNullOrWhiteSpace(avatarUrl) ? null : avatarUrl,
@@ -117,6 +121,7 @@ public sealed class SeedDataImporterService
             else if (overwrite)
             {
                 user.DisplayName = string.IsNullOrWhiteSpace(displayName) ? user.DisplayName : displayName;
+                user.Email = normalizedEmail;
                 user.Role = ParseEnum(roleText, user.Role);
                 user.Bio = string.IsNullOrWhiteSpace(bio) ? null : bio;
                 user.AvatarUrl = string.IsNullOrWhiteSpace(avatarUrl) ? null : avatarUrl;

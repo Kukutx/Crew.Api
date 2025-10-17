@@ -11,6 +11,7 @@ public static class UserMappings
         return new UserProfileDto(
             profile.Id,
             profile.DisplayName,
+            profile.Email,
             profile.Role.ToString().ToLowerInvariant(),
             profile.Bio,
             profile.AvatarUrl,
