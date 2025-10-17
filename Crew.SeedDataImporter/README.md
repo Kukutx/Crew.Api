@@ -8,7 +8,7 @@ Excel 文件可以包含以下工作表：
 
 | Sheet 名称 | 作用 | 需要的列（按顺序） |
 | --- | --- | --- |
-| `Users` | 创建/更新用户 | `FirebaseUid`, `DisplayName`, `Role`, `Bio`, `AvatarUrl`, `CreatedAt` |
+| `Users` | 创建/更新用户 | `FirebaseUid`, `DisplayName`, `Email`, `Role`, `Bio`, `AvatarUrl`, `CreatedAt` |
 | `Tags` | 创建/更新标签 | `Name`, `Category`, `CreatedAt` |
 | `UserTags` | 建立用户-标签关系 | `FirebaseUid`, `TagName` |
 | `Events` | 创建/更新活动 | `Title`, `OwnerFirebaseUid`, `Description`, `StartTime`, `EndTime`, `StartLatitude`, `StartLongitude`, `EndLatitude`, `EndLongitude`, `MaxParticipants`, `Visibility`, `RoutePolyline` |

@@ -126,6 +126,7 @@ internal sealed class UserReadService : IUserReadService
         return new UserProfile(
             user.Id,
             user.DisplayName,
+            user.Email,
             user.Role,
             user.Bio,
             user.AvatarUrl,

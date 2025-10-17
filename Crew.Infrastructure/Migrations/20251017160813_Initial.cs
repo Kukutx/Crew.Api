@@ -102,6 +102,7 @@ namespace Crew.Infrastructure.Migrations
                     id = table.Column<Guid>(type: "uuid", nullable: false),
                     firebase_uid = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: false),
                     display_name = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
+                    email = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
                     role = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
                     bio = table.Column<string>(type: "character varying(1024)", maxLength: 1024, nullable: true),
                     avatar_url = table.Column<string>(type: "character varying(2048)", maxLength: 2048, nullable: true),

@@ -18,10 +18,14 @@ public sealed class UserProvisioningService
     public async Task<User> EnsureUserAsync(
         string firebaseUid,
         string? displayName,
+        string? email = null,
         UserRole role = UserRole.User,
         string? avatarUrl = null,
         CancellationToken cancellationToken = default)
     {
+        var emailProvided = email is not null;
+        var normalizedEmail = string.IsNullOrWhiteSpace(email) ? null : email?.Trim();
+
         var existing = await _userRepository.FindByFirebaseUidAsync(firebaseUid, cancellationToken);
         if (existing is not null)
         {
@@ -30,6 +34,12 @@ public sealed class UserProvisioningService
             if (!string.IsNullOrWhiteSpace(displayName) && !string.Equals(existing.DisplayName, displayName, StringComparison.Ordinal))
             {
                 existing.DisplayName = displayName;
+                requiresUpdate = true;
+            }
+
+            if (emailProvided && !string.Equals(existing.Email, normalizedEmail, StringComparison.OrdinalIgnoreCase))
+            {
+                existing.Email = normalizedEmail;
                 requiresUpdate = true;
             }
 
@@ -59,6 +69,7 @@ public sealed class UserProvisioningService
             Id = Guid.NewGuid(),
             FirebaseUid = firebaseUid,
             DisplayName = displayName,
+            Email = string.IsNullOrWhiteSpace(email) ? null : email.Trim(),
             Role = role,
             AvatarUrl = avatarUrl,
             CreatedAt = DateTimeOffset.UtcNow

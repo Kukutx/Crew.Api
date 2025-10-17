@@ -5,6 +5,7 @@ namespace Crew.Application.Users;
 public sealed record UserProfile(
     Guid Id,
     string? DisplayName,
+    string? Email,
     UserRole Role,
     string? Bio,
     string? AvatarUrl,
