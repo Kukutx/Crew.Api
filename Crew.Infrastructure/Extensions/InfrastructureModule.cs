@@ -39,11 +39,13 @@ public sealed class InfrastructureModule : IModuleInstaller
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IRoadTripEventRepository, RoadTripEventRepository>();
         services.AddScoped<IRegistrationRepository, RegistrationRepository>();
+        services.AddScoped<IEventMetricsRepository, EventMetricsRepository>();
         services.AddScoped<IChatRepository, ChatRepository>();
         services.AddScoped<IOutboxRepository, OutboxRepository>();
         services.AddScoped<IUserActivityHistoryRepository, UserActivityHistoryRepository>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<IEventReadService, EventReadService>();
+        services.AddScoped<IGetFeedQueryHandler, GetFeedQueryHandler>();
         services.AddScoped<IUserReadService, UserReadService>();
         services.AddScoped<IUserRelationshipService, UserRelationshipService>();
         services.AddScoped<IUserProfileCommandService, UserProfileCommandService>();

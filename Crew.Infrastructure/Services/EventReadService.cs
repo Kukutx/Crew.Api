@@ -27,7 +27,7 @@ internal sealed class EventReadService : IEventReadService
         {
             var envelope = new Envelope(request.MinLongitude.Value, request.MaxLongitude.Value, request.MinLatitude.Value, request.MaxLatitude.Value);
             var polygon = _geometryFactory.ToGeometry(envelope);
-            query = query.Where(e => polygon.Contains(e.StartPoint) ||
+            query = query.Where(e => polygon.Contains(e.Location) ||
                          (e.EndPoint != null && polygon.Contains(e.EndPoint!)));
         }
 
@@ -52,8 +52,8 @@ internal sealed class EventReadService : IEventReadService
                 e.OwnerId,
                 e.Title,
                 e.StartTime,
-                e.StartPoint.X,
-                e.StartPoint.Y,
+                e.Location.X,
+                e.Location.Y,
                 e.Registrations.Count(r => r.Status == Crew.Domain.Enums.RegistrationStatus.Confirmed),
                 e.MaxParticipants,
                 userId != null && e.Registrations.Any(r => r.UserId == userId),
@@ -114,8 +114,8 @@ internal sealed class EventReadService : IEventReadService
             @event.Description,
             @event.StartTime,
             @event.EndTime,
-            @event.StartPoint.X,
-            @event.StartPoint.Y,
+            @event.Location.X,
+            @event.Location.Y,
             @event.EndPoint?.X,
             @event.EndPoint?.Y,
             @event.RoutePolyline,

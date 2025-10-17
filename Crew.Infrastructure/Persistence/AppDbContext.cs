@@ -30,6 +30,7 @@ public class AppDbContext : DbContext
     public DbSet<Moment> Moments => Set<Moment>();
     public DbSet<MomentImage> MomentImages => Set<MomentImage>();
     public DbSet<MomentComment> MomentComments => Set<MomentComment>();
+    public DbSet<EventMetrics> EventMetrics => Set<EventMetrics>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

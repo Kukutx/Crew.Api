@@ -46,6 +46,7 @@ public sealed class MomentsController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize]
     [ProducesResponseType(typeof(MomentDetailDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> CreateAsync([FromBody] CreateMomentRequestDto request, CancellationToken cancellationToken)
@@ -77,6 +78,7 @@ public sealed class MomentsController : ControllerBase
     }
 
     [HttpPost("{id:guid}/comments")]
+    [Authorize]
     [ProducesResponseType(typeof(MomentCommentDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> AddCommentAsync(Guid id, [FromBody] AddMomentCommentRequest request, CancellationToken cancellationToken)

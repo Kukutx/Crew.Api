@@ -306,9 +306,11 @@ public sealed class SeedDataImporterService
                     EndTime = endTime,
                     StartPoint = startPoint,
                     EndPoint = endPoint,
+                    Location = startPoint,
                     RoutePolyline = string.IsNullOrWhiteSpace(polyline) ? null : polyline,
                     MaxParticipants = maxParticipants,
-                    Visibility = ParseEnum(visibilityText, EventVisibility.Private)
+                    Visibility = ParseEnum(visibilityText, EventVisibility.Private),
+                    CreatedAt = now
                 };
 
                 _dbContext.RoadTripEvents.Add(roadTripEvent);
@@ -323,6 +325,7 @@ public sealed class SeedDataImporterService
                 roadTripEvent.EndTime = endTime;
                 roadTripEvent.StartPoint = startPoint;
                 roadTripEvent.EndPoint = endPoint;
+                roadTripEvent.Location = startPoint;
                 roadTripEvent.RoutePolyline = string.IsNullOrWhiteSpace(polyline) ? null : polyline;
                 roadTripEvent.MaxParticipants = maxParticipants;
                 roadTripEvent.Visibility = ParseEnum(visibilityText, roadTripEvent.Visibility);

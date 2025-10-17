@@ -2,13 +2,17 @@ using System;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Crew.Application.Auth;
 using Crew.Contracts.Moments;
 using Crew.Domain.Entities;
 using Crew.Domain.Enums;
+using Crew.Infrastructure.Persistence;
 using Crew.Tests.Support;
+using FluentAssertions;
+using Microsoft.EntityFrameworkCore;
 using NetTopologySuite;
 using NetTopologySuite.Geometries;
 
@@ -125,6 +129,8 @@ public class MomentsControllerTests : IClassFixture<CrewApiFactory>
             StartTime = DateTimeOffset.UtcNow,
             EndTime = DateTimeOffset.UtcNow.AddHours(4),
             StartPoint = geometryFactory.CreatePoint(new Coordinate(25.03, 121.56)),
+            Location = geometryFactory.CreatePoint(new Coordinate(25.03, 121.56)),
+            CreatedAt = DateTimeOffset.UtcNow,
             Visibility = EventVisibility.Public,
             MaxParticipants = 7
         });

@@ -37,4 +37,19 @@ public static class EventMappings
             detail.IsRegistered,
             detail.Tags,
             (detail.Moments ?? Array.Empty<MomentSummary>()).Select(m => m.ToDto()).ToList());
+
+    public static EventCardDto ToDto(this EventCard card)
+        => new(
+            card.Id,
+            card.OwnerId,
+            card.Title,
+            card.Description,
+            card.StartTime,
+            card.CreatedAt,
+            new[] { card.Longitude, card.Latitude },
+            card.DistanceKm,
+            card.Registrations,
+            card.Likes,
+            card.Engagement,
+            card.Tags);
 }

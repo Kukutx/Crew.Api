@@ -1,3 +1,4 @@
+using System;
 using Crew.Domain.Enums;
 using NetTopologySuite.Geometries;
 
@@ -11,8 +12,10 @@ public class RoadTripEvent
     public string? Description { get; set; }
     public DateTimeOffset StartTime { get; set; }
     public DateTimeOffset? EndTime { get; set; }
+    public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
     public Point StartPoint { get; set; } = null!;
     public Point? EndPoint { get; set; }
+    public Point Location { get; set; } = null!;
     public string? RoutePolyline { get; set; }
     public int? MaxParticipants { get; set; }
     public EventVisibility Visibility { get; set; }
@@ -22,4 +25,5 @@ public class RoadTripEvent
     public ICollection<EventTag> Tags { get; set; } = new List<EventTag>();
     public ICollection<Moment> Moments { get; set; } = new List<Moment>();
     public ICollection<UserActivityHistory> ActivityHistory { get; set; } = new List<UserActivityHistory>();
+    public EventMetrics? Metrics { get; set; }
 }

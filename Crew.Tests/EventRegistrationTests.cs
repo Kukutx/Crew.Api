@@ -1,12 +1,15 @@
 using Crew.Domain.Entities;
 using Crew.Domain.Enums;
 using Crew.Domain.Events;
+using Crew.Infrastructure.Persistence;
 using Crew.Tests.Support;
+using Microsoft.EntityFrameworkCore;
 using NetTopologySuite;
 using NetTopologySuite.Geometries;
 using System;
 using System.Net.Http;
 using System.Threading.Tasks;
+using FluentAssertions;
 
 namespace Crew.Tests;
 
@@ -40,6 +43,8 @@ public class EventRegistrationTests : IClassFixture<CrewApiFactory>
                 StartTime = DateTimeOffset.UtcNow,
                 EndTime = DateTimeOffset.UtcNow.AddHours(2),
                 StartPoint = start,
+                Location = start,
+                CreatedAt = DateTimeOffset.UtcNow,
                 Visibility = EventVisibility.Public
             });
 
@@ -76,5 +81,10 @@ public class EventRegistrationTests : IClassFixture<CrewApiFactory>
         history.UserId.Should().Be(user.Id);
         history.EventId.Should().Be(eventId);
         history.Role.Should().Be(ActivityRole.Participant);
+
+        var metrics = await assertDbContext.EventMetrics.SingleAsync();
+        metrics.EventId.Should().Be(eventId);
+        metrics.RegistrationsCount.Should().Be(1);
+        metrics.LikesCount.Should().Be(0);
     }
 }

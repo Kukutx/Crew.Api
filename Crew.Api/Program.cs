@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using System.Linq;
 using System.Security.Claims;
 using Crew.Api.Hubs;
 using Crew.Api.Messaging;
@@ -10,10 +9,16 @@ using Crew.Application.Auth;
 using Crew.Application.Chat;
 using Crew.Application.Events;
 using Crew.Infrastructure.Extensions;
+using FluentValidation;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.AspNetCore.Mvc.Versioning;
+using Microsoft.AspNetCore.Authentication;
+using Crew.Api.Authentication;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 using Serilog;
 using Serilog.Formatting.Json;
 
@@ -42,7 +47,31 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.ConfigureOptions<ConfigureSwaggerOptions>();
 builder.Services.AddSignalR();
+builder.Services.AddValidatorsFromAssemblyContaining<GetFeedQueryValidator>();
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = CrewAuthenticationDefaults.SchemeName;
+    options.DefaultChallengeScheme = CrewAuthenticationDefaults.SchemeName;
+}).AddScheme<AuthenticationSchemeOptions, CrewAuthenticationHandler>(CrewAuthenticationDefaults.SchemeName, _ => { });
 builder.Services.AddAuthorization();
+
+builder.Services.AddOpenTelemetry()
+    .ConfigureResource(resource => resource.AddService("Crew.Api"))
+    .WithTracing(tracing => tracing
+        .AddAspNetCoreInstrumentation()
+        .AddHttpClientInstrumentation()
+        .AddEntityFrameworkCoreInstrumentation(options =>
+        {
+            options.SetDbStatementForText = true;
+            options.EnrichWithIDbCommand = (activity, command) =>
+            {
+                activity.SetTag("db.command", command.CommandText);
+            };
+        })
+        .AddOtlpExporter())
+    .WithMetrics(metrics => metrics
+        .AddAspNetCoreInstrumentation()
+        .AddHttpClientInstrumentation());
 
 var corsSection = builder.Configuration.GetSection("Cors");
 var allowedOrigins = corsSection.GetSection("AllowedOrigins").Get<string[]>() ?? Array.Empty<string>();
@@ -171,6 +200,7 @@ app.UseSerilogRequestLogging(options =>
 app.UseRouting();
 app.UseCors(RequestIdMiddleware.CrewAppCorsPolicy);
 app.UseMiddleware<FirebaseAuthenticationMiddleware>();
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

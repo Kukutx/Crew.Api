@@ -16,6 +16,7 @@ public sealed class RegisterForEventCommand
     private readonly IChatRepository _chatRepository;
     private readonly IOutboxRepository _outboxRepository;
     private readonly IUserActivityHistoryRepository _activityHistoryRepository;
+    private readonly IEventMetricsRepository _eventMetricsRepository;
     private readonly IUnitOfWork _unitOfWork;
 
     public RegisterForEventCommand(
@@ -24,6 +25,7 @@ public sealed class RegisterForEventCommand
         IChatRepository chatRepository,
         IOutboxRepository outboxRepository,
         IUserActivityHistoryRepository activityHistoryRepository,
+        IEventMetricsRepository eventMetricsRepository,
         IUnitOfWork unitOfWork)
     {
         _eventRepository = eventRepository;
@@ -31,6 +33,7 @@ public sealed class RegisterForEventCommand
         _chatRepository = chatRepository;
         _outboxRepository = outboxRepository;
         _activityHistoryRepository = activityHistoryRepository;
+        _eventMetricsRepository = eventMetricsRepository;
         _unitOfWork = unitOfWork;
     }
 
@@ -51,6 +54,9 @@ public sealed class RegisterForEventCommand
             existing.Status = RegistrationStatus.Confirmed;
             existing.CreatedAt = DateTimeOffset.UtcNow;
             await EnsureActivityHistoryAsync(userId, eventId, cancellationToken);
+            var metrics = await _eventMetricsRepository.GetOrCreateAsync(eventId, cancellationToken);
+            metrics.RegistrationsCount = Math.Max(0, metrics.RegistrationsCount) + 1;
+            metrics.UpdatedAt = DateTimeOffset.UtcNow;
             await _unitOfWork.SaveChangesAsync(cancellationToken);
             return existing;
         }
@@ -66,6 +72,10 @@ public sealed class RegisterForEventCommand
 
         await _registrationRepository.AddAsync(registration, cancellationToken);
         await EnsureActivityHistoryAsync(userId, eventId, cancellationToken);
+
+        var eventMetrics = await _eventMetricsRepository.GetOrCreateAsync(eventId, cancellationToken);
+        eventMetrics.RegistrationsCount = Math.Max(0, eventMetrics.RegistrationsCount) + 1;
+        eventMetrics.UpdatedAt = DateTimeOffset.UtcNow;
 
         var chat = await _chatRepository.GetEventChatAsync(eventId, cancellationToken);
         if (chat is null)
@@ -131,6 +141,13 @@ public sealed class RegisterForEventCommand
         {
             await _activityHistoryRepository.RemoveAsync(history, cancellationToken);
         }
+
+        var metrics = await _eventMetricsRepository.GetOrCreateAsync(eventId, cancellationToken);
+        if (metrics.RegistrationsCount > 0)
+        {
+            metrics.RegistrationsCount -= 1;
+        }
+        metrics.UpdatedAt = DateTimeOffset.UtcNow;
 
         var chat = await _chatRepository.GetEventChatAsync(eventId, cancellationToken);
         if (chat is not null)
