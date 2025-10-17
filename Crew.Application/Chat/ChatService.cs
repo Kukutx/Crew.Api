@@ -19,13 +19,13 @@ public sealed class ChatService
         _unitOfWork = unitOfWork;
     }
 
-    public Task<Chat?> GetChatAsync(Guid chatId, CancellationToken cancellationToken = default)
+    public Task<Crew.Domain.Entities.Chat?> GetChatAsync(Guid chatId, CancellationToken cancellationToken = default)
         => _chatRepository.GetChatAsync(chatId, cancellationToken);
 
-    public Task<Chat?> GetEventChatAsync(Guid eventId, CancellationToken cancellationToken = default)
+    public Task<Crew.Domain.Entities.Chat?> GetEventChatAsync(Guid eventId, CancellationToken cancellationToken = default)
         => _chatRepository.GetEventChatAsync(eventId, cancellationToken);
 
-    public async Task<Chat> EnsureEventChatAsync(Guid eventId, Guid ownerId, string title, CancellationToken cancellationToken = default)
+    public async Task<Crew.Domain.Entities.Chat> EnsureEventChatAsync(Guid eventId, Guid ownerId, string title, CancellationToken cancellationToken = default)
     {
         var chat = await _chatRepository.GetEventChatAsync(eventId, cancellationToken);
         if (chat is not null)
@@ -33,7 +33,7 @@ public sealed class ChatService
             return chat;
         }
 
-        chat = new Chat
+        chat = new Crew.Domain.Entities.Chat
         {
             Id = Guid.NewGuid(),
             Type = ChatType.EventGroup,
@@ -91,7 +91,7 @@ public sealed class ChatService
         return member;
     }
 
-    public async Task<Chat> OpenDirectChatAsync(Guid requesterId, Guid counterpartId, CancellationToken cancellationToken = default)
+    public async Task<Crew.Domain.Entities.Chat> OpenDirectChatAsync(Guid requesterId, Guid counterpartId, CancellationToken cancellationToken = default)
     {
         var existing = await _chatRepository.GetDirectChatAsync(requesterId, counterpartId, cancellationToken);
         if (existing is not null)
@@ -99,7 +99,7 @@ public sealed class ChatService
             return existing;
         }
 
-        var chat = new Chat
+        var chat = new Crew.Domain.Entities.Chat
         {
             Id = Guid.NewGuid(),
             Type = ChatType.Direct,
@@ -143,7 +143,7 @@ public sealed class ChatService
         return message;
     }
 
-    public Task<IReadOnlyList<(Chat chat, ChatMember membership, ChatMessage? lastMessage, long lastSeq)>> GetChatSummariesAsync(
+    public Task<IReadOnlyList<(Crew.Domain.Entities.Chat chat, ChatMember membership, ChatMessage? lastMessage, long lastSeq)>> GetChatSummariesAsync(
         Guid userId,
         CancellationToken cancellationToken = default)
         => _chatRepository.GetChatSummariesAsync(userId, cancellationToken);

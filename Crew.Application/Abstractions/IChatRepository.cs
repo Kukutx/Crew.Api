@@ -8,12 +8,12 @@ namespace Crew.Application.Abstractions;
 
 public interface IChatRepository
 {
-    Task<Chat?> GetChatAsync(Guid chatId, CancellationToken cancellationToken = default);
-    Task<Chat?> GetEventChatAsync(Guid eventId, CancellationToken cancellationToken = default);
-    Task<Chat?> GetDirectChatAsync(Guid userA, Guid userB, CancellationToken cancellationToken = default);
-    Task<IReadOnlyList<(Chat chat, ChatMember membership, ChatMessage? lastMessage, long lastSeq)>> GetChatSummariesAsync(Guid userId, CancellationToken cancellationToken = default);
-    Task AddChatAsync(Chat chat, CancellationToken cancellationToken = default);
-    Task UpdateChatAsync(Chat chat);
+    Task<Crew.Domain.Entities.Chat?> GetChatAsync(Guid chatId, CancellationToken cancellationToken = default);
+    Task<Crew.Domain.Entities.Chat?> GetEventChatAsync(Guid eventId, CancellationToken cancellationToken = default);
+    Task<Crew.Domain.Entities.Chat?> GetDirectChatAsync(Guid userA, Guid userB, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<(Crew.Domain.Entities.Chat chat, ChatMember membership, ChatMessage? lastMessage, long lastSeq)>> GetChatSummariesAsync(Guid userId, CancellationToken cancellationToken = default);
+    Task AddChatAsync(Crew.Domain.Entities.Chat chat, CancellationToken cancellationToken = default);
+    Task UpdateChatAsync(Crew.Domain.Entities.Chat chat);
 
     Task<ChatMember?> GetMembershipAsync(Guid chatId, Guid userId, CancellationToken cancellationToken = default);
     Task AddMemberAsync(ChatMember member, CancellationToken cancellationToken = default);

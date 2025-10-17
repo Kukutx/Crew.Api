@@ -70,7 +70,7 @@ public sealed class RegisterForEventCommand
         var chat = await _chatRepository.GetEventChatAsync(eventId, cancellationToken);
         if (chat is null)
         {
-            chat = new Chat
+            chat = new Crew.Domain.Entities.Chat
             {
                 Id = Guid.NewGuid(),
                 Type = ChatType.EventGroup,
