@@ -60,12 +60,14 @@ public class EventRegistrationTests : IClassFixture<CrewApiFactory>
         registration.UserId.Should().Be(user.Id);
         registration.Status.Should().Be(RegistrationStatus.Confirmed);
 
-        var group = await assertDbContext.ChatGroups.SingleAsync();
-        group.EventId.Should().Be(eventId);
+        var chat = await assertDbContext.Chats.SingleAsync();
+        chat.EventId.Should().Be(eventId);
+        chat.Type.Should().Be(ChatType.EventGroup);
 
-        var membership = await assertDbContext.ChatMemberships.SingleAsync();
-        membership.GroupId.Should().Be(group.Id);
+        var membership = await assertDbContext.ChatMembers.SingleAsync();
+        membership.ChatId.Should().Be(chat.Id);
         membership.UserId.Should().Be(user.Id);
+        membership.Role.Should().Be(ChatMemberRole.Member);
 
         var outboxMessage = await assertDbContext.OutboxMessages.SingleAsync();
         outboxMessage.Type.Should().Be(nameof(UserJoinedGroupEvent));

@@ -1,6 +1,9 @@
+using System;
 using System.Text.Json;
-using Crew.Application.Abstractions;
+using System.Threading;
+using System.Threading.Tasks;
 using Crew.Api.Hubs;
+using Crew.Application.Abstractions;
 using Microsoft.AspNetCore.SignalR;
 
 namespace Crew.Api.Messaging;
@@ -25,14 +28,14 @@ public sealed class UserJoinedGroupHandler : IOutboxEventHandler
             return;
         }
 
-        await _hubContext.Clients.Group(GroupName(@event.GroupId)).SendAsync("system", new
+        await _hubContext.Clients.Group(GroupName(@event.ChatId)).SendAsync("system", new
         {
             userId = @event.UserId,
             joinedAt = @event.JoinedAt
         }, cancellationToken);
     }
 
-    private static string GroupName(Guid groupId) => $"group:{groupId}";
+    private static string GroupName(Guid chatId) => $"chat:{chatId}";
 
-    private sealed record UserJoinedGroupPayload(Guid GroupId, Guid UserId, DateTimeOffset JoinedAt);
+    private sealed record UserJoinedGroupPayload(Guid ChatId, Guid UserId, DateTimeOffset JoinedAt);
 }

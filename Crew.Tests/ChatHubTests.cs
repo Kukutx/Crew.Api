@@ -31,19 +31,20 @@ public class ChatHubTests : IClassFixture<CrewApiFactory>
             var userProvisioning = scope.ServiceProvider.GetRequiredService<UserProvisioningService>();
             var user = await userProvisioning.EnsureUserAsync(CrewApiFactory.TestFirebaseUid, "Integration Tester", cancellationToken: CancellationToken.None);
 
-            dbContext.ChatGroups.Add(new ChatGroup
+            dbContext.Chats.Add(new Chat
             {
                 Id = groupId,
-                Scope = GroupScope.Event,
+                Type = ChatType.EventGroup,
                 EventId = eventId,
+                Title = "Integration Ride",
                 CreatedAt = DateTimeOffset.UtcNow
             });
 
-            dbContext.ChatMemberships.Add(new ChatMembership
+            dbContext.ChatMembers.Add(new ChatMember
             {
-                GroupId = groupId,
+                ChatId = groupId,
                 UserId = user.Id,
-                Role = "member",
+                Role = ChatMemberRole.Member,
                 JoinedAt = DateTimeOffset.UtcNow
             });
 

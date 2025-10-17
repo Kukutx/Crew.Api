@@ -1,8 +1,11 @@
+using System;
+using System.Text.Json;
+using System.Threading;
+using System.Threading.Tasks;
 using Crew.Application.Abstractions;
 using Crew.Domain.Entities;
 using Crew.Domain.Enums;
 using Crew.Domain.Events;
-using System.Text.Json;
 
 namespace Crew.Application.Events;
 
@@ -64,31 +67,45 @@ public sealed class RegisterForEventCommand
         await _registrationRepository.AddAsync(registration, cancellationToken);
         await EnsureActivityHistoryAsync(userId, eventId, cancellationToken);
 
-        var group = await _chatRepository.GetEventGroupAsync(eventId, cancellationToken);
-        if (group is null)
+        var chat = await _chatRepository.GetEventChatAsync(eventId, cancellationToken);
+        if (chat is null)
         {
-            group = new ChatGroup
+            chat = new Chat
             {
-                Id = eventId,
-                Scope = GroupScope.Event,
+                Id = Guid.NewGuid(),
+                Type = ChatType.EventGroup,
                 EventId = eventId,
-                CreatedAt = DateTimeOffset.UtcNow
+                OwnerUserId = @event.OwnerId,
+                Title = @event.Title,
+                CreatedAt = DateTimeOffset.UtcNow,
+                IsArchived = false
             };
 
-            await _chatRepository.AddGroupAsync(group, cancellationToken);
+            await _chatRepository.AddChatAsync(chat, cancellationToken);
         }
 
-        var membership = new ChatMembership
+        var membership = await _chatRepository.GetMembershipAsync(chat.Id, userId, cancellationToken);
+        if (membership is null)
         {
-            GroupId = group.Id,
-            UserId = userId,
-            Role = "member",
-            JoinedAt = DateTimeOffset.UtcNow
-        };
+            membership = new ChatMember
+            {
+                ChatId = chat.Id,
+                UserId = userId,
+                Role = ChatMemberRole.Member,
+                JoinedAt = DateTimeOffset.UtcNow
+            };
 
-        await _chatRepository.AddMembershipAsync(membership, cancellationToken);
+            await _chatRepository.AddMemberAsync(membership, cancellationToken);
+        }
+        else
+        {
+            membership.LeftAt = null;
+            membership.JoinedAt = DateTimeOffset.UtcNow;
+            membership.Role = ChatMemberRole.Member;
+            await _chatRepository.UpdateMemberAsync(membership);
+        }
 
-        var outboxEvent = new UserJoinedGroupEvent(group.Id, userId, membership.JoinedAt);
+        var outboxEvent = new UserJoinedGroupEvent(chat.Id, userId, membership.JoinedAt);
         var outboxMessage = new OutboxMessage
         {
             Id = Guid.NewGuid(),
@@ -115,13 +132,14 @@ public sealed class RegisterForEventCommand
             await _activityHistoryRepository.RemoveAsync(history, cancellationToken);
         }
 
-        var group = await _chatRepository.GetEventGroupAsync(eventId, cancellationToken);
-        if (group is not null)
+        var chat = await _chatRepository.GetEventChatAsync(eventId, cancellationToken);
+        if (chat is not null)
         {
-            var membership = await _chatRepository.GetMembershipAsync(group.Id, userId, cancellationToken);
+            var membership = await _chatRepository.GetMembershipAsync(chat.Id, userId, cancellationToken);
             if (membership is not null)
             {
-                await _chatRepository.RemoveMembershipAsync(membership);
+                membership.LeftAt = DateTimeOffset.UtcNow;
+                await _chatRepository.UpdateMemberAsync(membership);
             }
         }
 

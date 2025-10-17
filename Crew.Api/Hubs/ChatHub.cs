@@ -1,6 +1,10 @@
+using System;
 using System.Security.Claims;
+using System.Threading;
+using System.Threading.Tasks;
 using Crew.Api.Mapping;
 using Crew.Application.Chat;
+using Crew.Domain.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 
@@ -16,7 +20,7 @@ public sealed class ChatHub : Hub
         _chatService = chatService;
     }
 
-    public async Task JoinEventGroup(Guid eventId, CancellationToken cancellationToken)
+    public async Task<Guid> JoinEventGroup(Guid eventId, CancellationToken cancellationToken)
     {
         var userId = GetUserId();
         if (userId is null)
@@ -24,40 +28,35 @@ public sealed class ChatHub : Hub
             throw new HubException("Unauthorized");
         }
 
-        var group = await _chatService.GetEventGroupAsync(eventId, cancellationToken);
-        if (group is null)
+        var chat = await _chatService.GetEventChatAsync(eventId, cancellationToken);
+        if (chat is null)
         {
             throw new HubException("Event group not found");
         }
 
-        if (!await _chatService.IsMemberAsync(group.Id, userId.Value, cancellationToken))
+        if (!await _chatService.IsMemberAsync(chat.Id, userId.Value, cancellationToken))
         {
             throw new HubException("Forbidden");
         }
 
-        await Groups.AddToGroupAsync(Context.ConnectionId, GroupName(group.Id), cancellationToken);
+        await Groups.AddToGroupAsync(Context.ConnectionId, GroupName(chat.Id), cancellationToken);
+        return chat.Id;
     }
 
-    public async Task SendToGroup(Guid groupId, string text, CancellationToken cancellationToken)
+    public async Task JoinChat(Guid chatId, CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(text))
-        {
-            throw new HubException("Message cannot be empty");
-        }
-
         var userId = GetUserId();
         if (userId is null)
         {
             throw new HubException("Unauthorized");
         }
 
-        if (!await _chatService.IsMemberAsync(groupId, userId.Value, cancellationToken))
+        if (!await _chatService.IsMemberAsync(chatId, userId.Value, cancellationToken))
         {
             throw new HubException("Forbidden");
         }
 
-        var message = await _chatService.SendToGroupAsync(groupId, userId.Value, text, cancellationToken);
-        await Clients.Group(GroupName(groupId)).SendAsync("msg", message.ToDto(), cancellationToken);
+        await Groups.AddToGroupAsync(Context.ConnectionId, GroupName(chatId), cancellationToken);
     }
 
     public async Task<Guid> OpenDialog(Guid userId, CancellationToken cancellationToken)
@@ -68,13 +67,19 @@ public sealed class ChatHub : Hub
             throw new HubException("Unauthorized");
         }
 
-        var dialog = await _chatService.OpenDialogAsync(currentUserId.Value, userId, cancellationToken);
-        return dialog.Id;
+        var chat = await _chatService.OpenDirectChatAsync(currentUserId.Value, userId, cancellationToken);
+        await Groups.AddToGroupAsync(Context.ConnectionId, GroupName(chat.Id), cancellationToken);
+        return chat.Id;
     }
 
-    public async Task SendPrivate(Guid dialogId, string text, CancellationToken cancellationToken)
+    public async Task SendMessage(
+        Guid chatId,
+        ChatMessageKind kind,
+        string? bodyText,
+        string? metaJson,
+        CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(text))
+        if (kind == ChatMessageKind.Text && string.IsNullOrWhiteSpace(bodyText))
         {
             throw new HubException("Message cannot be empty");
         }
@@ -85,15 +90,36 @@ public sealed class ChatHub : Hub
             throw new HubException("Unauthorized");
         }
 
-        var dialog = await _chatService.GetDialogAsync(dialogId, cancellationToken);
-        if (dialog is null || (dialog.UserA != userId.Value && dialog.UserB != userId.Value))
+        if (!await _chatService.IsMemberAsync(chatId, userId.Value, cancellationToken))
         {
             throw new HubException("Forbidden");
         }
 
-        var message = await _chatService.SendPrivateAsync(dialogId, userId.Value, text, cancellationToken);
-        var recipients = new[] { dialog.UserA.ToString(), dialog.UserB.ToString() };
-        await Clients.Users(recipients).SendAsync("pm", message.ToDto(), cancellationToken);
+        var message = await _chatService.SendMessageAsync(chatId, userId.Value, kind, bodyText, metaJson, cancellationToken);
+        await Clients.Group(GroupName(chatId)).SendAsync("MessageCreated", message.ToDto(), cancellationToken);
+    }
+
+    public async Task MarkRead(Guid chatId, long maxSeq, CancellationToken cancellationToken)
+    {
+        var userId = GetUserId();
+        if (userId is null)
+        {
+            throw new HubException("Unauthorized");
+        }
+
+        await _chatService.MarkReadAsync(chatId, userId.Value, maxSeq, cancellationToken);
+        await Clients.Group(GroupName(chatId)).SendAsync("Read", new { ChatId = chatId, UserId = userId.Value, MaxSeq = maxSeq }, cancellationToken);
+    }
+
+    public async Task Typing(Guid chatId, CancellationToken cancellationToken)
+    {
+        var userId = GetUserId();
+        if (userId is null)
+        {
+            throw new HubException("Unauthorized");
+        }
+
+        await Clients.OthersInGroup(GroupName(chatId)).SendAsync("Typing", new { ChatId = chatId, UserId = userId.Value, Timestamp = DateTimeOffset.UtcNow }, cancellationToken);
     }
 
     private Guid? GetUserId()
@@ -102,5 +128,5 @@ public sealed class ChatHub : Hub
         return Guid.TryParse(value, out var id) ? id : null;
     }
 
-    private static string GroupName(Guid groupId) => $"group:{groupId}";
+    private static string GroupName(Guid chatId) => $"chat:{chatId}";
 }

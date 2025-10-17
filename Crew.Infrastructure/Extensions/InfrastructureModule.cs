@@ -1,3 +1,7 @@
+using System;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Threading.Tasks;
 using Crew.Application.Abstractions;
 using Crew.Application.Auth;
 using Crew.Application.Events;
@@ -15,7 +19,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Http.Resilience;
 using Polly;
-using System.Net.Http.Headers;
 
 namespace Crew.Infrastructure.Extensions;
 

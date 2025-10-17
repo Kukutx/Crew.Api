@@ -14,11 +14,12 @@ public class AppDbContext : DbContext
     public DbSet<RoadTripEvent> RoadTripEvents => Set<RoadTripEvent>();
     public DbSet<EventSegment> EventSegments => Set<EventSegment>();
     public DbSet<Registration> Registrations => Set<Registration>();
-    public DbSet<ChatGroup> ChatGroups => Set<ChatGroup>();
-    public DbSet<ChatMembership> ChatMemberships => Set<ChatMembership>();
+    public DbSet<Chat> Chats => Set<Chat>();
+    public DbSet<ChatMember> ChatMembers => Set<ChatMember>();
     public DbSet<ChatMessage> ChatMessages => Set<ChatMessage>();
-    public DbSet<PrivateDialog> PrivateDialogs => Set<PrivateDialog>();
-    public DbSet<PrivateMessage> PrivateMessages => Set<PrivateMessage>();
+    public DbSet<ChatMessageAttachment> ChatMessageAttachments => Set<ChatMessageAttachment>();
+    public DbSet<ChatMessageReaction> ChatMessageReactions => Set<ChatMessageReaction>();
+    public DbSet<Report> Reports => Set<Report>();
     public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
     public DbSet<Tag> Tags => Set<Tag>();
     public DbSet<UserTag> UserTags => Set<UserTag>();
