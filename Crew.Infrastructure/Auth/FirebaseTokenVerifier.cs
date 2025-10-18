@@ -26,7 +26,13 @@ internal sealed class FirebaseTokenVerifier : IFirebaseTokenVerifier
             var decoded = await FirebaseAuth.DefaultInstance.VerifyIdTokenAsync(token, cancellationToken);
             decoded.Claims.TryGetValue("name", out var nameClaim);
             decoded.Claims.TryGetValue("email", out var emailClaim);
-            return new FirebaseTokenResult(decoded.Uid, nameClaim as string, emailClaim as string);
+            decoded.Claims.TryGetValue("role", out var roleClaim);
+
+            return new FirebaseTokenResult(
+                decoded.Uid,
+                nameClaim as string,
+                emailClaim as string,
+                roleClaim?.ToString());
         }
         catch (FirebaseAuthException)
         {

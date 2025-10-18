@@ -49,8 +49,10 @@ public sealed class InfrastructureModule : IModuleInstaller
         services.AddScoped<IUserReadService, UserReadService>();
         services.AddScoped<IUserRelationshipService, UserRelationshipService>();
         services.AddScoped<IUserProfileCommandService, UserProfileCommandService>();
+        services.AddScoped<IUserAdministrationService, UserAdministrationService>();
         services.AddScoped<IMomentService, MomentService>();
         services.AddScoped<IFirebaseTokenVerifier, FirebaseTokenVerifier>();
+        services.AddScoped<IFirebaseCustomClaimsService, FirebaseCustomClaimsService>();
 
         services.AddHostedService<OutboxProcessor>();
 
