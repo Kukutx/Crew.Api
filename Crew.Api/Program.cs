@@ -75,15 +75,28 @@ builder.Services.AddOpenTelemetry()
 
 var corsSection = builder.Configuration.GetSection("Cors");
 var allowedOrigins = corsSection.GetSection("AllowedOrigins").Get<string[]>() ?? Array.Empty<string>();
-allowedOrigins = allowedOrigins.Where(o => !string.IsNullOrWhiteSpace(o)).ToArray();
+allowedOrigins = allowedOrigins
+    .Select(o => o?.Trim())
+    .Where(o => !string.IsNullOrWhiteSpace(o))
+    .Select(o => o!.TrimEnd('/'))
+    .Distinct(StringComparer.OrdinalIgnoreCase)
+    .ToArray();
 if (allowedOrigins.Length == 0)
 {
-    allowedOrigins = new[] { "https://app.crew.dev" };
+    allowedOrigins = new[] { "https://crew-dashboard-f1khue98r-kukutxs-projects.vercel.app/" };
 }
 
 var allowedMethods = corsSection.GetSection("AllowedMethods").Get<string[]>()
+        ?.Select(m => m?.Trim())
+    .Where(m => !string.IsNullOrWhiteSpace(m))
+    .Distinct(StringComparer.OrdinalIgnoreCase)
+    .ToArray()
     ?? new[] { "GET", "POST", "PUT", "DELETE", "OPTIONS" };
 var allowedHeaders = corsSection.GetSection("AllowedHeaders").Get<string[]>()
+        ?.Select(h => h?.Trim())
+    .Where(h => !string.IsNullOrWhiteSpace(h))
+    .Distinct(StringComparer.OrdinalIgnoreCase)
+    .ToArray()
     ?? new[] { "Authorization", "Content-Type" };
 
 builder.Services.AddCors(options =>

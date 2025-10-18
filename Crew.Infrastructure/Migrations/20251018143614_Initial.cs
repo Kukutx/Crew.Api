@@ -1,7 +1,7 @@
 ﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using NetTopologySuite.Geometries;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
@@ -50,6 +50,23 @@ namespace Crew.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "reports",
+                columns: table => new
+                {
+                    id = table.Column<Guid>(type: "uuid", nullable: false),
+                    target_type = table.Column<int>(type: "integer", nullable: false),
+                    target_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    reason = table.Column<string>(type: "character varying(1024)", maxLength: 1024, nullable: false),
+                    reporter_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    status = table.Column<int>(type: "integer", nullable: false),
+                    created_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("pk_reports", x => x.id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "road_trip_events",
                 columns: table => new
                 {
@@ -59,8 +76,10 @@ namespace Crew.Infrastructure.Migrations
                     description = table.Column<string>(type: "text", nullable: true),
                     start_time = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     end_time = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
-                    start_point = table.Column<Point>(type: "geometry (Point, 4326)", nullable: false),
-                    end_point = table.Column<Point>(type: "geometry (Point, 4326)", nullable: true),
+                    created_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false, defaultValueSql: "now() at time zone 'utc'"),
+                    start_point = table.Column<Point>(type: "geography (Point, 4326)", nullable: false),
+                    end_point = table.Column<Point>(type: "geography (Point, 4326)", nullable: true),
+                    location = table.Column<Point>(type: "geography (Point, 4326)", nullable: false),
                     route_polyline = table.Column<string>(type: "character varying(4096)", maxLength: 4096, nullable: true),
                     max_participants = table.Column<int>(type: "integer", nullable: true, defaultValue: 7),
                     visibility = table.Column<int>(type: "integer", nullable: false)
@@ -102,6 +121,26 @@ namespace Crew.Infrastructure.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("pk_users", x => x.id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "event_metrics",
+                columns: table => new
+                {
+                    event_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    likes_count = table.Column<int>(type: "integer", nullable: false, defaultValue: 0),
+                    registrations_count = table.Column<int>(type: "integer", nullable: false, defaultValue: 0),
+                    updated_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false, defaultValueSql: "now() at time zone 'utc'")
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("pk_event_metrics", x => x.event_id);
+                    table.ForeignKey(
+                        name: "fk_event_metrics_road_trip_events_event_id",
+                        column: x => x.event_id,
+                        principalTable: "road_trip_events",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -206,79 +245,6 @@ namespace Crew.Infrastructure.Migrations
                     table.ForeignKey(
                         name: "fk_chat_messages_users_sender_id",
                         column: x => x.sender_id,
-                        principalTable: "users",
-                        principalColumn: "id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "chat_message_attachments",
-                columns: table => new
-                {
-                    id = table.Column<Guid>(type: "uuid", nullable: false),
-                    message_id = table.Column<long>(type: "bigint", nullable: false),
-                    storage_key = table.Column<string>(type: "character varying(512)", maxLength: 512, nullable: false),
-                    content_type = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: false),
-                    size = table.Column<long>(type: "bigint", nullable: false),
-                    width = table.Column<int>(type: "integer", nullable: true),
-                    height = table.Column<int>(type: "integer", nullable: true),
-                    duration = table.Column<int>(type: "integer", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("pk_chat_message_attachments", x => x.id);
-                    table.ForeignKey(
-                        name: "fk_chat_message_attachments_chat_messages_message_id",
-                        column: x => x.message_id,
-                        principalTable: "chat_messages",
-                        principalColumn: "id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "chat_message_reactions",
-                columns: table => new
-                {
-                    message_id = table.Column<long>(type: "bigint", nullable: false),
-                    user_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    emoji = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
-                    created_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("pk_chat_message_reactions", x => new { x.message_id, x.user_id, x.emoji });
-                    table.ForeignKey(
-                        name: "fk_chat_message_reactions_chat_messages_message_id",
-                        column: x => x.message_id,
-                        principalTable: "chat_messages",
-                        principalColumn: "id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "fk_chat_message_reactions_users_user_id",
-                        column: x => x.user_id,
-                        principalTable: "users",
-                        principalColumn: "id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "reports",
-                columns: table => new
-                {
-                    id = table.Column<Guid>(type: "uuid", nullable: false),
-                    target_type = table.Column<int>(type: "integer", nullable: false),
-                    target_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    reason = table.Column<string>(type: "character varying(1024)", maxLength: 1024, nullable: false),
-                    reporter_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    status = table.Column<int>(type: "integer", nullable: false),
-                    created_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("pk_reports", x => x.id);
-                    table.ForeignKey(
-                        name: "fk_reports_users_reporter_id",
-                        column: x => x.reporter_id,
                         principalTable: "users",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Cascade);
@@ -448,6 +414,56 @@ namespace Crew.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "chat_message_attachments",
+                columns: table => new
+                {
+                    id = table.Column<Guid>(type: "uuid", nullable: false),
+                    message_id = table.Column<long>(type: "bigint", nullable: false),
+                    storage_key = table.Column<string>(type: "character varying(512)", maxLength: 512, nullable: false),
+                    content_type = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: false),
+                    size = table.Column<long>(type: "bigint", nullable: false),
+                    width = table.Column<int>(type: "integer", nullable: true),
+                    height = table.Column<int>(type: "integer", nullable: true),
+                    duration = table.Column<int>(type: "integer", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("pk_chat_message_attachments", x => x.id);
+                    table.ForeignKey(
+                        name: "fk_chat_message_attachments_chat_messages_message_id",
+                        column: x => x.message_id,
+                        principalTable: "chat_messages",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "chat_message_reactions",
+                columns: table => new
+                {
+                    message_id = table.Column<long>(type: "bigint", nullable: false),
+                    user_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    emoji = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
+                    created_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("pk_chat_message_reactions", x => new { x.message_id, x.user_id, x.emoji });
+                    table.ForeignKey(
+                        name: "fk_chat_message_reactions_chat_messages_message_id",
+                        column: x => x.message_id,
+                        principalTable: "chat_messages",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "fk_chat_message_reactions_users_user_id",
+                        column: x => x.user_id,
+                        principalTable: "users",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "moment_comments",
                 columns: table => new
                 {
@@ -495,30 +511,14 @@ namespace Crew.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateIndex(
-                name: "ix_chat_members_chat_id",
+                name: "IX_ChatMember_ChatId",
                 table: "chat_members",
                 column: "chat_id");
 
             migrationBuilder.CreateIndex(
-                name: "ix_chat_members_user_id",
+                name: "IX_ChatMember_UserId",
                 table: "chat_members",
                 column: "user_id");
-
-            migrationBuilder.CreateIndex(
-                name: "ix_chat_messages_chat_id",
-                table: "chat_messages",
-                column: "chat_id");
-
-            migrationBuilder.CreateIndex(
-                name: "ix_chat_messages_chat_id_seq",
-                table: "chat_messages",
-                columns: new[] { "chat_id", "seq" },
-                unique: true);
-
-            migrationBuilder.CreateIndex(
-                name: "ix_chat_messages_sender_id",
-                table: "chat_messages",
-                column: "sender_id");
 
             migrationBuilder.CreateIndex(
                 name: "ix_chat_message_attachments_message_id",
@@ -531,7 +531,24 @@ namespace Crew.Infrastructure.Migrations
                 column: "user_id");
 
             migrationBuilder.CreateIndex(
-                name: "ix_chats_event_id",
+                name: "ix_chat_messages_sender_id",
+                table: "chat_messages",
+                column: "sender_id");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ChatMessage_ChatId",
+                table: "chat_messages",
+                column: "chat_id");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ChatMessage_ChatId_Seq",
+                table: "chat_messages",
+                columns: new[] { "chat_id", "seq" },
+                unique: true,
+                descending: new[] { false, true });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Chat_EventId",
                 table: "chats",
                 column: "event_id");
 
@@ -539,11 +556,6 @@ namespace Crew.Infrastructure.Migrations
                 name: "ix_chats_type_owner_user_id",
                 table: "chats",
                 columns: new[] { "type", "owner_user_id" });
-
-            migrationBuilder.CreateIndex(
-                name: "ix_reports_reporter_id",
-                table: "reports",
-                column: "reporter_id");
 
             migrationBuilder.CreateIndex(
                 name: "ix_event_segments_event_id",
@@ -592,6 +604,11 @@ namespace Crew.Infrastructure.Migrations
                 column: "user_id");
 
             migrationBuilder.CreateIndex(
+                name: "ix_reports_target_id",
+                table: "reports",
+                column: "target_id");
+
+            migrationBuilder.CreateIndex(
                 name: "ix_tags_name_category",
                 table: "tags",
                 columns: new[] { "name", "category" },
@@ -638,19 +655,16 @@ namespace Crew.Infrastructure.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
+                name: "chat_members");
+
+            migrationBuilder.DropTable(
                 name: "chat_message_attachments");
 
             migrationBuilder.DropTable(
                 name: "chat_message_reactions");
 
             migrationBuilder.DropTable(
-                name: "reports");
-
-            migrationBuilder.DropTable(
-                name: "chat_members");
-
-            migrationBuilder.DropTable(
-                name: "chat_messages");
+                name: "event_metrics");
 
             migrationBuilder.DropTable(
                 name: "event_segments");
@@ -671,6 +685,9 @@ namespace Crew.Infrastructure.Migrations
                 name: "registrations");
 
             migrationBuilder.DropTable(
+                name: "reports");
+
+            migrationBuilder.DropTable(
                 name: "user_activity_histories");
 
             migrationBuilder.DropTable(
@@ -683,13 +700,16 @@ namespace Crew.Infrastructure.Migrations
                 name: "user_tags");
 
             migrationBuilder.DropTable(
-                name: "chats");
+                name: "chat_messages");
 
             migrationBuilder.DropTable(
                 name: "moments");
 
             migrationBuilder.DropTable(
                 name: "tags");
+
+            migrationBuilder.DropTable(
+                name: "chats");
 
             migrationBuilder.DropTable(
                 name: "road_trip_events");
