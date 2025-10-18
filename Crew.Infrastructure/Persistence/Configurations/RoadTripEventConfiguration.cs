@@ -14,12 +14,12 @@ public class RoadTripEventConfiguration : IEntityTypeConfiguration<RoadTripEvent
             .HasColumnType("timestamp with time zone")
             .HasDefaultValueSql("now() at time zone 'utc'");
         builder.Property(x => x.StartPoint)
-            .HasColumnType("geography (Point, 4326)")
+            .HasColumnType("geometry (Point, 4326)")
             .IsRequired();
         builder.Property(x => x.EndPoint)
-            .HasColumnType("geography (Point, 4326)");
+            .HasColumnType("geometry (Point, 4326)");
         builder.Property(x => x.Location)
-            .HasColumnType("geography (Point, 4326)")
+            .HasColumnType("geometry (Point, 4326)")
             .IsRequired();
         builder.Property(x => x.RoutePolyline).HasMaxLength(4096);
         builder.Property(x => x.MaxParticipants).HasDefaultValue(7);

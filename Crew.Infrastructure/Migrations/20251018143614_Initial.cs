@@ -77,9 +77,9 @@ namespace Crew.Infrastructure.Migrations
                     start_time = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     end_time = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     created_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false, defaultValueSql: "now() at time zone 'utc'"),
-                    start_point = table.Column<Point>(type: "geography (Point, 4326)", nullable: false),
-                    end_point = table.Column<Point>(type: "geography (Point, 4326)", nullable: true),
-                    location = table.Column<Point>(type: "geography (Point, 4326)", nullable: false),
+                    start_point = table.Column<Point>(type: "geometry (Point, 4326)", nullable: false),
+                    end_point = table.Column<Point>(type: "geometry (Point, 4326)", nullable: true),
+                    location = table.Column<Point>(type: "geometry (Point, 4326)", nullable: false),
                     route_polyline = table.Column<string>(type: "character varying(4096)", maxLength: 4096, nullable: true),
                     max_participants = table.Column<int>(type: "integer", nullable: true, defaultValue: 7),
                     visibility = table.Column<int>(type: "integer", nullable: false)
