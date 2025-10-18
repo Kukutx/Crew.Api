@@ -1,5 +1,6 @@
 using System;
 using System.Security.Claims;
+using System.Linq;
 using Crew.Api.Mapping;
 using Asp.Versioning;
 using Crew.Application.Auth;
@@ -56,6 +57,15 @@ public sealed class UsersController : ControllerBase
             ?? throw new InvalidOperationException("User profile not found after provisioning");
 
         return Ok(profile.ToDto());
+    }
+
+    [HttpGet]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(IReadOnlyList<UserSummaryDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetUsersAsync(CancellationToken cancellationToken)
+    {
+        var users = await _userReadService.GetUsersAsync(cancellationToken);
+        return Ok(users.Select(u => u.ToDto()));
     }
 
     [HttpGet("{id:guid}")]

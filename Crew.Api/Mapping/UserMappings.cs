@@ -6,6 +6,17 @@ namespace Crew.Api.Mapping;
 
 public static class UserMappings
 {
+    public static UserSummaryDto ToDto(this UserSummary summary)
+    {
+        return new UserSummaryDto(
+            summary.Id,
+            summary.DisplayName,
+            summary.Email,
+            summary.Role.ToString().ToLowerInvariant(),
+            summary.AvatarUrl,
+            summary.CreatedAt);
+    }
+
     public static UserProfileDto ToDto(this UserProfile profile)
     {
         return new UserProfileDto(
