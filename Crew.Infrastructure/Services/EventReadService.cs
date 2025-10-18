@@ -3,17 +3,12 @@ using Crew.Application.Moments;
 using Crew.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
-using NetTopologySuite.Geometries;                    // EF.Functions
-using Npgsql.EntityFrameworkCore.PostgreSQL;            // ILike/空间扩展注册
-using Npgsql.EntityFrameworkCore.PostgreSQL.NetTopologySuite;
 
 namespace Crew.Infrastructure.Services;
 
 internal sealed class EventReadService : IEventReadService
 {
     private readonly AppDbContext _dbContext;
-    private readonly GeometryFactory _geometryFactory = NetTopologySuite.NtsGeometryServices.Instance.CreateGeometryFactory(srid: 4326);
-
     public EventReadService(AppDbContext dbContext)
     {
         _dbContext = dbContext;
@@ -25,10 +20,17 @@ internal sealed class EventReadService : IEventReadService
 
         if (request.MinLongitude is not null && request.MinLatitude is not null && request.MaxLongitude is not null && request.MaxLatitude is not null)
         {
-            var envelope = new Envelope(request.MinLongitude.Value, request.MaxLongitude.Value, request.MinLatitude.Value, request.MaxLatitude.Value);
-            var polygon = _geometryFactory.ToGeometry(envelope);
-            query = query.Where(e => polygon.Contains(e.Location) ||
-                         (e.EndPoint != null && polygon.Contains(e.EndPoint!)));
+            var minLongitude = request.MinLongitude.Value;
+            var maxLongitude = request.MaxLongitude.Value;
+            var minLatitude = request.MinLatitude.Value;
+            var maxLatitude = request.MaxLatitude.Value;
+
+            query = query.Where(e =>
+                (e.Location.X >= minLongitude && e.Location.X <= maxLongitude &&
+                 e.Location.Y >= minLatitude && e.Location.Y <= maxLatitude) ||
+                (e.EndPoint != null &&
+                 e.EndPoint.X >= minLongitude && e.EndPoint.X <= maxLongitude &&
+                 e.EndPoint.Y >= minLatitude && e.EndPoint.Y <= maxLatitude));
         }
 
         if (request.From is not null)

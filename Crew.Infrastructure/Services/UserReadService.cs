@@ -2,6 +2,7 @@ using Crew.Application.Users;
 using Crew.Domain.Enums;
 using Crew.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using System.Linq;
 
 namespace Crew.Infrastructure.Services;
 
@@ -12,6 +13,21 @@ internal sealed class UserReadService : IUserReadService
     public UserReadService(AppDbContext dbContext)
     {
         _dbContext = dbContext;
+    }
+
+    public async Task<IReadOnlyList<UserSummary>> GetUsersAsync(CancellationToken cancellationToken = default)
+    {
+        return await _dbContext.Users
+            .AsNoTracking()
+            .OrderBy(u => u.DisplayName)
+            .Select(u => new UserSummary(
+                u.Id,
+                u.DisplayName,
+                u.Email,
+                u.Role,
+                u.AvatarUrl,
+                u.CreatedAt))
+            .ToListAsync(cancellationToken);
     }
 
     public async Task<UserProfile?> GetProfileAsync(Guid userId, CancellationToken cancellationToken = default)
