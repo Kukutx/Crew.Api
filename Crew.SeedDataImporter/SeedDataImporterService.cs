@@ -400,10 +400,50 @@ public sealed class SeedDataImporterService
                     .Where(x => x.EventId == eventId)
                     .ToListAsync(cancellationToken);
                 _dbContext.EventSegments.RemoveRange(existing);
+                await _dbContext.EventSegments.AddRangeAsync(segments, cancellationToken);
+                _logger.LogInformation("Replaced {Count} segments for event {EventId}.", segments.Count, eventId);
+                continue;
             }
 
-            await _dbContext.EventSegments.AddRangeAsync(segments, cancellationToken);
-            _logger.LogInformation("Added {Count} segments for event {EventId}.", segments.Count, eventId);
+            var existingSegments = await _dbContext.EventSegments
+                .Where(x => x.EventId == eventId)
+                .Select(x => new
+                {
+                    x.Id,
+                    x.Seq,
+                    Latitude = x.Waypoint.Y,
+                    Longitude = x.Waypoint.X
+                })
+                .ToListAsync(cancellationToken);
+
+            var deduped = new List<EventSegment>();
+            foreach (var segment in segments)
+            {
+                var alreadyExists = existingSegments.Any(x =>
+                    x.Seq == segment.Seq &&
+                    Math.Abs(x.Latitude - segment.Waypoint.Y) < 1e-6 &&
+                    Math.Abs(x.Longitude - segment.Waypoint.X) < 1e-6);
+
+                if (alreadyExists)
+                {
+                    _logger.LogInformation(
+                        "Skipped duplicate segment seq {Seq} for event {EventId}.",
+                        segment.Seq,
+                        eventId);
+                    continue;
+                }
+
+                deduped.Add(segment);
+            }
+
+            if (deduped.Count == 0)
+            {
+                _logger.LogInformation("No new segments to add for event {EventId}.", eventId);
+                continue;
+            }
+
+            await _dbContext.EventSegments.AddRangeAsync(deduped, cancellationToken);
+            _logger.LogInformation("Added {Count} new segments for event {EventId}.", deduped.Count, eventId);
         }
     }
 
