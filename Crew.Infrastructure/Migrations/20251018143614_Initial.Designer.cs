@@ -591,7 +591,7 @@ namespace Crew.Infrastructure.Migrations
                         .HasColumnName("description");
 
                     b.Property<Point>("EndPoint")
-                        .HasColumnType("geography (Point, 4326)")
+                        .HasColumnType("geometry (Point, 4326)")
                         .HasColumnName("end_point");
 
                     b.Property<DateTimeOffset?>("EndTime")
@@ -600,7 +600,7 @@ namespace Crew.Infrastructure.Migrations
 
                     b.Property<Point>("Location")
                         .IsRequired()
-                        .HasColumnType("geography (Point, 4326)")
+                        .HasColumnType("geometry (Point, 4326)")
                         .HasColumnName("location");
 
                     b.Property<int?>("MaxParticipants")
@@ -620,7 +620,7 @@ namespace Crew.Infrastructure.Migrations
 
                     b.Property<Point>("StartPoint")
                         .IsRequired()
-                        .HasColumnType("geography (Point, 4326)")
+                        .HasColumnType("geometry (Point, 4326)")
                         .HasColumnName("start_point");
 
                     b.Property<DateTimeOffset>("StartTime")
