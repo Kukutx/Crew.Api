@@ -1,5 +1,7 @@
+using System;
 using System.Security.Claims;
 using Crew.Application.Auth;
+using Crew.Domain.Enums;
 using Serilog.Context;
 
 namespace Crew.Api.Middleware;
@@ -24,7 +26,18 @@ public sealed class FirebaseAuthenticationMiddleware
             var result = await tokenVerifier.VerifyAsync(token, context.RequestAborted);
             if (result is not null)
             {
-                var user = await userProvisioningService.EnsureUserAsync(result.FirebaseUid, result.DisplayName, result.Email, cancellationToken: context.RequestAborted);
+                UserRole? role = null;
+                if (!string.IsNullOrWhiteSpace(result.Role) && Enum.TryParse<UserRole>(result.Role, true, out var parsedRole))
+                {
+                    role = parsedRole;
+                }
+
+                var user = await userProvisioningService.EnsureUserAsync(
+                    result.FirebaseUid,
+                    result.DisplayName,
+                    result.Email,
+                    role,
+                    cancellationToken: context.RequestAborted);
                 userId = user.Id;
 
                 var claims = new List<Claim>
@@ -32,6 +45,8 @@ public sealed class FirebaseAuthenticationMiddleware
                     new(ClaimTypes.NameIdentifier, user.Id.ToString()),
                     new("firebase_uid", result.FirebaseUid)
                 };
+
+                claims.Add(new Claim(ClaimTypes.Role, user.Role.ToString()));
 
                 if (!string.IsNullOrEmpty(result.Email))
                 {

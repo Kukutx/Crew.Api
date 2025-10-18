@@ -1,3 +1,6 @@
+using System;
+using System.Threading;
+using System.Threading.Tasks;
 using Crew.Application.Abstractions;
 using Crew.Domain.Entities;
 using Crew.Domain.Enums;
@@ -19,7 +22,7 @@ public sealed class UserProvisioningService
         string firebaseUid,
         string? displayName,
         string? email = null,
-        UserRole role = UserRole.User,
+        UserRole? role = null,
         string? avatarUrl = null,
         CancellationToken cancellationToken = default)
     {
@@ -49,9 +52,9 @@ public sealed class UserProvisioningService
                 requiresUpdate = true;
             }
 
-            if (existing.Role != role)
+            if (role.HasValue && existing.Role != role.Value)
             {
-                existing.Role = role;
+                existing.Role = role.Value;
                 requiresUpdate = true;
             }
 
@@ -70,7 +73,7 @@ public sealed class UserProvisioningService
             FirebaseUid = firebaseUid,
             DisplayName = displayName,
             Email = string.IsNullOrWhiteSpace(email) ? null : email.Trim(),
-            Role = role,
+            Role = role ?? UserRole.User,
             AvatarUrl = avatarUrl,
             CreatedAt = DateTimeOffset.UtcNow
         };
